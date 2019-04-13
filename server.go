@@ -5,23 +5,23 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 )
 
 // Server definition of mock server
 type Server struct {
 	impostersPath string
-	handler       http.Handler
+	router        *mux.Router
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, h http.Handler) *Server {
+func NewServer(p string, r *mux.Router) *Server {
 	return &Server{
 		impostersPath: p,
-		handler:       h,
+		router:        r,
 	}
 }
 
@@ -31,19 +31,17 @@ func (s *Server) Run() error {
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
 		return fmt.Errorf("the directory %s doesn't exists", s.impostersPath)
 	}
-	imposters, err := s.fetchImposters()
-	if err != nil {
+	if err := s.buildImposters(); err != nil {
 		return err
 	}
-	fmt.Println(imposters)
+
 	return nil
 }
 
-func (s *Server) fetchImposters() ([]Imposter, error) {
-	var imposters []Imposter
+func (s *Server) buildImposters() error {
 	files, err := ioutil.ReadDir(s.impostersPath)
 	if err != nil {
-		return imposters, errors.Wrapf(err, "an error ocurred while read dir %s", s.impostersPath)
+		return errors.Wrapf(err, "an error ocurred while read dir %s", s.impostersPath)
 	}
 
 	for _, f := range files {
@@ -52,11 +50,10 @@ func (s *Server) fetchImposters() ([]Imposter, error) {
 			log.Println(err)
 			continue
 		}
-
-		imposters = append(imposters, imposter)
+		s.router.HandleFunc(imposter.Request.Endpoint, imposterHandler(imposter)).Methods(imposter.Request.Method)
 	}
 
-	return imposters, nil
+	return nil
 }
 
 func (s *Server) buildImposter(imposterFileName string, imposter *Imposter) error {
