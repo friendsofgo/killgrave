@@ -10,7 +10,7 @@ type Imposter struct {
 type Request struct {
 	Method     string                 `json:"method"`
 	Endpoint   string                 `json:"endpoint"`
-	SchemaFile string                 `json:"schema_file"`
+	SchemaFile *string                `json:"schema_file"`
 	Headers    map[string]interface{} `json:"headers"`
 }
 
