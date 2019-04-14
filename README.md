@@ -19,9 +19,9 @@ Or custome your server with this flags:
 ```sh
  -host string
         if you run your server on a different host (default "localhost")
-  -imposters string
+ -imposters string
         directory where your imposter are saved (default "imposters")
-  -port int
+ -port int
         por to run the server (default 3000)
 ```
 
