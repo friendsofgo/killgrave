@@ -12,9 +12,9 @@ import (
 )
 
 func main() {
-	host := flag.String("host", "localhost", "if you run your server on a different host (default: localhost)")
-	port := flag.Int("port", 3000, "por to run the server (default: 3000)")
-	imposters := flag.String("imposters", "imposters", "directory where your imposter are saved (default: imposters)")
+	host := flag.String("host", "localhost", "if you run your server on a different host")
+	port := flag.Int("port", 3000, "por to run the server")
+	imposters := flag.String("imposters", "imposters", "directory where your imposter are saved")
 	flag.Parse()
 
 	r := mux.NewRouter()
