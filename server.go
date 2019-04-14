@@ -47,7 +47,9 @@ func (s *Server) buildImposters() error {
 	for _, f := range files {
 		var imposter Imposter
 		if err := s.buildImposter(f.Name(), &imposter); err != nil || imposter.Request.Endpoint == "" {
-			log.Println(err)
+			if err != nil {
+				log.Println(err)
+			}
 			continue
 		}
 		s.router.HandleFunc(imposter.Request.Endpoint, imposterHandler(imposter)).Methods(imposter.Request.Method)
