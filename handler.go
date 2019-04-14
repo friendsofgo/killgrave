@@ -1,6 +1,7 @@
 package killgrave
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -18,6 +19,13 @@ func imposterHandler(imposter Imposter) http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 			return
 		}
+
+		if err := validateHeaders(imposter, r.Header); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
 		w.Header().Set("Content-Type", imposter.Response.ContentType)
 		w.WriteHeader(imposter.Response.Status)
 		writeBody(imposter, w)
@@ -56,7 +64,37 @@ func validateSchema(imposter Imposter, bodyRequest io.ReadCloser) error {
 	}
 
 	return nil
+}
 
+func validateHeaders(imposter Imposter, header http.Header) error {
+	if imposter.Request.Headers == nil {
+		return nil
+	}
+
+	for k, v := range *imposter.Request.Headers {
+		_, ok := header[k]
+		if !ok {
+			return fmt.Errorf("the key %s is not specified on header", k)
+		}
+
+		if !compareHeaderValues(v, header[k]) {
+			return fmt.Errorf("the key %s expected: %v got:%v", k, v, header[k])
+		}
+	}
+
+	return nil
+}
+
+func compareHeaderValues(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func writeBody(imposter Imposter, w http.ResponseWriter) {

@@ -8,10 +8,10 @@ type Imposter struct {
 
 // Request represent the structure of real request
 type Request struct {
-	Method     string                 `json:"method"`
-	Endpoint   string                 `json:"endpoint"`
-	SchemaFile *string                `json:"schema_file"`
-	Headers    map[string]interface{} `json:"headers"`
+	Method     string               `json:"method"`
+	Endpoint   string               `json:"endpoint"`
+	SchemaFile *string              `json:"schema_file"`
+	Headers    *map[string][]string `json:"headers"`
 }
 
 // Response represent the structure of real response
