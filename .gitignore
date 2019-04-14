@@ -13,3 +13,6 @@
 
 imposters
 schemas
+
+!test/testdata/imposters/
+!test/testdata/schemas/

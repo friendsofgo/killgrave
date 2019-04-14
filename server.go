@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 )
 
 // Server definition of mock server
@@ -29,7 +27,7 @@ func NewServer(p string, r *mux.Router) *Server {
 // handlers for each imposter
 func (s *Server) Run() error {
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
-		return fmt.Errorf("the directory %s doesn't exists", s.impostersPath)
+		return invalidDirectoryError(fmt.Sprintf("the directory %s doesn't exists", s.impostersPath))
 	}
 	if err := s.buildImposters(); err != nil {
 		return err
@@ -39,17 +37,15 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) buildImposters() error {
-	files, err := ioutil.ReadDir(s.impostersPath)
-	if err != nil {
-		return errors.Wrapf(err, "an error ocurred while read dir %s", s.impostersPath)
-	}
+	files, _ := ioutil.ReadDir(s.impostersPath)
 
 	for _, f := range files {
 		var imposter Imposter
-		if err := s.buildImposter(f.Name(), &imposter); err != nil || imposter.Request.Endpoint == "" {
-			if err != nil {
-				log.Println(err)
-			}
+		if err := s.buildImposter(f.Name(), &imposter); err != nil {
+			return err
+		}
+
+		if imposter.Request.Endpoint == "" {
 			continue
 		}
 		s.router.HandleFunc(imposter.Request.Endpoint, imposterHandler(imposter)).Methods(imposter.Request.Method)
@@ -60,15 +56,12 @@ func (s *Server) buildImposters() error {
 
 func (s *Server) buildImposter(imposterFileName string, imposter *Imposter) error {
 	f := s.impostersPath + "/" + imposterFileName
-	imposterFile, err := os.Open(f)
-	if err != nil {
-		return errors.Wrapf(err, "error reading imposter file: %s", f)
-	}
+	imposterFile, _ := os.Open(f)
 	defer imposterFile.Close()
 
 	bytes, _ := ioutil.ReadAll(imposterFile)
 	if err := json.Unmarshal(bytes, imposter); err != nil {
-		return errors.Wrapf(err, "error while unmarshall imposter file %s", f)
+		return malformattedImposterError(fmt.Sprintf("error while unmarshall imposter file %s", f))
 	}
 	return nil
 }
