@@ -12,7 +12,8 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-func imposterHandler(imposter Imposter) http.HandlerFunc {
+// ImposterHandler create specific handler for the received imposter
+func ImposterHandler(imposter Imposter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := validateSchema(imposter, r.Body); err != nil {
 			w.WriteHeader(http.StatusBadRequest)

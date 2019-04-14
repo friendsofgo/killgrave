@@ -8,7 +8,7 @@ import (
 
 func TestRunServer(t *testing.T) {
 	var serverData = []struct {
-		in     string
+		name   string
 		server *Server
 		err    error
 	}{
@@ -18,7 +18,7 @@ func TestRunServer(t *testing.T) {
 	}
 
 	for _, tt := range serverData {
-		t.Run(tt.in, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			err := tt.server.Run()
 
 			if err == nil {

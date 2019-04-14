@@ -1,0 +1,41 @@
+{
+    "type": "error",
+    "properties": {
+        "nul": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "gophers"
+                    ]
+                },
+                "attributes": {
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "color": {
+                            "type": "string"
+                        },
+                        "age": {
+                            "type": "integer"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "color",
+                        "age"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "attributes"
+            ]
+        }
+    },
+    "required": [
+        "data"
+    ]
+}

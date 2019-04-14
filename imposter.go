@@ -1,5 +1,7 @@
 package killgrave
 
+import "net/http"
+
 // Imposter define an imposter structure
 type Imposter struct {
 	Request  Request  `json:"request"`
@@ -8,10 +10,10 @@ type Imposter struct {
 
 // Request represent the structure of real request
 type Request struct {
-	Method     string               `json:"method"`
-	Endpoint   string               `json:"endpoint"`
-	SchemaFile *string              `json:"schema_file"`
-	Headers    *map[string][]string `json:"headers"`
+	Method     string       `json:"method"`
+	Endpoint   string       `json:"endpoint"`
+	SchemaFile *string      `json:"schema_file"`
+	Headers    *http.Header `json:"headers"`
 }
 
 // Response represent the structure of real response

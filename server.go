@@ -48,7 +48,7 @@ func (s *Server) buildImposters() error {
 		if imposter.Request.Endpoint == "" {
 			continue
 		}
-		s.router.HandleFunc(imposter.Request.Endpoint, imposterHandler(imposter)).Methods(imposter.Request.Method)
+		s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).Methods(imposter.Request.Method)
 	}
 
 	return nil

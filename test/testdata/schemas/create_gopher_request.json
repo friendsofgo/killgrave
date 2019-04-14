@@ -1,0 +1,42 @@
+{
+    "type": "object",
+    "properties": {
+        "data": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "gophers"
+                    ]
+                },
+                "attributes": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "color": {
+                            "type": "string"
+                        },
+                        "age": {
+                            "type": "integer"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "color",
+                        "age"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "attributes"
+            ]
+        }
+    },
+    "required": [
+        "data"
+    ]
+}
