@@ -6,7 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/textproto"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/xeipuuv/gojsonschema"
@@ -73,12 +75,12 @@ func validateHeaders(imposter Imposter, header http.Header) error {
 	}
 
 	for k, v := range *imposter.Request.Headers {
-		_, ok := header[k]
-		if !ok {
+		mimeTypeKey := textproto.CanonicalMIMEHeaderKey(k)
+		if _, ok := header[mimeTypeKey]; !ok {
 			return fmt.Errorf("the key %s is not specified on header", k)
 		}
 
-		if !compareHeaderValues(v, header[k]) {
+		if !compareHeaderValues(v, header[mimeTypeKey]) {
 			return fmt.Errorf("the key %s expected: %v got:%v", k, v, header[k])
 		}
 	}
@@ -91,7 +93,7 @@ func compareHeaderValues(a, b []string) bool {
 		return false
 	}
 	for i, v := range a {
-		if v != b[i] {
+		if strings.ToLower(v) != strings.ToLower(b[i]) {
 			return false
 		}
 	}
