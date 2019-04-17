@@ -6,7 +6,7 @@ Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**,
 To install `killgrave`, run:
 
 ```sh
-$ GO111MODULE=off go get -u github.com/friendsofgo/cmd/killgrave
+$ GO111MODULE=off go get -u github.com/friendsofgo/killgrave/cmd/killgrave
 ```
 
 Use `killgrave` with default flags:
@@ -137,7 +137,7 @@ curl --header "Content-Type: application/json" \
 * Validate requests headers
 * Check response status
 * Write json body with files
-* Write body on differents with different content types
+* Write differnts content-type bodies
 * Regex for using on endpoint urls
 
 ## Next Features
