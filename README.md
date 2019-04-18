@@ -141,14 +141,17 @@ curl --header "Content-Type: application/json" \
 * Validate json schemas on requests
 * Validate requests headers
 * Check response status
-* Write json body with files
-* Write differnts content-type bodies
+* All content-type bodies
+* Write body files (XML, JSON, HTML...)
+* Write bodies in line
 * Regex for using on endpoint urls
 
 ## Next Features
-- [ ] Dynamic responses
+- [ ] Validate headers on body
 - [ ] Proxy server
+- [ ] Dynamic responses and error responses
 - [ ] Record proxy server
+- [ ] Better documentation with examples of each feature
 
 ## Contributing
 [Contributions](https://github.com/friendsofgo/killgrave/issues?q=is%3Aissue+is%3Aopen) are more than welcome, if you are interested please fork this repo and send your Pull Request.
