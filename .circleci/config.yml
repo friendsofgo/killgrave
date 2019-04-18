@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  codecov: codecov/codecov@1.0.1
+  codecov: codecov/codecov@1.0.4
 jobs:
   build-go1_11_6:
     docker:
@@ -25,18 +25,14 @@ jobs:
     steps:
       - checkout
       - run: go test -v -race ./...
-      - run: go build -race cmd/killgrave/main.go
-      - run: make coverage
-      - run: 
-        command: |          
-          mkdir /tmp/coverage_artifact
-          mv coverage.txt /tmp/coverage_artifact
-      - store_artifacts:
-        path: /tmp/coverage_artifact
-  coverage:   
+      - run: go build -race cmd/killgrave/main.go      
+  coverage:  
+    docker:
+      - image: circleci/golang:latest
     steps:
+      - run: make coverage      
       - codecov/upload:
-        file: /tmp/coverage_artifact/coverage.txt
+          file: coverage.txt
 workflows:
   version: 2
   build_and_test:
@@ -44,6 +40,4 @@ workflows:
       - build-go1_11_6
       - build-go1_12_1
       - build-go_latest
-      - coverage:
-          requires:
-            - build-go_latest
+      - coverage
