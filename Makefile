@@ -6,7 +6,7 @@ COVERAGE_REPORT = coverage.txt
 COVERAGE_PROFILE = profile.out
 COVERAGE_MODE = atomic
 
-test-coverage:
+coverage:
 	@cd $(WORKDIR); \
 	echo "" > $(COVERAGE_REPORT); \
 	for dir in `find . -name "*.go" | grep -o '.*/' | sort | uniq`; do \
