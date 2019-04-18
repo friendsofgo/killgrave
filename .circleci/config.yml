@@ -37,7 +37,8 @@ jobs:
     steps:
       - codecov/upload:
         file: /tmp/coverage_artifact/coverage.txt
- workflows:
+workflows:
+  version: 2
   build_and_test:
     jobs:
       - build-go1.11.6
