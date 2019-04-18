@@ -27,7 +27,9 @@ jobs:
   coverage:  
     docker:
       - image: circleci/golang:latest
+    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     steps:
+      - checkout
       - run: make coverage      
       - run: bash <(curl -s https://codecov.io/bash)
 workflows:
