@@ -3,7 +3,7 @@ jobs:
   build-go1_11_6:
     docker:
       - image: circleci/golang:1.11.6
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    working_directory: /go/src/github.com/friendsofgo/killgrave
     steps:
       - checkout
       - run: go test -v -race ./...
@@ -11,7 +11,7 @@ jobs:
   build-go1_12_1:
     docker:
       - image: circleci/golang:1.12.1
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    working_directory: /go/src/github.com/friendsofgo/killgrave
     steps:
       - checkout
       - run: go test -v -race ./...
@@ -19,7 +19,7 @@ jobs:
   build-go_latest:
     docker:
       - image: circleci/golang:latest
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    working_directory: /go/src/github.com/friendsofgo/killgrave
     steps:
       - checkout
       - run: go test -v -race ./...
@@ -27,7 +27,7 @@ jobs:
   coverage:  
     docker:
       - image: circleci/golang:latest
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    working_directory: /go/src/github.com/friendsofgo/killgrave
     steps:
       - checkout
       - run: make coverage      
