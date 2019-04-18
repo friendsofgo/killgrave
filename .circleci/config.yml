@@ -27,15 +27,17 @@ jobs:
       - run: go test -v -race ./...
       - run: go build -race cmd/killgrave/main.go
       - run: make coverage
-      - run: mv coverage.txt /tmp/coverage_artifact
+      - run: 
+        command: |          
+          mkdir /tmp/coverage_artifact
+          mv coverage.txt /tmp/coverage_artifact
       - store_artifacts:
         path: /tmp/coverage_artifact
-  coverage:
+  coverage:   
     steps:
       - codecov/upload:
         file: /tmp/coverage_artifact/coverage.txt
  workflows:
-  version: 2.1
   build_and_test:
     jobs:
       - build-go1.11.6
