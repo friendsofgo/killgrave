@@ -39,4 +39,7 @@ workflows:
       - build-go1_11_6
       - build-go1_12_1
       - build-go_latest
-      - coverage
+      - coverage:
+          filters:
+            branches:
+              ignore: /.*/
