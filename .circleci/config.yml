@@ -2,7 +2,7 @@ version: 2.1
 orbs:
   codecov: codecov/codecov@1.0.1
 jobs:
-  build-go1.11.6:
+  build-go1_11_6:
     docker:
       - image: circleci/golang:1.11.6
     working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
@@ -10,7 +10,7 @@ jobs:
       - checkout
       - run: go test -v -race ./...
       - run: go build -race cmd/killgrave/main.go
-  build-go1.12.1:
+  build-go1_12_1:
     docker:
       - image: circleci/golang:1.12.1
     working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
@@ -41,8 +41,8 @@ workflows:
   version: 2
   build_and_test:
     jobs:
-      - build-go1.11.6
-      - build-go1.12.1
+      - build-go1_11_6
+      - build-go1_12_1
       - build-go_latest
       - coverage:
           requires:
