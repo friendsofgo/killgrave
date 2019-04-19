@@ -3,7 +3,9 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/friendsofgo/killgrave)](https://goreportcard.com/report/github.com/friendsofgo/killgrave)
 [![GoDoc](https://godoc.org/graphql.co/graphql?status.svg)](https://godoc.org/github.com/friendsofgo/killgrave)
 
-![](https://res.cloudinary.com/fogo/image/upload/c_scale,w_250/v1555701277/fogo/projects/gopher-killgrave.svg)
+<p align="center">
+  <img src="https://res.cloudinary.com/fogo/image/upload/c_scale,w_350/v1555701634/fogo/projects/gopher-killgrave.png" alt="Golang Killgrave"/>
+</p>
 
 # Killgrave
 
