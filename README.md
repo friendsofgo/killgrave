@@ -25,6 +25,12 @@ Install `killgrave` using [homebrew](https://brew.sh/index_es):
 $ brew install friendsofgo/tap/killgrave
 ```
 
+Or you can download the binary for your arch on:
+
+[https://github.com/friendsofgo/killgrave/releases](https://github.com/friendsofgo/killgrave/releases)
+
+## Using Killgrave
+
 Use `killgrave` with default flags:
 
 ```sh
