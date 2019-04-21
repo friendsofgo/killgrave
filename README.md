@@ -13,10 +13,16 @@
 Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**, very easy to use made in **Go**.
 
 ## Getting started
-To install `killgrave`, run:
+Install `killgrave` using go:
 
 ```sh
 $ GO111MODULE=off go get -u github.com/friendsofgo/killgrave/cmd/killgrave
+```
+
+Install `killgrave` using [homebrew](https://brew.sh/index_es):
+
+```sh
+$ brew install friendsofgo/tap/killgrave
 ```
 
 Use `killgrave` with default flags:
@@ -33,6 +39,8 @@ Or custome your server with this flags:
         directory where your imposter are saved (default "imposters")
  -port int
         por to run the server (default 3000)
+ -version
+        show the version of the application
 ```
 
 ## How to use
