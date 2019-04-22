@@ -29,7 +29,8 @@ func ImposterHandler(imposter Imposter) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Content-Type", imposter.Response.ContentType)
+
+		writeHeaders(imposter, w)
 		w.WriteHeader(imposter.Response.Status)
 		writeBody(imposter, w)
 	}
@@ -98,6 +99,17 @@ func compareHeaderValues(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+func writeHeaders(imposter Imposter, w http.ResponseWriter) {
+	if imposter.Response.Headers == nil {
+		return
+	}
+
+	for k, v := range *imposter.Response.Headers {
+		// TODO: Handle array of header values
+		w.Header().Set(k, v[0])
+	}
 }
 
 func writeBody(imposter Imposter, w http.ResponseWriter) {
