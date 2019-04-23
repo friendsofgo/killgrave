@@ -106,9 +106,10 @@ func writeHeaders(imposter Imposter, w http.ResponseWriter) {
 		return
 	}
 
-	for k, v := range *imposter.Response.Headers {
-		// TODO: Handle array of header values
-		w.Header().Set(k, v[0])
+	for key, values := range *imposter.Response.Headers {
+		for _, val := range values {
+			w.Header().Add(key, val)
+		}
 	}
 }
 
