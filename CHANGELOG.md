@@ -8,3 +8,9 @@
 * Run server with imposter configuration
 * Processing and parsing imposters file
 * Initial version
+
+## v0.2.0 (2019/04/24)
+
+* Create an official docker image for the application
+* Update README.md with how to use the application with docker
+* Allow write headers for the response
