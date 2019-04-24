@@ -45,9 +45,9 @@ func TestImposterHandler(t *testing.T) {
 		expectedBody string
 		statusCode   int
 	}{
-		{"valid imposter with body", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, ContentType: "application/json", Body: body}}, body, http.StatusOK},
-		{"valid imposter with bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, ContentType: "application/json", BodyFile: &bodyFile}}, string(expectedBodyFileData), http.StatusOK},
-		{"valid imposter with not exists bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, ContentType: "application/json", BodyFile: &bodyFileFake}}, "", http.StatusOK},
+		{"valid imposter with body", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &http.Header{"Content-Type": []string{"application/json"}}, Body: body}}, body, http.StatusOK},
+		{"valid imposter with bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &http.Header{"Content-Type": []string{"application/json"}}, BodyFile: &bodyFile}}, string(expectedBodyFileData), http.StatusOK},
+		{"valid imposter with not exists bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &http.Header{"Content-Type": []string{"application/json"}}, BodyFile: &bodyFileFake}}, "", http.StatusOK},
 	}
 
 	for _, tt := range dataTest {

@@ -21,5 +21,5 @@ type Response struct {
 	Status      int     `json:"status"`
 	Body        string  `json:"body"`
 	BodyFile    *string `json:"bodyFile"`
-	ContentType string  `json:"content_type"`
+	Headers    *http.Header `json:"headers"`
 }

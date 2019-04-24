@@ -70,7 +70,11 @@ imposters/create_gopher.json
     },
     "response": {
         "status": 200,
-        "content_type": "application/json",
+        "headers": {
+            "Content-Type": [
+                "application/json"
+            ]
+        },
         "bodyFile": "responses/create_gopher_response.json"
     }
 }
