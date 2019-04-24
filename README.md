@@ -155,6 +155,18 @@ curl --header "Content-Type: application/json" \
   http://localhost:3000/gophers
 ```
 
+### Docker
+
+The application is also available through [Docker](https://hub.docker.com/r/friendsofgo/killgrave), just run:
+
+```bash
+docker run -it --rm -p 3000:3000 friendsofgo/killgrave
+```
+
+Remember to use the [-p](https://docs.docker.com/engine/reference/run/) flag to expose the container port where the application is listening (3000 by default).
+
+NOTE: If you want to use `killgrave` through Docker at the same time you use your own dockerised HTTP-based API, be careful with networking issues.
+
 ## Features
 * Imposters created in json
 * Validate json schemas on requests
