@@ -180,9 +180,9 @@ NOTE: If you want to use `killgrave` through Docker at the same time you use you
 * Write body files (XML, JSON, HTML...)
 * Write bodies in line
 * Regex for using on endpoint urls
+* Allow write headers on response
 
 ## Next Features
-- [ ] Validate headers on body
 - [ ] Proxy server
 - [ ] Dynamic responses and error responses
 - [ ] Record proxy server
