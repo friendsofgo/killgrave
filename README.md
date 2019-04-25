@@ -1,9 +1,9 @@
 [![CircleCI](https://circleci.com/gh/friendsofgo/killgrave/tree/master.svg?style=svg)](https://circleci.com/gh/friendsofgo/killgrave/tree/master)
-[![Version](https://img.shields.io/badge/version-v0.2.1-blue.svg)](https://img.shields.io/badge/version-v0.2.1-blue.svg)
+[![Version](https://img.shields.io/github/release/friendsofgo/killgrave.svg?style=flat-square)](https://github.com/friendsofgo/killgrave/releases/latest)
 [![codecov](https://codecov.io/gh/friendsofgo/killgrave/branch/master/graph/badge.svg)](https://codecov.io/gh/friendsofgo/killgrave)
 [![Go Report Card](https://goreportcard.com/badge/github.com/friendsofgo/killgrave)](https://goreportcard.com/report/github.com/friendsofgo/killgrave)
 [![GoDoc](https://godoc.org/graphql.co/graphql?status.svg)](https://godoc.org/github.com/friendsofgo/killgrave)
-[![FriendsOfGo](https://img.shields.io/badge/powered%20by-Friends%20of%20Go-73D7E2.svg)](https://img.shields.io/badge/powered%20by-Friends%20of%20Go-73D7E2.svg)
+[![FriendsOfGo](https://img.shields.io/badge/powered%20by-Friends%20of%20Go-73D7E2.svg)](https://friendsofgo.tech)
 
 <p align="center">
   <img src="https://res.cloudinary.com/fogo/image/upload/c_scale,w_350/v1555701634/fogo/projects/gopher-killgrave.png" alt="Golang Killgrave"/>
@@ -183,10 +183,13 @@ NOTE: If you want to use `killgrave` through Docker at the same time you use you
 * Regex for using on endpoint urls
 * Allow write headers on response
 * Allow imposter's matching by request schema
+* Dynamic responses based on regex endpoint or request schema
 
 ## Next Features
+- [ ] Dynamic responses based on headers
+- [ ] Dynamic responses based on query params
+- [ ] Allow write multiples imposters by file
 - [ ] Proxy server
-- [ ] Dynamic responses and error responses
 - [ ] Record proxy server
 - [ ] Better documentation with examples of each feature
 
