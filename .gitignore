@@ -15,4 +15,4 @@ imposters
 schemas
 
 !test/testdata/imposters/
-!test/testdata/schemas/
+!test/testdata/imposters/schemas/

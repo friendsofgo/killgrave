@@ -23,9 +23,9 @@ func TestImposterHandler(t *testing.T) {
 	var headers = make(http.Header)
 	headers.Add("Content-Type", "application/json")
 
-	schemaFile := "test/testdata/schemas/create_gopher_request.json"
-	bodyFile := "test/testdata/responses/create_gopher_response.json"
-	bodyFileFake := "test/testdata/responses/create_gopher_response_fail.json"
+	schemaFile := "test/testdata/imposters/schemas/create_gopher_request.json"
+	bodyFile := "test/testdata/imposters/responses/create_gopher_response.json"
+	bodyFileFake := "test/testdata/imposters/responses/create_gopher_response_fail.json"
 	body := `{"test":true}`
 
 	validRequest := Request{
@@ -75,15 +75,6 @@ func TestImposterHandler(t *testing.T) {
 }
 
 func TestInvalidRequestWithSchema(t *testing.T) {
-	wrongRequest := []byte(`{
-		"data": {
-			"type": "gophers",
-		  "attributes": {
-			"name": "Zebediah",
-			"color": "Purple"
-		  }
-		}
-	  }`)
 	validRequest := []byte(`{
 		"data": {
 			"type": "gophers",
@@ -93,9 +84,6 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 		  }
 		}
 	  }`)
-	notExistFile := "failSchema"
-	wrongSchema := "test/testdata/schemas/create_gopher_request_fail.json"
-	validSchema := "test/testdata/schemas/create_gopher_request.json"
 
 	var dataTest = []struct {
 		name       string
@@ -103,13 +91,11 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 		statusCode int
 		request    []byte
 	}{
-		{"schema file not found", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers", SchemaFile: &notExistFile}}, http.StatusBadRequest, validRequest},
-		{"wrong schema", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers", SchemaFile: &wrongSchema}}, http.StatusBadRequest, validRequest},
-		{"request invalid", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers", SchemaFile: &validSchema}}, http.StatusBadRequest, wrongRequest},
 		{"valid request no schema", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers"}, Response: Response{Status: http.StatusOK, Body: "test ok"}}, http.StatusOK, validRequest},
 	}
 
 	for _, tt := range dataTest {
+
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest("POST", "/gophers", bytes.NewBuffer(tt.request))
 			if err != nil {
@@ -137,7 +123,7 @@ func TestInvalidHeaders(t *testing.T) {
 		  }
 		}
 	  }`)
-	schemaFile := "test/testdata/schemas/create_gopher_request.json"
+	schemaFile := "test/testdata/imposters/schemas/create_gopher_request.json"
 	var expectedHeaders = make(http.Header)
 	expectedHeaders.Add("Content-Type", "application/json")
 	expectedHeaders.Add("Authorization", "Bearer gopher")

@@ -13,7 +13,7 @@ func TestRunServer(t *testing.T) {
 		err    error
 	}{
 		{"imposter directory not found", NewServer("failImposterPath", nil), invalidDirectoryError("error")},
-		{"malformatted json", NewServer("test/testdata/malformatted", nil), malformattedImposterError("error")},
+		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil), malformattedImposterError("error")},
 		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter()), nil},
 	}
 
