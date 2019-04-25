@@ -9,12 +9,12 @@ import (
 )
 
 func TestMatcherBySchema(t *testing.T) {
-	bodyA := ioutil.NopCloser(bytes.NewReader([]byte("{\"type\": \"A\"}")))
-	bodyB := ioutil.NopCloser(bytes.NewReader([]byte("{\"type\": \"B\"}")))
+	bodyA := ioutil.NopCloser(bytes.NewReader([]byte("{\"type\": \"gopher\"}")))
+	bodyB := ioutil.NopCloser(bytes.NewReader([]byte("{\"type\": \"cat\"}")))
 
-	schemaAFile := "test/testdata/schemas/type_a.json"
-	schemaBFile := "test/testdata/schemas/type_b.json"
-
+	schemaGopherFile := "test/testdata/schemas/type_gopher.json"
+	schemaCatFile := "test/testdata/schemas/type_cat.json"
+	schemeFailFile := "test/testdata/schemas/type_gopher_fail.json"
 
 	requestWithoutSchema := Request{
 		Method:     "POST",
@@ -25,13 +25,19 @@ func TestMatcherBySchema(t *testing.T) {
 	requestWithSchema := Request{
 		Method:     "POST",
 		Endpoint:   "/login",
-		SchemaFile: &schemaAFile,
+		SchemaFile: &schemaGopherFile,
 	}
 
 	requestWithNonExistingSchema := Request{
 		Method:     "POST",
 		Endpoint:   "/login",
-		SchemaFile: &schemaBFile,
+		SchemaFile: &schemaCatFile,
+	}
+
+	requestWithWrongSchema := Request{
+		Method:     "POST",
+		Endpoint:   "/login",
+		SchemaFile: &schemeFailFile,
 	}
 
 	okResponse := Response{Status: http.StatusOK}
@@ -46,6 +52,7 @@ func TestMatcherBySchema(t *testing.T) {
 		{"correct request schema", MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: bodyA}, true},
 		{"incorrect request schema", MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: bodyB}, false},
 		{"non-existing schema file", MatcherBySchema(Imposter{Request: requestWithNonExistingSchema, Response: okResponse}), &http.Request{Body: bodyB}, false},
+		{"malformatted schema file", MatcherBySchema(Imposter{Request: requestWithWrongSchema, Response: okResponse}), &http.Request{Body: bodyB}, false},
 	}
 
 	for _, tt := range matcherData {

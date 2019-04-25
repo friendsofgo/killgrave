@@ -6,14 +6,19 @@ import (
 	"github.com/pkg/errors"
 	"github.com/xeipuuv/gojsonschema"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 )
 
-// MatcherBySchema ...
+// MatcherBySchema check if the request matching with the schema file
 func MatcherBySchema(imposter Imposter) mux.MatcherFunc {
 	return func(req *http.Request, rm *mux.RouteMatch) bool {
 		err := validateSchema(imposter, req)
+
+		// TODO: inject the logger
+		log.Println(err)
+
 		return err == nil
 	}
 }

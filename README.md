@@ -1,4 +1,5 @@
 [![CircleCI](https://circleci.com/gh/friendsofgo/killgrave/tree/master.svg?style=svg)](https://circleci.com/gh/friendsofgo/killgrave/tree/master)
+[![Version](https://img.shields.io/badge/version-v0.2.1-blue.svg)](https://img.shields.io/badge/version-v0.2.1-blue.svg)
 [![codecov](https://codecov.io/gh/friendsofgo/killgrave/branch/master/graph/badge.svg)](https://codecov.io/gh/friendsofgo/killgrave)
 [![Go Report Card](https://goreportcard.com/badge/github.com/friendsofgo/killgrave)](https://goreportcard.com/report/github.com/friendsofgo/killgrave)
 [![GoDoc](https://godoc.org/graphql.co/graphql?status.svg)](https://godoc.org/github.com/friendsofgo/killgrave)
@@ -181,6 +182,7 @@ NOTE: If you want to use `killgrave` through Docker at the same time you use you
 * Write bodies in line
 * Regex for using on endpoint urls
 * Allow write headers on response
+* Allow imposter's matching by request schema
 
 ## Next Features
 - [ ] Proxy server

@@ -6,7 +6,7 @@
   "properties": {
     "type": {
       "type": "string",
-      "pattern": "^(A)$"
+      "pattern": "^(gopher)$"
     }
   }
 }
