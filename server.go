@@ -40,6 +40,10 @@ func (s *Server) buildImposters() error {
 	files, _ := ioutil.ReadDir(s.impostersPath)
 
 	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+
 		var imposter Imposter
 		if err := s.buildImposter(f.Name(), &imposter); err != nil {
 			return err
@@ -65,5 +69,7 @@ func (s *Server) buildImposter(imposterFileName string, imposter *Imposter) erro
 	if err := json.Unmarshal(bytes, imposter); err != nil {
 		return malformattedImposterError(fmt.Sprintf("error while unmarshall imposter file %s", f))
 	}
+	imposter.BasePath = s.impostersPath
+
 	return nil
 }

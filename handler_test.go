@@ -23,9 +23,9 @@ func TestImposterHandler(t *testing.T) {
 	var headers = make(http.Header)
 	headers.Add("Content-Type", "application/json")
 
-	schemaFile := "test/testdata/schemas/create_gopher_request.json"
-	bodyFile := "test/testdata/responses/create_gopher_response.json"
-	bodyFileFake := "test/testdata/responses/create_gopher_response_fail.json"
+	schemaFile := "test/testdata/imposters/schemas/create_gopher_request.json"
+	bodyFile := "test/testdata/imposters/responses/create_gopher_response.json"
+	bodyFileFake := "test/testdata/imposters/responses/create_gopher_response_fail.json"
 	body := `{"test":true}`
 
 	validRequest := Request{
@@ -123,7 +123,7 @@ func TestInvalidHeaders(t *testing.T) {
 		  }
 		}
 	  }`)
-	schemaFile := "test/testdata/schemas/create_gopher_request.json"
+	schemaFile := "test/testdata/imposters/schemas/create_gopher_request.json"
 	var expectedHeaders = make(http.Header)
 	expectedHeaders.Add("Content-Type", "application/json")
 	expectedHeaders.Add("Authorization", "Bearer gopher")

@@ -17,9 +17,11 @@ func MatcherBySchema(imposter Imposter) mux.MatcherFunc {
 		err := validateSchema(imposter, req)
 
 		// TODO: inject the logger
-		log.Println(err)
-
-		return err == nil
+		if err != nil {
+			log.Println(err)
+			return false
+		}
+		return true
 	}
 }
 
@@ -35,7 +37,7 @@ func validateSchema(imposter Imposter, req *http.Request) error {
 		req.Body = ioutil.NopCloser(bytes.NewBuffer(b))
 	}()
 
-	schemaFile := *imposter.Request.SchemaFile
+	schemaFile := imposter.CalculateFilePath(*imposter.Request.SchemaFile)
 	if _, err := os.Stat(schemaFile); os.IsNotExist(err) {
 		return errors.Wrapf(err, "the schema file %s not found", schemaFile)
 	}

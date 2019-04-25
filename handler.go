@@ -72,7 +72,8 @@ func writeBody(imposter Imposter, w http.ResponseWriter) {
 	wb := []byte(imposter.Response.Body)
 
 	if imposter.Response.BodyFile != nil {
-		wb = fetchBodyFromFile(*imposter.Response.BodyFile)
+		bodyFile := imposter.CalculateFilePath(*imposter.Response.BodyFile)
+		wb = fetchBodyFromFile(bodyFile)
 	}
 	w.Write(wb)
 }

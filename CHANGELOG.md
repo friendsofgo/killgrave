@@ -18,3 +18,6 @@
 ## v0.2.1 (2019/04/25)
 
 * Allow imposter's matching by request schema
+* Dynamic responses based on regex endpoint or request schema
+* Calculate files directory(body and schema) based on imposters path
+* Update REAMDE.md with resolved features and new future features

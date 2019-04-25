@@ -12,9 +12,9 @@ func TestMatcherBySchema(t *testing.T) {
 	bodyA := ioutil.NopCloser(bytes.NewReader([]byte("{\"type\": \"gopher\"}")))
 	bodyB := ioutil.NopCloser(bytes.NewReader([]byte("{\"type\": \"cat\"}")))
 
-	schemaGopherFile := "test/testdata/schemas/type_gopher.json"
-	schemaCatFile := "test/testdata/schemas/type_cat.json"
-	schemeFailFile := "test/testdata/schemas/type_gopher_fail.json"
+	schemaGopherFile := "test/testdata/imposters/schemas/type_gopher.json"
+	schemaCatFile := "test/testdata/imposters/schemas/type_cat.json"
+	schemeFailFile := "test/testdata/imposters/schemas/type_gopher_fail.json"
 
 	requestWithoutSchema := Request{
 		Method:     "POST",
