@@ -10,6 +10,7 @@ import (
 	"os"
 )
 
+// MatcherBySchema ...
 func MatcherBySchema(imposter Imposter) mux.MatcherFunc {
 	return func(req *http.Request, rm *mux.RouteMatch) bool {
 		err := validateSchema(imposter, req)
