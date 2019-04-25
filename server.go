@@ -1,13 +1,9 @@
 package killgrave
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/xeipuuv/gojsonschema"
 	"io/ioutil"
-	"net/http"
 	"os"
 
 	"github.com/gorilla/mux"
@@ -54,10 +50,7 @@ func (s *Server) buildImposters() error {
 		}
 		s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
 			Methods(imposter.Request.Method).
-			MatcherFunc(func(req *http.Request, rm *mux.RouteMatch) bool {
-				err := validateSchema(imposter, req)
-				return err == nil
-			})
+			MatcherFunc(MatcherBySchema(imposter))
 	}
 
 	return nil
@@ -72,46 +65,5 @@ func (s *Server) buildImposter(imposterFileName string, imposter *Imposter) erro
 	if err := json.Unmarshal(bytes, imposter); err != nil {
 		return malformattedImposterError(fmt.Sprintf("error while unmarshall imposter file %s", f))
 	}
-	return nil
-}
-
-func validateSchema(imposter Imposter, req *http.Request) error {
-	var b []byte
-
-	defer func() {
-		req.Body.Close()
-		req.Body = ioutil.NopCloser(bytes.NewBuffer(b))
-	}()
-
-	if imposter.Request.SchemaFile == nil {
-		return nil
-	}
-
-	schemaFile := *imposter.Request.SchemaFile
-	if _, err := os.Stat(schemaFile); os.IsNotExist(err) {
-		return errors.Wrapf(err, "the schema file %s not found", schemaFile)
-	}
-
-	b, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		return errors.Wrapf(err, "impossible read the request body")
-	}
-
-	dir, _ := os.Getwd()
-	schemaFilePath := "file://" + dir + "/" + schemaFile
-	schema := gojsonschema.NewReferenceLoader(schemaFilePath)
-	document := gojsonschema.NewStringLoader(string(b))
-
-	res, err := gojsonschema.Validate(schema, document)
-	if err != nil {
-		return errors.Wrap(err, "error validating the json schema")
-	}
-
-	if !res.Valid() {
-		for _, desc := range res.Errors() {
-			return errors.New(desc.String())
-		}
-	}
-
 	return nil
 }
