@@ -61,6 +61,12 @@ func (s *Server) buildImposters() error {
 				r.HeadersRegexp(k, v)
 			}
 		}
+
+		if imposter.Request.Params != nil {
+			for k, v := range *imposter.Request.Params {
+				r.Queries(k, v)
+			}
+		}
 	}
 
 	return nil

@@ -183,9 +183,9 @@ NOTE: If you want to use `killgrave` through Docker at the same time you use you
 * Allow imposter's matching by request schema
 * Dynamic responses based on regex endpoint or request schema
 * Dynamic responses based on headers
+* Dynamic responses based on query params
 
 ## Next Features
-- [ ] Dynamic responses based on query params
 - [ ] Allow write multiple imposters by file
 - [ ] Allow different directories to organize your imposters (create extension for imposters ".imp.json")
 - [ ] Proxy server
