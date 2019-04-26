@@ -64,9 +64,7 @@ imposters/create_gopher.json
         "endpoint": "/gophers",
         "schema_file": "schemas/create_gopher_request.json",
         "headers": {
-            "Content-Type": [
-                "application/json"
-            ]
+            "Content-Type": "application/json"
         }
     },
     "response": {
@@ -184,11 +182,12 @@ NOTE: If you want to use `killgrave` through Docker at the same time you use you
 * Allow write headers on response
 * Allow imposter's matching by request schema
 * Dynamic responses based on regex endpoint or request schema
+* Dynamic responses based on headers
 
 ## Next Features
-- [ ] Dynamic responses based on headers
 - [ ] Dynamic responses based on query params
 - [ ] Allow write multiples imposters by file
+- [ ] Allow differents directories to organize your imposters
 - [ ] Proxy server
 - [ ] Record proxy server
 - [ ] Better documentation with examples of each feature

@@ -52,9 +52,15 @@ func (s *Server) buildImposters() error {
 		if imposter.Request.Endpoint == "" {
 			continue
 		}
-		s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
+		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
 			Methods(imposter.Request.Method).
 			MatcherFunc(MatcherBySchema(imposter))
+
+		if imposter.Request.Headers != nil {
+			for k, v := range *imposter.Request.Headers {
+				r.HeadersRegexp(k, v)
+			}
+		}
 	}
 
 	return nil

@@ -20,8 +20,8 @@ func TestImposterHandler(t *testing.T) {
 		  }
 		}
 	  }`)
-	var headers = make(http.Header)
-	headers.Add("Content-Type", "application/json")
+	var headers = make(map[string]string)
+	headers["Content-Type"] = "application/json"
 
 	schemaFile := "test/testdata/imposters/schemas/create_gopher_request.json"
 	bodyFile := "test/testdata/imposters/responses/create_gopher_response.json"
@@ -45,9 +45,9 @@ func TestImposterHandler(t *testing.T) {
 		expectedBody string
 		statusCode   int
 	}{
-		{"valid imposter with body", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &http.Header{"Content-Type": []string{"application/json"}}, Body: body}}, body, http.StatusOK},
-		{"valid imposter with bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &http.Header{"Content-Type": []string{"application/json"}}, BodyFile: &bodyFile}}, string(expectedBodyFileData), http.StatusOK},
-		{"valid imposter with not exists bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &http.Header{"Content-Type": []string{"application/json"}}, BodyFile: &bodyFileFake}}, "", http.StatusOK},
+		{"valid imposter with body", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, Body: body}}, body, http.StatusOK},
+		{"valid imposter with bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFile}}, string(expectedBodyFileData), http.StatusOK},
+		{"valid imposter with not exists bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFileFake}}, "", http.StatusOK},
 	}
 
 	for _, tt := range dataTest {
@@ -56,7 +56,6 @@ func TestImposterHandler(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not created request: %v", err)
 			}
-			req.Header = headers
 
 			rec := httptest.NewRecorder()
 			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
@@ -101,55 +100,6 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not created request: %v", err)
 			}
-			rec := httptest.NewRecorder()
-			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
-
-			handler.ServeHTTP(rec, req)
-			if status := rec.Code; status != tt.statusCode {
-				t.Fatalf("handler expected %d code and got: %d code", tt.statusCode, status)
-			}
-		})
-	}
-}
-
-func TestInvalidHeaders(t *testing.T) {
-	validRequest := []byte(`{
-		"data": {
-			"type": "gophers",
-		  "attributes": {
-			"name": "Zebediah",
-			"color": "Purple",
-			"age": 55
-		  }
-		}
-	  }`)
-	schemaFile := "test/testdata/imposters/schemas/create_gopher_request.json"
-	var expectedHeaders = make(http.Header)
-	expectedHeaders.Add("Content-Type", "application/json")
-	expectedHeaders.Add("Authorization", "Bearer gopher")
-
-	var wrongHeaders = make(http.Header)
-	wrongHeaders.Add("Content-Type", "application/json")
-	wrongHeaders.Add("Authorization", "Bearer bad gopher")
-
-	var dataTest = []struct {
-		name       string
-		imposter   Imposter
-		statusCode int
-		headers    http.Header
-	}{
-		{"missing headers", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers", SchemaFile: &schemaFile, Headers: &expectedHeaders}}, http.StatusBadRequest, make(http.Header)},
-		{"wrong headers", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers", SchemaFile: &schemaFile, Headers: &expectedHeaders}}, http.StatusBadRequest, wrongHeaders},
-	}
-
-	for _, tt := range dataTest {
-		t.Run(tt.name, func(t *testing.T) {
-			req, err := http.NewRequest("POST", "/gophers", bytes.NewBuffer(validRequest))
-			if err != nil {
-				t.Fatalf("could not created request: %v", err)
-			}
-			req.Header = tt.headers
-
 			rec := httptest.NewRecorder()
 			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
 

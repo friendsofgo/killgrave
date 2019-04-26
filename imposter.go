@@ -1,7 +1,6 @@
 package killgrave
 
 import (
-	"net/http"
 	"path"
 )
 
@@ -19,16 +18,16 @@ func (i *Imposter) CalculateFilePath(filePath string) string {
 
 // Request represent the structure of real request
 type Request struct {
-	Method     string       `json:"method"`
-	Endpoint   string       `json:"endpoint"`
-	SchemaFile *string      `json:"schema_file"`
-	Headers    *http.Header `json:"headers"`
+	Method     string             `json:"method"`
+	Endpoint   string             `json:"endpoint"`
+	SchemaFile *string            `json:"schema_file"`
+	Headers    *map[string]string `json:"headers"`
 }
 
 // Response represent the structure of real response
 type Response struct {
-	Status   int          `json:"status"`
-	Body     string       `json:"body"`
-	BodyFile *string      `json:"bodyFile"`
-	Headers  *http.Header `json:"headers"`
+	Status   int                `json:"status"`
+	Body     string             `json:"body"`
+	BodyFile *string            `json:"bodyFile"`
+	Headers  *map[string]string `json:"headers"`
 }

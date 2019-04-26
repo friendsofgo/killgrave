@@ -21,3 +21,7 @@
 * Dynamic responses based on regex endpoint or request schema
 * Calculate files directory(body and schema) based on imposters path
 * Update REAMDE.md with resolved features and new future features
+
+## v0.3.0 (2019/??/??)
+
+* Dynamic responses based on headers

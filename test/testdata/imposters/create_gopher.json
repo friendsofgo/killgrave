@@ -4,9 +4,7 @@
         "endpoint": "/gophers",
         "schema_file": "schemas/create_gopher_request.json",
         "headers": {
-            "Content-Type": [
-                "application/json"
-            ]
+            "Content-Type": "application/json"
         }
     },
     "response": {
