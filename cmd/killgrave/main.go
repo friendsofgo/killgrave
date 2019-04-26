@@ -6,8 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/friendsofgo/killgrave"
-
+	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/mux"
 )
 

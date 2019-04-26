@@ -20,8 +20,7 @@ func (i *Imposter) CalculateFilePath(filePath string) string {
 type Request struct {
 	Method     string             `json:"method"`
 	Endpoint   string             `json:"endpoint"`
-	SchemaFile *string            `json:"schema_file"`
-	Params     *map[string]string `json:"params"`
+	SchemaFile *string            `json:"schemaFile"`
 	Headers    *map[string]string `json:"headers"`
 }
 

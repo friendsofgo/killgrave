@@ -25,3 +25,4 @@
 ## v0.3.0 (2019/??/??)
 
 * Dynamic responses based on headers
+* Standarize json files using [Google JSON style Guide](https://google.github.io/styleguide/jsoncstyleguide.xml)
