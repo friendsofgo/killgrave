@@ -62,7 +62,7 @@ imposters/create_gopher.json
     "request": {
         "method": "POST",
         "endpoint": "/gophers",
-        "schema_file": "schemas/create_gopher_request.json",
+        "schemaFile": "schemas/create_gopher_request.json",
         "headers": {
             "Content-Type": "application/json"
         }
@@ -186,8 +186,8 @@ NOTE: If you want to use `killgrave` through Docker at the same time you use you
 
 ## Next Features
 - [ ] Dynamic responses based on query params
-- [ ] Allow write multiples imposters by file
-- [ ] Allow differents directories to organize your imposters
+- [ ] Allow write multiple imposters by file
+- [ ] Allow different directories to organize your imposters (create extension for imposters ".imp.json")
 - [ ] Proxy server
 - [ ] Record proxy server
 - [ ] Better documentation with examples of each feature

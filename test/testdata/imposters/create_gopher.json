@@ -2,7 +2,7 @@
     "request": {
         "method": "POST",
         "endpoint": "/gophers",
-        "schema_file": "schemas/create_gopher_request.json",
+        "schemaFile": "schemas/create_gopher_request.json",
         "headers": {
             "Content-Type": "application/json"
         }
