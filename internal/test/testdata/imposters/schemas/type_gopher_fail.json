@@ -1,0 +1,12 @@
+{
+  "type": "error",
+  "required": [
+    "type"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "pattern": "^(gopher)$"
+    }
+  }
+}
