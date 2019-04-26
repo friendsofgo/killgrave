@@ -2,13 +2,15 @@ package killgrave
 
 import (
 	"bytes"
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
-	"github.com/xeipuuv/gojsonschema"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 // MatcherBySchema check if the request matching with the schema file
@@ -45,6 +47,11 @@ func validateSchema(imposter Imposter, req *http.Request) error {
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return errors.Wrapf(err, "impossible read the request body")
+	}
+
+	contentBody := string(b)
+	if contentBody == "" {
+		return fmt.Errorf("expected an body request and got empy body request")
 	}
 
 	dir, _ := os.Getwd()

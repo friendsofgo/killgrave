@@ -2,15 +2,17 @@ package killgrave
 
 import (
 	"bytes"
-	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/gorilla/mux"
 )
 
 func TestMatcherBySchema(t *testing.T) {
 	bodyA := ioutil.NopCloser(bytes.NewReader([]byte("{\"type\": \"gopher\"}")))
 	bodyB := ioutil.NopCloser(bytes.NewReader([]byte("{\"type\": \"cat\"}")))
+	emptyBody := ioutil.NopCloser(bytes.NewReader([]byte("")))
 
 	schemaGopherFile := "test/testdata/imposters/schemas/type_gopher.json"
 	schemaCatFile := "test/testdata/imposters/schemas/type_cat.json"
@@ -53,6 +55,7 @@ func TestMatcherBySchema(t *testing.T) {
 		{"incorrect request schema", MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: bodyB}, false},
 		{"non-existing schema file", MatcherBySchema(Imposter{Request: requestWithNonExistingSchema, Response: okResponse}), &http.Request{Body: bodyB}, false},
 		{"malformatted schema file", MatcherBySchema(Imposter{Request: requestWithWrongSchema, Response: okResponse}), &http.Request{Body: bodyB}, false},
+		{"empty body with required schema file", MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: emptyBody}, false},
 	}
 
 	for _, tt := range matcherData {
