@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 )
 
 // Server definition of mock server
@@ -29,59 +32,66 @@ func (s *Server) Run() error {
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
 		return invalidDirectoryError(fmt.Sprintf("the directory %s doesn't exists", s.impostersPath))
 	}
-	if err := s.buildImposters(); err != nil {
-		return err
-	}
+	var imposterFileCh = make(chan string)
+	var done = make(chan bool)
 
-	return nil
+	go func() {
+		findImposters(s.impostersPath, imposterFileCh)
+		done <- true
+	}()
+	for {
+		select {
+		case f := <-imposterFileCh:
+			var imposter Imposter
+			err := s.buildImposter(f, &imposter)
+			if err != nil {
+				log.Printf("error trying to load %s imposter: %v", f, err)
+			} else {
+				if err := s.createImposterHandler(imposter); err != nil {
+					log.Printf("%v on %s", err, f)
+					break
+				}
+				log.Printf("imposter %s loaded\n", f)
+			}
+		case <-done:
+			close(imposterFileCh)
+			close(done)
+			return nil
+		}
+	}
 }
 
-func (s *Server) buildImposters() error {
-	files, _ := ioutil.ReadDir(s.impostersPath)
+func (s *Server) createImposterHandler(imposter Imposter) error {
+	if imposter.Request.Endpoint == "" {
+		return errors.New("the request.endpoint file is required for an valid imposter")
+	}
+	r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
+		Methods(imposter.Request.Method).
+		MatcherFunc(MatcherBySchema(imposter))
 
-	for _, f := range files {
-		if f.IsDir() {
-			continue
-		}
-
-		var imposter Imposter
-		if err := s.buildImposter(f.Name(), &imposter); err != nil {
-			return err
-		}
-
-		if imposter.Request.Endpoint == "" {
-			continue
-		}
-		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
-			Methods(imposter.Request.Method).
-			MatcherFunc(MatcherBySchema(imposter))
-
-		if imposter.Request.Headers != nil {
-			for k, v := range *imposter.Request.Headers {
-				r.HeadersRegexp(k, v)
-			}
-		}
-
-		if imposter.Request.Params != nil {
-			for k, v := range *imposter.Request.Params {
-				r.Queries(k, v)
-			}
+	if imposter.Request.Headers != nil {
+		for k, v := range *imposter.Request.Headers {
+			r.HeadersRegexp(k, v)
 		}
 	}
 
+	if imposter.Request.Params != nil {
+		for k, v := range *imposter.Request.Params {
+			r.Queries(k, v)
+		}
+	}
 	return nil
 }
 
 func (s *Server) buildImposter(imposterFileName string, imposter *Imposter) error {
-	f := s.impostersPath + "/" + imposterFileName
-	imposterFile, _ := os.Open(f)
+	imposterFile, _ := os.Open(imposterFileName)
 	defer imposterFile.Close()
 
 	bytes, _ := ioutil.ReadAll(imposterFile)
 	if err := json.Unmarshal(bytes, imposter); err != nil {
-		return malformattedImposterError(fmt.Sprintf("error while unmarshall imposter file %s", f))
+		return malformattedImposterError(fmt.Sprintf("error while unmarshall imposter file %s", imposterFileName))
 	}
-	imposter.BasePath = s.impostersPath
+	imposter.BasePath = filepath.Dir(imposterFileName)
 
 	return nil
 }

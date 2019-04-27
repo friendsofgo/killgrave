@@ -28,3 +28,4 @@
 * Standarize json files using [Google JSON style Guide](https://google.github.io/styleguide/jsoncstyleguide.xml)
 * Move to `internal` not exposable API
 * Dynamic responses based on query params
+* Allow organize your imposters with structured folders

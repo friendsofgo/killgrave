@@ -1,8 +1,15 @@
 package killgrave
 
 import (
+	"os"
 	"path"
+	"path/filepath"
+	"strings"
+
+	"github.com/pkg/errors"
 )
+
+const imposterExtension = ".imp.json"
 
 // Imposter define an imposter structure
 type Imposter struct {
@@ -31,4 +38,17 @@ type Response struct {
 	Body     string             `json:"body"`
 	BodyFile *string            `json:"bodyFile"`
 	Headers  *map[string]string `json:"headers"`
+}
+
+func findImposters(impostersDirectory string, imposterFileCh chan string) error {
+	err := filepath.Walk(impostersDirectory, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return errors.Wrap(err, "error finding imposters")
+		}
+		if !info.IsDir() && strings.LastIndex(info.Name(), imposterExtension) != -1 {
+			imposterFileCh <- path
+		}
+		return nil
+	})
+	return err
 }

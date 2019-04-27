@@ -13,7 +13,7 @@ func TestRunServer(t *testing.T) {
 		err    error
 	}{
 		{"imposter directory not found", NewServer("failImposterPath", nil), invalidDirectoryError("error")},
-		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil), malformattedImposterError("error")},
+		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil), nil},
 		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter()), nil},
 	}
 
@@ -36,10 +36,6 @@ func TestRunServer(t *testing.T) {
 				case invalidDirectoryError:
 					if _, ok := (tt.err).(invalidDirectoryError); !ok {
 						t.Fatalf("expected invalidDirectoryError got %+v", err)
-					}
-				case malformattedImposterError:
-					if _, ok := (tt.err).(malformattedImposterError); !ok {
-						t.Fatalf("expected malformattedImpoasterError got %+v", err)
 					}
 				default:
 					t.Fatalf("not recognize error %+v", err)
