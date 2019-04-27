@@ -22,10 +22,11 @@
 * Calculate files directory(body and schema) based on imposters path
 * Update REAMDE.md with resolved features and new future features
 
-## v0.3.0 (2019/??/??)
+## v0.3.0 (2019/04/27)
 
 * Dynamic responses based on headers
 * Standarize json files using [Google JSON style Guide](https://google.github.io/styleguide/jsoncstyleguide.xml)
 * Move to `internal` not exposable API
 * Dynamic responses based on query params
-* Allow organize your imposters with structured folders
+* Allow organize your imposters with structured folders (using new extension `.imp.json`)
+* Allow write multiple imposters by file

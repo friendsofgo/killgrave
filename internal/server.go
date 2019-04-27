@@ -41,15 +41,12 @@ func (s *Server) Run() error {
 	for {
 		select {
 		case f := <-imposterFileCh:
-			var imposter Imposter
-			err := s.buildImposter(f, &imposter)
+			var imposters []Imposter
+			err := s.unmarshalImposters(f, &imposters)
 			if err != nil {
 				log.Printf("error trying to load %s imposter: %v", f, err)
 			} else {
-				if err := s.createImposterHandler(imposter); err != nil {
-					log.Printf("%v on %s", err, f)
-					break
-				}
+				s.createImposterHandler(imposters, f)
 				log.Printf("imposter %s loaded\n", f)
 			}
 		case <-done:
@@ -60,37 +57,34 @@ func (s *Server) Run() error {
 	}
 }
 
-func (s *Server) createImposterHandler(imposter Imposter) error {
-	if imposter.Request.Endpoint == "" {
-		return errors.New("the request.endpoint file is required for an valid imposter")
-	}
-	r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
-		Methods(imposter.Request.Method).
-		MatcherFunc(MatcherBySchema(imposter))
+func (s *Server) createImposterHandler(imposters []Imposter, imposterFilePath string) {
+	for _, imposter := range imposters {
+		imposter.BasePath = filepath.Dir(imposterFilePath)
+		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
+			Methods(imposter.Request.Method).
+			MatcherFunc(MatcherBySchema(imposter))
 
-	if imposter.Request.Headers != nil {
-		for k, v := range *imposter.Request.Headers {
-			r.HeadersRegexp(k, v)
+		if imposter.Request.Headers != nil {
+			for k, v := range *imposter.Request.Headers {
+				r.HeadersRegexp(k, v)
+			}
+		}
+
+		if imposter.Request.Params != nil {
+			for k, v := range *imposter.Request.Params {
+				r.Queries(k, v)
+			}
 		}
 	}
-
-	if imposter.Request.Params != nil {
-		for k, v := range *imposter.Request.Params {
-			r.Queries(k, v)
-		}
-	}
-	return nil
 }
 
-func (s *Server) buildImposter(imposterFileName string, imposter *Imposter) error {
+func (s *Server) unmarshalImposters(imposterFileName string, imposters *[]Imposter) error {
 	imposterFile, _ := os.Open(imposterFileName)
 	defer imposterFile.Close()
 
 	bytes, _ := ioutil.ReadAll(imposterFile)
-	if err := json.Unmarshal(bytes, imposter); err != nil {
+	if err := json.Unmarshal(bytes, imposters); err != nil {
 		return errors.Wrapf(err, "error while unmarshall imposter file %s", imposterFileName)
 	}
-	imposter.BasePath = filepath.Dir(imposterFileName)
-
 	return nil
 }
