@@ -2,7 +2,6 @@ package killgrave
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -30,7 +29,7 @@ func NewServer(p string, r *mux.Router) *Server {
 // handlers for each imposter
 func (s *Server) Run() error {
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
-		return invalidDirectoryError(fmt.Sprintf("the directory %s doesn't exists", s.impostersPath))
+		return errors.Wrapf(err, "the directory %s doesn't exists", s.impostersPath)
 	}
 	var imposterFileCh = make(chan string)
 	var done = make(chan bool)
@@ -89,7 +88,7 @@ func (s *Server) buildImposter(imposterFileName string, imposter *Imposter) erro
 
 	bytes, _ := ioutil.ReadAll(imposterFile)
 	if err := json.Unmarshal(bytes, imposter); err != nil {
-		return malformattedImposterError(fmt.Sprintf("error while unmarshall imposter file %s", imposterFileName))
+		return errors.Wrapf(err, "error while unmarshall imposter file %s", imposterFileName)
 	}
 	imposter.BasePath = filepath.Dir(imposterFileName)
 

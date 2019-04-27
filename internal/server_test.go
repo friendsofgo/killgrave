@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 )
 
 func TestRunServer(t *testing.T) {
@@ -12,7 +13,7 @@ func TestRunServer(t *testing.T) {
 		server *Server
 		err    error
 	}{
-		{"imposter directory not found", NewServer("failImposterPath", nil), invalidDirectoryError("error")},
+		{"imposter directory not found", NewServer("failImposterPath", nil), errors.New("hello")},
 		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil), nil},
 		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter()), nil},
 	}
@@ -30,15 +31,6 @@ func TestRunServer(t *testing.T) {
 			if err != nil {
 				if tt.err == nil {
 					t.Fatalf("not expected any erros and got %+v", err)
-				}
-
-				switch err.(type) {
-				case invalidDirectoryError:
-					if _, ok := (tt.err).(invalidDirectoryError); !ok {
-						t.Fatalf("expected invalidDirectoryError got %+v", err)
-					}
-				default:
-					t.Fatalf("not recognize error %+v", err)
 				}
 			}
 		})
