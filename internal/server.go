@@ -46,7 +46,7 @@ func (s *Server) Run() error {
 			if err != nil {
 				log.Printf("error trying to load %s imposter: %v", f, err)
 			} else {
-				s.createImposterHandler(imposters, f)
+				s.addImposterHandler(imposters, f)
 				log.Printf("imposter %s loaded\n", f)
 			}
 		case <-done:
@@ -57,7 +57,7 @@ func (s *Server) Run() error {
 	}
 }
 
-func (s *Server) createImposterHandler(imposters []Imposter, imposterFilePath string) {
+func (s *Server) addImposterHandler(imposters []Imposter, imposterFilePath string) {
 	for _, imposter := range imposters {
 		imposter.BasePath = filepath.Dir(imposterFilePath)
 		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).

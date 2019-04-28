@@ -54,7 +54,7 @@ Or custome your server with this flags:
 
 ### Create an imposter
 You must be create an imposter to start to use the application, only files with the `.imp.json` extension will be interpreted as imposters files, and the base path for
-the rest of the files will be the path of the `.imp.json` file are.
+the rest of the files will be the path of the `.imp.json` file.
 
 You need to organize your imposters from more restrictive to less.
 

@@ -51,7 +51,7 @@ func validateSchema(imposter Imposter, req *http.Request) error {
 
 	contentBody := string(b)
 	if contentBody == "" {
-		return fmt.Errorf("expected an body request and got empy body request")
+		return fmt.Errorf("unexpected empty body request")
 	}
 
 	dir, _ := os.Getwd()
