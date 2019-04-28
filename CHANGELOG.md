@@ -22,7 +22,7 @@
 * Calculate files directory(body and schema) based on imposters path
 * Update REAMDE.md with resolved features and new future features
 
-## v0.3.0 (2019/04/27)
+## v0.3.0 (2019/04/28)
 
 * Dynamic responses based on headers
 * Standarize json files using [Google JSON style Guide](https://google.github.io/styleguide/jsoncstyleguide.xml)
