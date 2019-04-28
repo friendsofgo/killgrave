@@ -1,0 +1,25 @@
+[
+    {
+        "request": {
+            "method": "POST",
+            "endpoint": "/gophers",
+            "schemaFile": "schemas/create_gopher_request.json",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "params": {
+                "gopherColor": "{v:[a-z]+}"
+            }
+        },
+        "response": {
+            "status": 200,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "bodyFile": "responses/create_gopher_response.json"
+        }
+    },
+    {
+        "t": "random_text"
+    }
+]

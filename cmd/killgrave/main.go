@@ -6,8 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/friendsofgo/killgrave"
-
+	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/mux"
 )
 
@@ -31,7 +30,7 @@ func main() {
 	r := mux.NewRouter()
 
 	s := killgrave.NewServer(*imposters, r)
-	if err := s.Run(); err != nil {
+	if err := s.Build(); err != nil {
 		log.Fatal(err)
 	}
 

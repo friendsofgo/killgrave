@@ -14,5 +14,5 @@
 imposters
 schemas
 
-!test/testdata/imposters/
-!test/testdata/imposters/schemas/
+!internal/test/testdata/imposters/
+!internal/test/testdata/imposters/schemas/

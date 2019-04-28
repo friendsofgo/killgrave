@@ -53,32 +53,51 @@ Or custome your server with this flags:
 ## How to use
 
 ### Create an imposter
-You must be create an imposter to start to use the application
+You must be create an imposter to start to use the application, only files with the `.imp.json` extension will be interpreted as imposters files, and the base path for
+the rest of the files will be the path of the `.imp.json` file.
+
+You need to organize your imposters from more restrictive to less. We use a rule-based system for create each imposter, for this reason you need to organize your imposters in the way that more restrictive to less, like the example below.
 
 ```json
-imposters/create_gopher.json
+imposters/create_gopher.imp.json
 
-{
-    "request": {
-        "method": "POST",
-        "endpoint": "/gophers",
-        "schema_file": "schemas/create_gopher_request.json",
-        "headers": {
-            "Content-Type": [
-                "application/json"
-            ]
+[
+    {
+        "request": {
+            "method": "POST",
+            "endpoint": "/gophers",
+            "schemaFile": "schemas/create_gopher_request.json",
+            "headers": {
+                "Content-Type": "application/json",
+                "Return-Error": "error"
+            }
+        },
+        "response": {
+            "status": 500,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": "{\"error\": \"Server error ocurred\"}"
         }
     },
-    "response": {
-        "status": 200,
-        "headers": {
-            "Content-Type": [
-                "application/json"
-            ]
+    {
+        "request": {
+            "method": "POST",
+            "endpoint": "/gophers",
+            "schemaFile": "schemas/create_gopher_request.json",
+            "headers": {
+                "Content-Type": "application/json"
+            }
         },
-        "bodyFile": "responses/create_gopher_response.json"
+        "response": {
+            "status": 200,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "bodyFile": "responses/create_gopher_response.json"
+        }
     }
-}
+]
 ```
 And its related files
 
@@ -184,14 +203,16 @@ NOTE: If you want to use `killgrave` through Docker at the same time you use you
 * Allow write headers on response
 * Allow imposter's matching by request schema
 * Dynamic responses based on regex endpoint or request schema
+* Dynamic responses based on headers
+* Dynamic responses based on query params
+* Allow organize your imposters with structured folders
+* Allow write multiple imposters by file
 
 ## Next Features
-- [ ] Dynamic responses based on headers
-- [ ] Dynamic responses based on query params
-- [ ] Allow write multiples imposters by file
 - [ ] Proxy server
 - [ ] Record proxy server
 - [ ] Better documentation with examples of each feature
+- [ ] Validate request body XML
 
 ## Contributing
 [Contributions](https://github.com/friendsofgo/killgrave/issues?q=is%3Aissue+is%3Aopen) are more than welcome, if you are interested please fork this repo and send your Pull Request.
