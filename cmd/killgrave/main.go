@@ -30,7 +30,7 @@ func main() {
 	r := mux.NewRouter()
 
 	s := killgrave.NewServer(*imposters, r)
-	if err := s.Run(); err != nil {
+	if err := s.Build(); err != nil {
 		log.Fatal(err)
 	}
 

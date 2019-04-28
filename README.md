@@ -56,7 +56,7 @@ Or custome your server with this flags:
 You must be create an imposter to start to use the application, only files with the `.imp.json` extension will be interpreted as imposters files, and the base path for
 the rest of the files will be the path of the `.imp.json` file.
 
-You need to organize your imposters from more restrictive to less.
+You need to organize your imposters from more restrictive to less. We use a rule-based system for create each imposter, for this reason you need to organize your imposters in the way that more restrictive to less, like the example below.
 
 ```json
 imposters/create_gopher.imp.json

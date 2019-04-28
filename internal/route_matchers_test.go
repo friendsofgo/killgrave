@@ -42,6 +42,8 @@ func TestMatcherBySchema(t *testing.T) {
 		SchemaFile: &schemeFailFile,
 	}
 
+	httpRequestA := &http.Request{Body: bodyA}
+	httpRequestB := &http.Request{Body: bodyB}
 	okResponse := Response{Status: http.StatusOK}
 
 	var matcherData = []struct {
@@ -50,11 +52,11 @@ func TestMatcherBySchema(t *testing.T) {
 		req  *http.Request
 		res  bool
 	}{
-		{"imposter without request schema", MatcherBySchema(Imposter{Request: requestWithoutSchema, Response: okResponse}), &http.Request{Body: bodyA}, true},
-		{"correct request schema", MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: bodyA}, true},
-		{"incorrect request schema", MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: bodyB}, false},
-		{"non-existing schema file", MatcherBySchema(Imposter{Request: requestWithNonExistingSchema, Response: okResponse}), &http.Request{Body: bodyB}, false},
-		{"malformatted schema file", MatcherBySchema(Imposter{Request: requestWithWrongSchema, Response: okResponse}), &http.Request{Body: bodyB}, false},
+		{"correct request schema", MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestA, true},
+		{"imposter without request schema", MatcherBySchema(Imposter{Request: requestWithoutSchema, Response: okResponse}), httpRequestA, true},
+		{"malformatted schema file", MatcherBySchema(Imposter{Request: requestWithWrongSchema, Response: okResponse}), httpRequestA, false},
+		{"incorrect request schema", MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestB, false},
+		{"non-existing schema file", MatcherBySchema(Imposter{Request: requestWithNonExistingSchema, Response: okResponse}), httpRequestB, false},
 		{"empty body with required schema file", MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: emptyBody}, false},
 	}
 

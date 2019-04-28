@@ -20,7 +20,7 @@ func TestRunServer(t *testing.T) {
 
 	for _, tt := range serverData {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.server.Run()
+			err := tt.server.Build()
 
 			if err == nil {
 				if tt.err != nil {

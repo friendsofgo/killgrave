@@ -25,9 +25,9 @@ func NewServer(p string, r *mux.Router) *Server {
 	}
 }
 
-// Run read all the files on the impostersPath and creates different
+// Build read all the files on the impostersPath and add different
 // handlers for each imposter
-func (s *Server) Run() error {
+func (s *Server) Build() error {
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
 		return errors.Wrapf(err, "the directory %s doesn't exists", s.impostersPath)
 	}
