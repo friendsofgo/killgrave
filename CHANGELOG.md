@@ -30,3 +30,7 @@
 * Dynamic responses based on query params
 * Allow organize your imposters with structured folders (using new extension `.imp.json`)
 * Allow write multiple imposters by file
+
+## v0.3.1 (2019/05/07)
+
+* Allow CORS requests
