@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -36,5 +37,5 @@ func main() {
 
 	httpAddr := fmt.Sprintf("%s:%d", *host, *port)
 	log.Printf("The fake server is on tap now: http://%s:%d\n", *host, *port)
-	log.Fatal(http.ListenAndServe(httpAddr, r))
+	log.Fatal(http.ListenAndServe(httpAddr, handlers.CORS()(r)))
 }
