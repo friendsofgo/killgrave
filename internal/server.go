@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 )
@@ -23,6 +24,13 @@ func NewServer(p string, r *mux.Router) *Server {
 		impostersPath: p,
 		router:        r,
 	}
+}
+
+// AccessControl Return options to initialize the mock server with default access control
+func (s *Server) AccessControl() (h []handlers.CORSOption) {
+	h = append(h, handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE", "PATCH", "TRACE", "CONNECT"}))
+	h = append(h, handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "*"}))
+	return
 }
 
 // Build read all the files on the impostersPath and add different

@@ -36,3 +36,12 @@ func TestRunServer(t *testing.T) {
 		})
 	}
 }
+
+func TestAccessControl(t *testing.T) {
+	s := NewServer("test/testdata/imposters", mux.NewRouter())
+	h := s.AccessControl()
+
+	if len(h) <= 0 {
+		t.Fatal("Expected any CORS options and got empty")
+	}
+}

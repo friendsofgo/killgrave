@@ -37,5 +37,5 @@ func main() {
 
 	httpAddr := fmt.Sprintf("%s:%d", *host, *port)
 	log.Printf("The fake server is on tap now: http://%s:%d\n", *host, *port)
-	log.Fatal(http.ListenAndServe(httpAddr, handlers.CORS()(r)))
+	log.Fatal(http.ListenAndServe(httpAddr, handlers.CORS(s.AccessControl()...)(r)))
 }
