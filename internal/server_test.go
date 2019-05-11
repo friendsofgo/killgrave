@@ -39,7 +39,20 @@ func TestRunServer(t *testing.T) {
 
 func TestAccessControl(t *testing.T) {
 	s := NewServer("test/testdata/imposters", mux.NewRouter())
-	h := s.AccessControl()
+	config := Config{
+		ImpostersPath: "imposters",
+		Port:          3000,
+		Host:          "localhost",
+		CORS: ConfigCORS{
+			Methods:          []string{"GET"},
+			Origins:          []string{"*"},
+			Headers:          []string{"Content-Type"},
+			ExposedHeaders:   []string{"Cache-Control"},
+			AllowCredentials: true,
+		},
+	}
+
+	h := s.AccessControl(config.CORS)
 
 	if len(h) <= 0 {
 		t.Fatal("Expected any CORS options and got empty")

@@ -18,10 +18,11 @@ type Config struct {
 
 // ConfigCORS representation of section CORS of the yaml
 type ConfigCORS struct {
-	Methods        []string `yaml:"methods"`
-	Headers        []string `yaml:"headers"`
-	Origins        []string `yaml:"origins"`
-	ExposedHeaders []string `yaml:"exposed_headers"`
+	Methods          []string `yaml:"methods"`
+	Headers          []string `yaml:"headers"`
+	Origins          []string `yaml:"origins"`
+	ExposedHeaders   []string `yaml:"exposed_headers"`
+	AllowCredentials bool     `yaml:"allow_credentials"`
 }
 
 // ReadConfigFile unmarshal content of config file to Config struct
