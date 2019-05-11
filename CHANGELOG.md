@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.3 (2019/05/11)
+
+* Improve default CORS options
+* Allow up mock server via config file
+* Allow configure CORS options
+  * Access-Control-Request-Method
+  * Access-Control-Request-Headers
+  * Access-Control-Allow-Origin
+  * Access-Control-Expose-Headers
+  * Access-Control-Allow-Credentials
+* Improve route_mateches unit tests
+
 ## v0.3.2 (2019/05/08)
 
 * Fix CORS add AccessControl allowing methods and headers

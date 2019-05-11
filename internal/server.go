@@ -2,7 +2,6 @@ package killgrave
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -55,7 +54,6 @@ func (s *Server) AccessControl(config ConfigCORS) (h []handlers.CORSOption) {
 		h = append(h, handlers.ExposedHeaders(config.ExposedHeaders))
 	}
 
-	fmt.Println(config)
 	if config.AllowCredentials {
 		h = append(h, handlers.AllowCredentials())
 	}
