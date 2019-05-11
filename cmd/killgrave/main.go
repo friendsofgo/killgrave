@@ -31,7 +31,7 @@ func main() {
 	}
 	var config killgrave.Config
 	if *c != "" {
-		//TODO: Read file
+		killgrave.ReadConfigFile(*c, &config)
 	} else {
 		config = killgrave.Config{
 			ImpostersPath: *imposters,
@@ -48,5 +48,5 @@ func main() {
 
 	httpAddr := fmt.Sprintf("%s:%d", config.Host, config.Port)
 	log.Printf("The fake server is on tap now: http://%s:%d\n", config.Host, config.Port)
-	log.Fatal(http.ListenAndServe(httpAddr, handlers.CORS(s.AccessControl()...)(r)))
+	log.Fatal(http.ListenAndServe(httpAddr, handlers.CORS(s.AccessControl(config.CORS)...)(r)))
 }

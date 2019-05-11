@@ -12,6 +12,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	defaultCORSMethods = []string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE", "PATCH", "TRACE", "CONNECT"}
+	defaultCORSHeaders = []string{"X-Requested-With", "Content-Type", "Authorization", "*"}
+)
+
 // Server definition of mock server
 type Server struct {
 	impostersPath string
@@ -27,9 +32,25 @@ func NewServer(p string, r *mux.Router) *Server {
 }
 
 // AccessControl Return options to initialize the mock server with default access control
-func (s *Server) AccessControl() (h []handlers.CORSOption) {
-	h = append(h, handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE", "PATCH", "TRACE", "CONNECT"}))
-	h = append(h, handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "*"}))
+func (s *Server) AccessControl(config ConfigCORS) (h []handlers.CORSOption) {
+	h = append(h, handlers.AllowedMethods(defaultCORSMethods))
+	h = append(h, handlers.AllowedHeaders(defaultCORSHeaders))
+
+	if len(config.Methods) > 0 {
+		h = append(h, handlers.AllowedMethods(config.Methods))
+	}
+
+	if len(config.Origins) > 0 {
+		h = append(h, handlers.AllowedOrigins(config.Origins))
+	}
+
+	if len(config.Headers) > 0 {
+		h = append(h, handlers.AllowedHeaders(config.Headers))
+	}
+
+	if len(config.ExposedHeaders) > 0 {
+		h = append(h, handlers.ExposedHeaders(config.ExposedHeaders))
+	}
 	return
 }
 
