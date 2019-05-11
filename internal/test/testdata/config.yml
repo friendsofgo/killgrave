@@ -1,0 +1,9 @@
+imposters_path: "imposters"
+port: 3000
+host: "localhost"
+cors:
+  methods: ["GET"]
+  headers: ["Content-Type"]
+  exposed_headers: ["Cache-Control"]
+  origins: ["*"]
+  allow_credentials: true
