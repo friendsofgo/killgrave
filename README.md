@@ -217,29 +217,29 @@ curl --header "Content-Type: application/json" \
 
 If you want to use `killgrave` on your client application you must consider to configure correctly all about CORS, thus we offer the possibility to configure as you need through a config file.
 
-In the CORS section of the file you can found the next options:
+In the CORS section of the file you can find the next options:
 
 - **methods** (string array)
   
-  Represent the **Access-Control-Request-Method header**, if you not specified or leave as empty array the default value will be:
+  Represent the **Access-Control-Request-Method header**, if you don't specify it or if you do leave it as any empty array, the default values will be:
 
   `"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE", "PATCH", "TRACE", "CONNECT"`
 
 - **headers** (string array)
   
-  Represent the **Access-Control-Request-Headers header**, if you not specified or leave as empty array the default value will be:
+  Represent the **Access-Control-Request-Headers header**, if you don't specify it or if you do leave it as any empty array, the default values will be:
 
   `"X-Requested-With", "Content-Type", "Authorization"`
 
 - **exposed_headers** (string array)
   
-  Represent the **Access-Control-Expose-Headers header**, if you not specified or leave as empty array the default value will be:
+  Represent the **Access-Control-Expose-Headers header**, if you don't specify it or if you do leave it as any empty array, the default values will be:
 
   `"Cache-Control", "Content-Language", "Content-Type", "Expires", "Last-Modified", "Pragma"`
 
 - **origins** (string array)
   
-  Represent the **Access-Control-Allow-Origin header**, if you not specified or leave as empty array this options has not default value
+  Represent the **Access-Control-Allow-Origin header**, if you don't specify or leave as empty array this options has not default value
 
 - **allow_credentials** (boolean)
   
