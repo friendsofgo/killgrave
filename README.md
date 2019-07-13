@@ -83,7 +83,11 @@ cors:
   allow_credentials: true
 ```
 
-The parameter `cors` is optional and his options can be empty array, the other options `imposters_path`, `port`, `host` are mandatory.
+Historically, the options `imposters_path`, `port`, `host` were mandatory when using a configuration file.
+
+However, since last versions, they are no longer needed, so you can simply override those options you want to.
+
+The option `cors` still being optional and his options can be an empty array,
 
 If you want more information about the CORS options, visit the [CORS section](#CORS).
 

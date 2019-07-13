@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/handlers"
@@ -20,25 +21,32 @@ func main() {
 	host := flag.String("host", "localhost", "if you run your server on a different host")
 	port := flag.Int("port", 3000, "por to run the server")
 	imposters := flag.String("imposters", "imposters", "directory where your imposters are saved")
-	v := flag.Bool("version", false, "show the version of the application")
-	c := flag.String("config", "", "path with configuration file")
+	version := flag.Bool("version", false, "show the version of the application")
+	configFilePath := flag.String("config", "", "path with configuration file")
 
 	flag.Parse()
 
-	if *v {
+	if *version {
 		fmt.Printf("%s version %s\n", name, version)
 		return
 	}
-	var config killgrave.Config
-	if *c != "" {
-		killgrave.ReadConfigFile(*c, &config)
-	} else {
-		config = killgrave.Config{
-			ImpostersPath: *imposters,
-			Port:          *port,
-			Host:          *host,
+
+	var config = killgrave.Config{
+		ImpostersPath: *imposters,
+		Port:          *port,
+		Host:          *host,
+	}
+
+	if *configFilePath != "" {
+		err := killgrave.ReadConfigFile(*configFilePath, &config)
+
+		if err != nil {
+			log.Printf("The config file %s couldn't be read, using default configuration instead\n", *configFilePath)
+		} else {
+			config.ImpostersPath = path.Join(path.Dir(*configFilePath), config.ImpostersPath)
 		}
 	}
+
 	r := mux.NewRouter()
 
 	s := killgrave.NewServer(config.ImpostersPath, r)
