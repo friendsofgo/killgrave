@@ -2,6 +2,7 @@
 
 ## v0.4.0 (TBD)
 * The config file option load the imposters path relative on where the config file is
+* Upgrade Killgrave to go1.13
 
 ## v0.3.3 (2019/05/11)
 
