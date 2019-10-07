@@ -10,9 +10,17 @@ jobs:
       - checkout
       - run: go test -v -race ./...
       - run: go build -race cmd/killgrave/main.go
-  build-go1_12_1:
+  build-go1_13_1:
     docker:
-      - image: circleci/golang:1.12.1
+      - image: circleci/golang:1.13.1
+    working_directory: /go/src/github.com/friendsofgo/killgrave
+    steps:
+      - checkout
+      - run: go test -v -race ./...
+      - run: go build -race cmd/killgrave/main.go
+  build-go1_12_9:
+    docker:
+      - image: circleci/golang:1.12.9
         environment:
           GO111MODULE: "on"
     working_directory: /go/src/github.com/friendsofgo/killgrave
@@ -23,8 +31,6 @@ jobs:
   build-go_latest:
     docker:
       - image: circleci/golang:latest
-        environment:
-          GO111MODULE: "on"
     working_directory: /go/src/github.com/friendsofgo/killgrave
     steps:
       - checkout
@@ -53,7 +59,8 @@ workflows:
   build_and_test:
     jobs:
       - build-go1_11_6
-      - build-go1_12_1
+      - build-go1_12_9
+      - build-go1_13_1
       - build-go_latest
       - coverage
       - release:
