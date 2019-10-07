@@ -3,6 +3,7 @@ package killgrave
 import (
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -25,17 +26,46 @@ type ConfigCORS struct {
 	AllowCredentials bool     `yaml:"allow_credentials"`
 }
 
-// ReadConfigFile unmarshal content of config file to Config struct
-func ReadConfigFile(path string, config *Config) error {
-	configFile, err := os.Open(path)
-	if err != nil {
-		return errors.Wrapf(err, "error trying to read config file: %s", path)
-	}
-	defer configFile.Close()
+// ConfigOpt function to encapsulate optional parameters
+type ConfigOpt func(cfg *Config) error
 
-	bytes, _ := ioutil.ReadAll(configFile)
-	if err := yaml.Unmarshal(bytes, config); err != nil {
-		return errors.Wrapf(err, "error while unmarshall configFile file %s", path)
+// NewConfig initialize the config
+func NewConfig(impostersPath, host string, port int, opts ...ConfigOpt) (Config, error) {
+	cfg := Config{
+		ImpostersPath: impostersPath,
+		Host:          host,
+		Port:          port,
 	}
-	return nil
+
+	for _, opt := range opts {
+		if err := opt(&cfg); err != nil {
+			return Config{}, err
+		}
+	}
+
+	return cfg, nil
+}
+
+// WithConfigFile unmarshal content of config file to Config struct
+func WithConfigFile(cfgPath string) ConfigOpt {
+	return func(cfg *Config) error {
+		if cfgPath == "" {
+			return nil
+		}
+
+		configFile, err := os.Open(cfgPath)
+		if err != nil {
+			return errors.Wrapf(err, "error trying to read config file: %s, using default configuration instead", cfgPath)
+		}
+		defer configFile.Close()
+
+		bytes, _ := ioutil.ReadAll(configFile)
+		if err := yaml.Unmarshal(bytes, cfg); err != nil {
+			return errors.Wrapf(err, "error while unmarshall configFile file %s, using default configuration instead", cfgPath)
+		}
+
+		cfg.ImpostersPath = path.Join(path.Dir(cfgPath), cfg.ImpostersPath)
+
+		return nil
+	}
 }
