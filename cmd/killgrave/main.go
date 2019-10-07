@@ -19,7 +19,7 @@ var (
 
 func main() {
 	host := flag.String("host", "localhost", "if you run your server on a different host")
-	port := flag.Int("port", 3000, "por to run the server")
+	port := flag.Int("port", 3000, "port to run the server")
 	imposters := flag.String("imposters", "imposters", "directory where your imposters are saved")
 	version := flag.Bool("version", false, "show the version of the application")
 	configFilePath := flag.String("config", "", "path with configuration file")
