@@ -19,7 +19,7 @@ Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**,
 Install `killgrave` using go:
 
 ```sh
-$ GO111MODULE=off go get -u github.com/friendsofgo/killgrave/cmd/killgrave
+$ go get -u github.com/friendsofgo/killgrave/cmd/killgrave
 ```
 
 Install `killgrave` using [homebrew](https://brew.sh/index_es):
