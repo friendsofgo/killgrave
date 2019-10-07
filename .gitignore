@@ -10,9 +10,8 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+coverage.txt
 
 imposters
-schemas
 
 !internal/test/testdata/imposters/
-!internal/test/testdata/imposters/schemas/
