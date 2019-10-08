@@ -1,11 +1,11 @@
 package killgrave
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -55,13 +55,13 @@ func WithConfigFile(cfgPath string) ConfigOpt {
 
 		configFile, err := os.Open(cfgPath)
 		if err != nil {
-			return errors.Wrapf(err, "error trying to read config file: %s, using default configuration instead", cfgPath)
+			return fmt.Errorf("%w: error trying to read config file: %s, using default configuration instead", err, cfgPath)
 		}
 		defer configFile.Close()
 
 		bytes, _ := ioutil.ReadAll(configFile)
 		if err := yaml.Unmarshal(bytes, cfg); err != nil {
-			return errors.Wrapf(err, "error while unmarshall configFile file %s, using default configuration instead", cfgPath)
+			return fmt.Errorf("%w: error while unmarshall configFile file %s, using default configuration instead", err, cfgPath)
 		}
 
 		cfg.ImpostersPath = path.Join(path.Dir(cfgPath), cfg.ImpostersPath)

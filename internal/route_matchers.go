@@ -8,8 +8,9 @@ import (
 	"net/http"
 	"os"
 
+	"errors"
+
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -41,12 +42,12 @@ func validateSchema(imposter Imposter, req *http.Request) error {
 
 	schemaFile := imposter.CalculateFilePath(*imposter.Request.SchemaFile)
 	if _, err := os.Stat(schemaFile); os.IsNotExist(err) {
-		return errors.Wrapf(err, "the schema file %s not found", schemaFile)
+		return fmt.Errorf("%w: the schema file %s not found", err, schemaFile)
 	}
 
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		return errors.Wrapf(err, "impossible read the request body")
+		return fmt.Errorf("%w: impossible read the request body", err)
 	}
 
 	contentBody := string(b)
@@ -61,7 +62,7 @@ func validateSchema(imposter Imposter, req *http.Request) error {
 
 	res, err := gojsonschema.Validate(schema, document)
 	if err != nil {
-		return errors.Wrap(err, "error validating the json schema")
+		return fmt.Errorf("%w: error validating the json schema", err)
 	}
 
 	if !res.Valid() {

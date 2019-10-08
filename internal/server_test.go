@@ -3,8 +3,9 @@ package killgrave
 import (
 	"testing"
 
+	"errors"
+
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 )
 
 func TestRunServer(t *testing.T) {

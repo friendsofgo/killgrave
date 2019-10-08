@@ -2,6 +2,7 @@ package killgrave
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -65,7 +65,7 @@ func (s *Server) AccessControl(config ConfigCORS) (h []handlers.CORSOption) {
 // handlers for each imposter
 func (s *Server) Build() error {
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
-		return errors.Wrapf(err, "the directory %s doesn't exists", s.impostersPath)
+		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
 	}
 	var imposterFileCh = make(chan string)
 	var done = make(chan bool)
@@ -120,7 +120,7 @@ func (s *Server) unmarshalImposters(imposterFileName string, imposters *[]Impost
 
 	bytes, _ := ioutil.ReadAll(imposterFile)
 	if err := json.Unmarshal(bytes, imposters); err != nil {
-		return errors.Wrapf(err, "error while unmarshall imposter file %s", imposterFileName)
+		return fmt.Errorf("%w: error while unmarshall imposter file %s", err, imposterFileName)
 	}
 	return nil
 }

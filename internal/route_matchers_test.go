@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"testing"
 
+	"errors"
+
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 )
 
 func TestMatcherBySchema(t *testing.T) {

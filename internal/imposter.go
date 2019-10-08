@@ -1,12 +1,11 @@
 package killgrave
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 const imposterExtension = ".imp.json"
@@ -43,7 +42,7 @@ type Response struct {
 func findImposters(impostersDirectory string, imposterFileCh chan string) error {
 	err := filepath.Walk(impostersDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return errors.Wrap(err, "error finding imposters")
+			return fmt.Errorf("%w: error finding imposters", err)
 		}
 		if !info.IsDir() && strings.LastIndex(info.Name(), imposterExtension) != -1 {
 			imposterFileCh <- path

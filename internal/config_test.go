@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/pkg/errors"
+	"errors"
 )
 
 func TestNewConfig(t *testing.T) {
