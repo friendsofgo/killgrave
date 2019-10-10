@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -48,7 +52,35 @@ func main() {
 		log.Fatal(err)
 	}
 
-	httpAddr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
-	log.Printf("The fake server is on tap now: http://%s:%d\n", cfg.Host, cfg.Port)
-	log.Fatal(http.ListenAndServe(httpAddr, handlers.CORS(s.AccessControl(cfg.CORS)...)(r)))
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	srv := startServer(cfg.Host, cfg.Port, s, cfg.CORS, r)
+	<-done
+
+	if err := srv.Shutdown(context.Background()); err != nil {
+		log.Fatalf("Server Shutdown Failed:%+v", err)
+	}
+}
+
+func startServer(host string, port int, ks *killgrave.Server, cors killgrave.ConfigCORS, router *mux.Router) *http.Server {
+	httpAddr := fmt.Sprintf("%s:%d", host, port)
+	log.Printf("The fake server is on tap now: http://%s:%d\n", host, port)
+
+	srv := &http.Server{
+		Addr:    httpAddr,
+		Handler: handlers.CORS(ks.AccessControl(cors)...)(router),
+	}
+
+	go func() {
+		err := srv.ListenAndServe()
+
+		if err != http.ErrServerClosed {
+			log.Fatal(err)
+		} else {
+			log.Println("stopping server...")
+		}
+	}()
+
+	return srv
 }
