@@ -9,9 +9,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/radovskyb/watcher"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 )
@@ -27,7 +29,7 @@ func main() {
 	imposters := flag.String("imposters", "imposters", "directory where your imposters are saved")
 	showVersion := flag.Bool("version", false, "show the version of the application")
 	configFilePath := flag.String("config", "", "path with configuration file")
-	//watcher := flag.Bool("watcher", false, "file watcher, reload the server with each file change")
+	watcherFlag := flag.Bool("watcher", false, "file watcher, reload the server with each file change")
 
 	flag.Parse()
 
@@ -36,31 +38,39 @@ func main() {
 		return
 	}
 
+	wt := watcher.New()
+	wt.SetMaxEvents(1)
+	wt.FilterOps(watcher.Rename, watcher.Move, watcher.Create, watcher.Write)
+	defer wt.Close()
+
+	var watcherConfig killgrave.ConfigOpt
+	if *watcherFlag {
+		watcherConfig = killgrave.WithWatcher(wt)
+		go func() {
+			if err := wt.Start(time.Millisecond * 100); err != nil {
+				log.Fatalln(err)
+			}
+		}()
+	}
 	cfg, err := killgrave.NewConfig(
 		*imposters,
 		*host,
 		*port,
 		killgrave.WithConfigFile(*configFilePath),
+		watcherConfig,
 	)
+
 	if err != nil {
 		log.Println(err)
 	}
 
-	r := mux.NewRouter()
-
-	s := killgrave.NewServer(cfg.ImpostersPath, r)
-	if err := s.Build(); err != nil {
-		log.Fatal(err)
-	}
-
-	watcherCh := make(chan struct{})
 	exit := make(chan struct{})
 	done := make(chan os.Signal, 1)
 
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	var httpSrv http.Server
 
-	httpSrv = createServer(cfg.Host, cfg.Port, s, cfg.CORS, r)
+	httpSrv = createServer(cfg.Host, cfg.Port, cfg)
 	runServer(&httpSrv)
 
 	go func() {
@@ -70,10 +80,14 @@ func main() {
 				shutDownServer(&httpSrv)
 				exit <- struct{}{}
 				return
-			case <-watcherCh:
+			case evt := <-wt.Event:
+				log.Println("modified file:", evt.Name())
 				shutDownServer(&httpSrv)
-				httpSrv = createServer(cfg.Host, cfg.Port, s, cfg.CORS, r)
+				httpSrv = createServer(cfg.Host, cfg.Port, cfg)
 				runServer(&httpSrv)
+				time.Sleep(1 * time.Millisecond)
+			case err := <-wt.Error:
+				log.Printf("Error checking file change: %+v", err)
 			default:
 				continue
 			}
@@ -82,7 +96,6 @@ func main() {
 
 	<-exit
 	close(done)
-	close(watcherCh)
 	close(exit)
 }
 
@@ -102,13 +115,19 @@ func runServer(srv *http.Server) {
 	}()
 }
 
-func createServer(host string, port int, ks *killgrave.Server, cors killgrave.ConfigCORS, router *mux.Router) http.Server {
+func createServer(host string, port int, cfg killgrave.Config) http.Server {
+	r := mux.NewRouter()
+	s := killgrave.NewServer(cfg.ImpostersPath, r)
+	if err := s.Build(); err != nil {
+		log.Fatal(err)
+	}
+
 	httpAddr := fmt.Sprintf("%s:%d", host, port)
 	log.Printf("The fake server is on tap now: http://%s:%d\n", host, port)
 
 	srv := http.Server{
 		Addr:    httpAddr,
-		Handler: handlers.CORS(ks.AccessControl(cors)...)(router),
+		Handler: handlers.CORS(s.AccessControl(cfg.CORS)...)(r),
 	}
 
 	return srv
