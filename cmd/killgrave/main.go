@@ -27,6 +27,7 @@ func main() {
 	imposters := flag.String("imposters", "imposters", "directory where your imposters are saved")
 	showVersion := flag.Bool("version", false, "show the version of the application")
 	configFilePath := flag.String("config", "", "path with configuration file")
+	//watcher := flag.Bool("watcher", false, "file watcher, reload the server with each file change")
 
 	flag.Parse()
 
@@ -52,35 +53,63 @@ func main() {
 		log.Fatal(err)
 	}
 
+	watcherCh := make(chan struct{})
+	exit := make(chan struct{})
 	done := make(chan os.Signal, 1)
+
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	var httpSrv http.Server
 
-	srv := startServer(cfg.Host, cfg.Port, s, cfg.CORS, r)
-	<-done
+	httpSrv = createServer(cfg.Host, cfg.Port, s, cfg.CORS, r)
+	runServer(&httpSrv)
 
+	go func() {
+		for {
+			select {
+			case <-done:
+				shutDownServer(&httpSrv)
+				exit <- struct{}{}
+				return
+			case <-watcherCh:
+				shutDownServer(&httpSrv)
+				httpSrv = createServer(cfg.Host, cfg.Port, s, cfg.CORS, r)
+				runServer(&httpSrv)
+			default:
+				continue
+			}
+		}
+	}()
+
+	<-exit
+	close(done)
+	close(watcherCh)
+	close(exit)
+}
+
+func shutDownServer(srv *http.Server) {
+	log.Println("stopping server...")
 	if err := srv.Shutdown(context.Background()); err != nil {
 		log.Fatalf("Server Shutdown Failed:%+v", err)
 	}
 }
 
-func startServer(host string, port int, ks *killgrave.Server, cors killgrave.ConfigCORS, router *mux.Router) *http.Server {
+func runServer(srv *http.Server) {
+	go func() {
+		err := srv.ListenAndServe()
+		if err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+}
+
+func createServer(host string, port int, ks *killgrave.Server, cors killgrave.ConfigCORS, router *mux.Router) http.Server {
 	httpAddr := fmt.Sprintf("%s:%d", host, port)
 	log.Printf("The fake server is on tap now: http://%s:%d\n", host, port)
 
-	srv := &http.Server{
+	srv := http.Server{
 		Addr:    httpAddr,
 		Handler: handlers.CORS(ks.AccessControl(cors)...)(router),
 	}
-
-	go func() {
-		err := srv.ListenAndServe()
-
-		if err != http.ErrServerClosed {
-			log.Fatal(err)
-		} else {
-			log.Println("stopping server...")
-		}
-	}()
 
 	return srv
 }
