@@ -1,15 +1,19 @@
-package killgrave
+package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+
+	killgrave "github.com/friendsofgo/killgrave/internal"
 )
 
 var (
@@ -18,22 +22,27 @@ var (
 	defaultCORSExposedHeaders = []string{"Cache-Control", "Content-Language", "Content-Type", "Expires", "Last-Modified", "Pragma"}
 )
 
+// ServerOpt function that allow modify the current server
+type ServerOpt func(s *Server)
+
 // Server definition of mock server
 type Server struct {
 	impostersPath string
 	router        *mux.Router
+	httpServer    http.Server
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router) *Server {
-	return &Server{
+func NewServer(p string, r *mux.Router, httpServer http.Server) Server {
+	return Server{
 		impostersPath: p,
 		router:        r,
+		httpServer:    httpServer,
 	}
 }
 
-// AccessControl Return options to initialize the mock server with default access control
-func (s *Server) AccessControl(config ConfigCORS) (h []handlers.CORSOption) {
+// PrepareAccessControl Return options to initialize the mock server with default access control
+func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption) {
 	h = append(h, handlers.AllowedMethods(defaultCORSMethods))
 	h = append(h, handlers.AllowedHeaders(defaultCORSHeaders))
 	h = append(h, handlers.ExposedHeaders(defaultCORSExposedHeaders))
@@ -93,6 +102,28 @@ func (s *Server) Build() error {
 	}
 }
 
+// Run run launch a previous configured http server if any error happens while the starting process
+// application will be crashed
+func (s *Server) Run() {
+	go func() {
+		log.Printf("The fake server is on tap now: %s\n", s.httpServer.Addr)
+		err := s.httpServer.ListenAndServe()
+		if err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+}
+
+// Shutdown shutdown the current http server
+func (s *Server) Shutdown() error {
+	log.Println("stopping server...")
+	if err := s.httpServer.Shutdown(context.TODO()); err != nil {
+		log.Fatalf("Server Shutdown Failed:%+v", err)
+	}
+
+	return nil
+}
+
 func (s *Server) addImposterHandler(imposters []Imposter, imposterFilePath string) {
 	for _, imposter := range imposters {
 		imposter.BasePath = filepath.Dir(imposterFilePath)
@@ -114,7 +145,7 @@ func (s *Server) addImposterHandler(imposters []Imposter, imposterFilePath strin
 	}
 }
 
-func (s *Server) unmarshalImposters(imposterFileName string, imposters *[]Imposter) error {
+func (s Server) unmarshalImposters(imposterFileName string, imposters *[]Imposter) error {
 	imposterFile, _ := os.Open(imposterFileName)
 	defer imposterFile.Close()
 

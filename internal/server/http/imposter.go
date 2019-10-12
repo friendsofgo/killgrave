@@ -1,4 +1,4 @@
-package killgrave
+package http
 
 import (
 	"fmt"

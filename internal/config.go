@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/radovskyb/watcher"
 	"gopkg.in/yaml.v2"
 )
 
@@ -39,10 +38,6 @@ func NewConfig(impostersPath, host string, port int, opts ...ConfigOpt) (Config,
 	}
 
 	for _, opt := range opts {
-		if opt == nil {
-			continue
-		}
-
 		if err := opt(&cfg); err != nil {
 			return Config{}, err
 		}
@@ -71,16 +66,6 @@ func WithConfigFile(cfgPath string) ConfigOpt {
 
 		cfg.ImpostersPath = path.Join(path.Dir(cfgPath), cfg.ImpostersPath)
 
-		return nil
-	}
-}
-
-// WithWatcher add all the directories under the imposter path to watch
-func WithWatcher(w *watcher.Watcher) ConfigOpt {
-	return func(cfg *Config) error {
-		if err := w.AddRecursive(cfg.ImpostersPath); err != nil {
-			return fmt.Errorf("%w: error trying to watch change on %s directory", err, cfg.ImpostersPath)
-		}
 		return nil
 	}
 }

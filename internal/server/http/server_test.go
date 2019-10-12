@@ -1,11 +1,12 @@
-package killgrave
+package http
 
 import (
+	"errors"
 	"testing"
 
-	"errors"
-
 	"github.com/gorilla/mux"
+
+	killgrave "github.com/friendsofgo/killgrave/internal"
 )
 
 func TestRunServer(t *testing.T) {
@@ -40,11 +41,11 @@ func TestRunServer(t *testing.T) {
 
 func TestAccessControl(t *testing.T) {
 	s := NewServer("test/testdata/imposters", mux.NewRouter())
-	config := Config{
+	config := killgrave.Config{
 		ImpostersPath: "imposters",
 		Port:          3000,
 		Host:          "localhost",
-		CORS: ConfigCORS{
+		CORS: killgrave.ConfigCORS{
 			Methods:          []string{"GET"},
 			Origins:          []string{"*"},
 			Headers:          []string{"Content-Type"},
