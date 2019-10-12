@@ -44,6 +44,8 @@ func readEventsFromWatcher(w *watcher.Watcher, fn func()) {
 				fn()
 			case err := <-w.Error:
 				log.Printf("Error checking file change: %+v", err)
+			case <-w.Closed:
+				return
 			}
 		}
 	}()
