@@ -15,12 +15,32 @@
 
 Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**, very easy to use made in **Go**.
 
+## Versions
+
+Actually `Killgrave` working using `sem ver` but in 0 version, for that the 'minor' will be change when some broken changes are added
+to the application, and the 'patch' would be changed when a new feature with new changes are added or for bug fixing, when 
+v1.0.0 will be released, `Killgrave` will be change to use a normal use of `sem ver`. 
+
+## Branch master
+
+Master branch contains all the latest changes on the application, for that the branch `master` is not an stable version.
+If you want to have those changes then you will need to use the branch master, but remember that some breaking changes can be added
+to this branch.
+
+## Future releases
+This project is on continuos improvement so you can check the [Issues](https://github.com/friendsofgo/killgrave/issues) created for give it support or create your owns.
+Furthermore on the `branch master` you can find the [CHANGELOG.md](https://github.com/friendsofgo/killgrave/blob/master/CHANGELOG.md) file that contains all the new feature would be added
+on the next release. 
+
 ## Getting started
+
 Install `killgrave` using go:
 
 ```sh
-$ go get -u github.com/friendsofgo/killgrave/cmd/killgrave
+$ go get -u github.com/friendsofgo/killgrave/cmd/killgrave@{version}
 ```
+
+`version` must be substituted by the `version` that you want to install, otherwise master would be installed.
 
 Install `killgrave` using [homebrew](https://brew.sh/index_es):
 
