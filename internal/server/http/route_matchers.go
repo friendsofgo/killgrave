@@ -1,14 +1,13 @@
-package killgrave
+package http
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-
-	"errors"
 
 	"github.com/gorilla/mux"
 	"github.com/xeipuuv/gojsonschema"

@@ -1,12 +1,11 @@
-package killgrave
+package http
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"testing"
-
-	"errors"
 
 	"github.com/gorilla/mux"
 )

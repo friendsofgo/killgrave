@@ -1,10 +1,9 @@
 package killgrave
 
 import (
+	"errors"
 	"reflect"
 	"testing"
-
-	"errors"
 )
 
 func TestNewConfig(t *testing.T) {
