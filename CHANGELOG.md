@@ -5,6 +5,7 @@
 * Upgrade Killgrave to go1.13
 * Remove use of github.com/pkg/errors in favor to standard errors package
 * Remove backward compatibility with previous versions to go 1.13
+* Add `-watcher` flag to reload the server with any changes on `imposters` folder
 
 ## v0.3.3 (2019/05/11)
 

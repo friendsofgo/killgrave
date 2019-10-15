@@ -55,10 +55,9 @@ func main() {
 		log.Println(err)
 	}
 
-	exit := make(chan struct{})
 	done := make(chan os.Signal, 1)
 
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
 	var srv server.Server
 	srv = runServer(cfg.Host, cfg.Port, cfg)
@@ -69,7 +68,6 @@ func main() {
 
 	<-done
 	close(done)
-	close(exit)
 	if w != nil {
 		w.Close()
 	}
