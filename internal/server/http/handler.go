@@ -5,11 +5,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 // ImposterHandler create specific handler for the received imposter
 func ImposterHandler(imposter Imposter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(imposter.Response.Delay.Delay())
 		writeHeaders(imposter, w)
 		w.WriteHeader(imposter.Response.Status)
 		writeBody(imposter, w)

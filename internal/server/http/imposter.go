@@ -37,6 +37,7 @@ type Response struct {
 	Body     string             `json:"body"`
 	BodyFile *string            `json:"bodyFile"`
 	Headers  *map[string]string `json:"headers"`
+	Delay    ResponseDelay      `json:"delay"`
 }
 
 func findImposters(impostersDirectory string, imposterFileCh chan string) error {

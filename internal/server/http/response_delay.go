@@ -1,0 +1,60 @@
+package http
+
+import (
+	"encoding/json"
+	"errors"
+	"math/rand"
+	"strings"
+	"time"
+)
+
+// ResponseDelay represent time delay before server responds.
+type ResponseDelay struct {
+	delay  int64
+	offset int64
+}
+
+// Delay return random time.Duration with respect to specified time range.
+func (d *ResponseDelay) Delay() time.Duration {
+	offset := d.offset
+	if offset > 0 {
+		offset = rand.Int63n(d.offset)
+	}
+	return time.Duration(d.delay + offset)
+}
+
+// UnmarshalJSON of json.Unmarshaler interface.
+// Input should be string, consisting of substring that can be parsed by time.ParseDuration,
+// or two similar substrings seperated by ":".
+func (d *ResponseDelay) UnmarshalJSON(data []byte) error {
+	const delimiter = ":"
+	var input string
+	if err := json.Unmarshal(data, &input); err != nil {
+		return err
+	}
+	if input == "" {
+		return nil
+	}
+	inputParts := strings.Split(input, delimiter)
+	if len(inputParts) > 2 {
+		return errors.New("expected one delimiter at most")
+	}
+	minDelay, err := time.ParseDuration(inputParts[0])
+	if err != nil {
+		return err
+	}
+	var offset int64
+	if len(inputParts) == 2 {
+		maxDelay, err := time.ParseDuration(inputParts[1])
+		if err != nil {
+			return err
+		}
+		offset = int64(maxDelay) - int64(minDelay)
+	}
+	if offset < 0 {
+		return errors.New("second time point is before first time point")
+	}
+	d.delay = int64(minDelay)
+	d.offset = offset
+	return nil
+}

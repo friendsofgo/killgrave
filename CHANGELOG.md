@@ -7,6 +7,7 @@
 * Remove backward compatibility with previous versions to go 1.13
 * Add `-watcher` flag to reload the server with any changes on `imposters` folder
 * Fix searching imposter files mechanism
+* Allow to add latency to responses
 
 ## v0.3.3 (2019/05/11)
 
