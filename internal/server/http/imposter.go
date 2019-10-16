@@ -44,7 +44,7 @@ func findImposters(impostersDirectory string, imposterFileCh chan string) error 
 		if err != nil {
 			return fmt.Errorf("%w: error finding imposters", err)
 		}
-		if !info.IsDir() && strings.LastIndex(info.Name(), imposterExtension) != -1 {
+		if !info.IsDir() && strings.HasSuffix(info.Name(), imposterExtension) {
 			imposterFileCh <- path
 		}
 		return nil

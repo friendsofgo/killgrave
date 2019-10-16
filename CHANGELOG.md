@@ -6,6 +6,7 @@
 * Remove use of github.com/pkg/errors in favor to standard errors package
 * Remove backward compatibility with previous versions to go 1.13
 * Add `-watcher` flag to reload the server with any changes on `imposters` folder
+* Fix searching imposter files mechanism
 
 ## v0.3.3 (2019/05/11)
 
