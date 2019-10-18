@@ -1,6 +1,7 @@
 package killgrave
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -11,10 +12,11 @@ import (
 
 // Config representation of config file yaml
 type Config struct {
-	ImpostersPath string     `yaml:"imposters_path"`
-	Port          int        `yaml:"port"`
-	Host          string     `yaml:"host"`
-	CORS          ConfigCORS `yaml:"cors"`
+	ImpostersPath string      `yaml:"imposters_path"`
+	Port          int         `yaml:"port"`
+	Host          string      `yaml:"host"`
+	CORS          ConfigCORS  `yaml:"cors"`
+	Proxy         ConfigProxy `yaml:"proxy"`
 }
 
 // ConfigCORS representation of section CORS of the yaml
@@ -24,6 +26,42 @@ type ConfigCORS struct {
 	Origins          []string `yaml:"origins"`
 	ExposedHeaders   []string `yaml:"exposed_headers"`
 	AllowCredentials bool     `yaml:"allow_credentials"`
+}
+
+// ConfigProxy is a representation of section proxy of the yaml
+type ConfigProxy struct {
+	Url  string    `yaml:"url"`
+	Mode ProxyMode `yaml:"mode"`
+}
+
+// ProxyMode is enumeration of proxy server modes
+type ProxyMode int
+
+const (
+	// Proxy server is off
+	ProxyNone ProxyMode = iota
+	// Only missing requests are proxied
+	ProxyMissing
+	// All requests are proxied
+	ProxyAll
+)
+
+func (mode *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var textMode string
+	if err := unmarshal(&textMode); err != nil {
+		return err
+	}
+	switch textMode {
+	case "all":
+		*mode = ProxyAll
+	case "missing":
+		*mode = ProxyMissing
+	case "none":
+		*mode = ProxyNone
+	default:
+		return errors.New("unknown proxy mode: " + textMode)
+	}
+	return nil
 }
 
 // ConfigOpt function to encapsulate optional parameters

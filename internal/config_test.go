@@ -37,6 +37,45 @@ func TestNewConfig(t *testing.T) {
 	}
 }
 
+func TestProxyModeUnmarshal(t *testing.T) {
+	testCases := map[string]struct {
+		input    interface{}
+		expected ProxyMode
+		err      error
+	}{
+		"valid mode all":     {"all", ProxyAll, nil},
+		"valid mode missing": {"missing", ProxyMissing, nil},
+		"valid mode none":    {"none", ProxyNone, nil},
+		"empty mode":         {"", ProxyNone, errors.New("error")},
+		"invalid mode":       {"nonsens23e", ProxyNone, errors.New("error")},
+		"error input":        {123, ProxyNone, errors.New("error")},
+	}
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			var mode ProxyMode
+			err := mode.UnmarshalYAML(func(i interface{}) error {
+				s := i.(*string)
+				input, ok := tc.input.(string)
+				if !ok {
+					return errors.New("error")
+				}
+				*s = input
+				return nil
+			})
+			if err != nil && tc.err == nil {
+				t.Fatalf("not expected any erros and got %v", err)
+			}
+
+			if err == nil && tc.err != nil {
+				t.Fatalf("expected an error and got nil")
+			}
+			if tc.expected != mode {
+				t.Fatalf("expected: %v, got: %v", tc.expected, mode)
+			}
+		})
+	}
+}
+
 func validConfig() Config {
 	return Config{
 		ImpostersPath: "test/testdata/imposters",

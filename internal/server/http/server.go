@@ -30,14 +30,16 @@ type Server struct {
 	impostersPath string
 	router        *mux.Router
 	httpServer    http.Server
+	proxy         *Proxy
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router, httpServer http.Server) Server {
+func NewServer(p string, r *mux.Router, httpServer http.Server, proxyServer *Proxy) Server {
 	return Server{
 		impostersPath: p,
 		router:        r,
 		httpServer:    httpServer,
+		proxy:         proxyServer,
 	}
 }
 
@@ -73,6 +75,9 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 // Build read all the files on the impostersPath and add different
 // handlers for each imposter
 func (s *Server) Build() error {
+	if s.proxy.mode == killgrave.ProxyAll {
+		s.handleAll(s.proxy.Handler())
+	}
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
 		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
 	}
@@ -83,6 +88,7 @@ func (s *Server) Build() error {
 		findImposters(s.impostersPath, imposterFileCh)
 		done <- true
 	}()
+loop:
 	for {
 		select {
 		case f := <-imposterFileCh:
@@ -97,9 +103,13 @@ func (s *Server) Build() error {
 		case <-done:
 			close(imposterFileCh)
 			close(done)
-			return nil
+			break loop
 		}
 	}
+	if s.proxy.mode == killgrave.ProxyMissing {
+		s.handleAll(s.proxy.Handler())
+	}
+	return nil
 }
 
 // Run run launch a previous configured http server if any error happens while the starting process
@@ -154,4 +164,8 @@ func (s Server) unmarshalImposters(imposterFileName string, imposters *[]Imposte
 		return fmt.Errorf("%w: error while unmarshall imposter file %s", err, imposterFileName)
 	}
 	return nil
+}
+
+func (s *Server) handleAll(h http.HandlerFunc) {
+	s.router.PathPrefix("/").HandlerFunc(h)
 }
