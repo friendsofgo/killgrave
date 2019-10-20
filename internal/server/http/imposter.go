@@ -39,15 +39,25 @@ type Response struct {
 	Headers  *map[string]string `json:"headers"`
 }
 
-func findImposters(impostersDirectory string, imposterFileCh chan string) error {
-	err := filepath.Walk(impostersDirectory, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return fmt.Errorf("%w: error finding imposters", err)
-		}
-		if !info.IsDir() && strings.HasSuffix(info.Name(), imposterExtension) {
-			imposterFileCh <- path
-		}
-		return nil
-	})
-	return err
+func findImposters(impostersDirectory string, done <-chan struct{}) (<-chan string, <-chan error) {
+	imposterFiles := make(chan string)
+	errc := make(chan error, 1)
+	go func() {
+		defer close(imposterFiles)
+		errc <- filepath.Walk(impostersDirectory, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return fmt.Errorf("%w: error finding imposters", err)
+			}
+			if info.IsDir() || strings.LastIndex(info.Name(), imposterExtension) == -1 {
+				return nil
+			}
+			select {
+			case imposterFiles <- path:
+				return nil
+			case <-done:
+				return fmt.Errorf("find imposters canceled")
+			}
+		})
+	}()
+	return imposterFiles, errc
 }

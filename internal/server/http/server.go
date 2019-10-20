@@ -10,10 +10,9 @@ import (
 	"os"
 	"path/filepath"
 
+	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-
-	killgrave "github.com/friendsofgo/killgrave/internal"
 )
 
 var (
@@ -76,28 +75,31 @@ func (s *Server) Build() error {
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
 		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
 	}
-	var imposterFileCh = make(chan string)
-	var done = make(chan bool)
+	done := make(chan struct{})
 
-	go func() {
-		findImposters(s.impostersPath, imposterFileCh)
-		done <- true
-	}()
-	for {
+	imposterFiles, errc := findImposters(s.impostersPath, done)
+	go s.processImposters(imposterFiles, done)
+
+	if err := <-errc; err != nil {
+		close(done)
+		return fmt.Errorf("%w: failed to find imposters", err)
+	}
+	return nil
+}
+
+func (s *Server) processImposters(imposterFiles <-chan string, done <-chan struct{}) {
+	var imposters []Imposter
+	for f := range imposterFiles {
 		select {
-		case f := <-imposterFileCh:
-			var imposters []Imposter
-			err := s.unmarshalImposters(f, &imposters)
-			if err != nil {
-				log.Printf("error trying to load %s imposter: %v", f, err)
-			} else {
-				s.addImposterHandler(imposters, f)
-				log.Printf("imposter %s loaded\n", f)
-			}
 		case <-done:
-			close(imposterFileCh)
-			close(done)
-			return nil
+			return
+		default:
+			if err := s.unmarshalImposters(f, &imposters); err != nil {
+				log.Printf("error trying to load %s imposter: %v", f, err)
+				continue
+			}
+			s.addImposterHandler(imposters, f)
+			log.Printf("imposter %s loaded\n", f)
 		}
 	}
 }
@@ -145,7 +147,7 @@ func (s *Server) addImposterHandler(imposters []Imposter, imposterFilePath strin
 	}
 }
 
-func (s Server) unmarshalImposters(imposterFileName string, imposters *[]Imposter) error {
+func (s *Server) unmarshalImposters(imposterFileName string, imposters *[]Imposter) error {
 	imposterFile, _ := os.Open(imposterFileName)
 	defer imposterFile.Close()
 
