@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func TestResponceDelayUnmarshal(t *testing.T) {
+func TestResponseDelayUnmarshal(t *testing.T) {
 	testCases := map[string]struct {
 		input string
 		delay ResponseDelay
@@ -56,7 +56,7 @@ func TestResponceDelayUnmarshal(t *testing.T) {
 			var delay ResponseDelay
 			err := json.Unmarshal([]byte(tc.input), &delay)
 			if err != nil && tc.err == nil {
-				t.Fatalf("not expected any erros and got: %v", err)
+				t.Fatalf("not expected any error and got: %v", err)
 			}
 
 			if err == nil && tc.err != nil {
@@ -70,7 +70,7 @@ func TestResponceDelayUnmarshal(t *testing.T) {
 	}
 }
 
-func TestResponceDelayDelay(t *testing.T) {
+func TestResponseDelay(t *testing.T) {
 	testCases := map[string]struct {
 		delay ResponseDelay
 	}{
