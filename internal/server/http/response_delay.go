@@ -52,7 +52,7 @@ func (d *ResponseDelay) UnmarshalJSON(data []byte) error {
 		offset = int64(maxDelay) - int64(minDelay)
 	}
 	if offset < 0 {
-		return errors.New("second time point is before first time point")
+		return errors.New("second value should be greater than the first one")
 	}
 	d.delay = int64(minDelay)
 	d.offset = offset

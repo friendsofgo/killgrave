@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const imposterExtension = ".imp.json"
@@ -38,6 +39,10 @@ type Response struct {
 	BodyFile *string            `json:"bodyFile"`
 	Headers  *map[string]string `json:"headers"`
 	Delay    ResponseDelay      `json:"delay"`
+}
+
+func (r *Response) GetDelay() time.Duration {
+	return r.Delay.Delay()
 }
 
 func findImposters(impostersDirectory string, imposterFileCh chan string) error {
