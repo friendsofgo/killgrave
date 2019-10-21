@@ -38,14 +38,15 @@ type ConfigProxy struct {
 type ProxyMode int
 
 const (
-	// Proxy server is off
+	// ProxyNone server is off
 	ProxyNone ProxyMode = iota
-	// Only missing requests are proxied
+	// ProxyMissing handle only missing requests are proxied
 	ProxyMissing
-	// All requests are proxied
+	// ProxyAll all requests are proxied
 	ProxyAll
 )
 
+// UnmarshalYAML implementation of yaml.Unmarshaler interface
 func (mode *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var textMode string
 	if err := unmarshal(&textMode); err != nil {
