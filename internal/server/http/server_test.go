@@ -8,9 +8,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gorilla/mux"
-
 	killgrave "github.com/friendsofgo/killgrave/internal"
+	"github.com/gorilla/mux"
 )
 
 func TestMain(m *testing.M) {
@@ -19,31 +18,51 @@ func TestMain(m *testing.M) {
 }
 
 func TestServer_Build(t *testing.T) {
+	type check func(err error, t *testing.T)
+
+	hasNoError := func() check {
+		return func(err error, t *testing.T) {
+			t.Helper()
+			if err != nil {
+				t.Fatalf("not expected any erros and got %+v", err)
+			}
+		}
+	}
+	hasNotExistError := func() check {
+		return func(err error, t *testing.T) {
+			t.Helper()
+			if !errors.Is(err, os.ErrNotExist) {
+				t.Fatalf("expected to get not exist error, got: %+v", err)
+			}
+		}
+	}
+
 	var serverData = []struct {
-		name   string
-		server Server
-		err    error
+		name     string
+		server   Server
+		errCheck check
 	}{
-		{"imposter directory not found", NewServer("failImposterPath", nil, http.Server{}), errors.New("hello")},
-		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, http.Server{}), nil},
-		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), http.Server{}), nil},
+		{
+			name:     "imposter directory not found",
+			server:   NewServer("failImposterPath", nil, http.Server{}),
+			errCheck: hasNotExistError(),
+		},
+		{
+			name:     "malformatted json",
+			server:   NewServer("test/testdata/malformatted_imposters", nil, http.Server{}),
+			errCheck: hasNoError(),
+		},
+		{
+			name:     "valid imposter",
+			server:   NewServer("test/testdata/imposters", mux.NewRouter(), http.Server{}),
+			errCheck: hasNoError(),
+		},
 	}
 
 	for _, tt := range serverData {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.server.Build()
-
-			if err == nil {
-				if tt.err != nil {
-					t.Fatalf("expected an error and got nil")
-				}
-			}
-
-			if err != nil {
-				if tt.err == nil {
-					t.Fatalf("not expected any erros and got %+v", err)
-				}
-			}
+			tt.errCheck(err, t)
 		})
 	}
 }

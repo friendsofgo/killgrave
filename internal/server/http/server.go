@@ -72,11 +72,7 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 // Build read all the files on the impostersPath and add different
 // handlers for each imposter
 func (s *Server) Build() error {
-	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
-		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
-	}
 	done := make(chan struct{})
-
 	imposterFiles, errc := findImposters(s.impostersPath, done)
 	go s.processImposters(imposterFiles, done)
 
