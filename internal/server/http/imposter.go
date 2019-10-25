@@ -18,6 +18,11 @@ type Imposter struct {
 	Response Response `json:"response"`
 }
 
+// GetDelay returns delay for response that user can specify in imposter config
+func (i *Imposter) GetDelay() time.Duration {
+	return i.Response.Delay.Delay()
+}
+
 // CalculateFilePath calculate file path based on basePath of imposter directory
 func (i *Imposter) CalculateFilePath(filePath string) string {
 	return path.Join(i.BasePath, filePath)
@@ -39,10 +44,6 @@ type Response struct {
 	BodyFile *string            `json:"bodyFile"`
 	Headers  *map[string]string `json:"headers"`
 	Delay    ResponseDelay      `json:"delay"`
-}
-
-func (r *Response) GetDelay() time.Duration {
-	return r.Delay.Delay()
 }
 
 func findImposters(impostersDirectory string, imposterFileCh chan string) error {
