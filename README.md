@@ -1,8 +1,3 @@
-[![CircleCI](https://circleci.com/gh/friendsofgo/killgrave/tree/master.svg?style=svg)](https://circleci.com/gh/friendsofgo/killgrave/tree/master)
-[![Version](https://img.shields.io/github/release/friendsofgo/killgrave.svg?style=flat-square)](https://github.com/friendsofgo/killgrave/releases/latest)
-[![codecov](https://codecov.io/gh/friendsofgo/killgrave/branch/master/graph/badge.svg)](https://codecov.io/gh/friendsofgo/killgrave)
-[![Go Report Card](https://goreportcard.com/badge/github.com/friendsofgo/killgrave)](https://goreportcard.com/report/github.com/friendsofgo/killgrave)
-[![FriendsOfGo](https://img.shields.io/badge/powered%20by-Friends%20of%20Go-73D7E2.svg)](https://friendsofgo.tech)
 
 </br>
 <a href="https://www.buymeacoffee.com/friendsofgo" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: 100px !important;" ></a>
@@ -242,6 +237,8 @@ curl --header "Content-Type: application/json" \
   http://localhost:3000/gophers
 ```
 
+
+
 ## CORS
 
 If you want to use `killgrave` on your client application you must consider to configure correctly all about CORS, thus we offer the possibility to configure as you need through a config file.
@@ -273,6 +270,21 @@ In the CORS section of the file you can find the next options:
 - **allow_credentials** (boolean)
   
   Represent the **Access-Control-Allow-Credentials header** you must indicate if true or false
+  
+## Imposter configuration file 
+Imposter file consists of JSON array of imposters. Each imposter can have two sections: `request` that describes request and `response`.
+
+### Request section
+
+### Response section
+Response section describes response that imposter server will send on matching request. Response can have next fields:
+
+#### delay
+Time that server waits before response. This can help simulate network issues, or server high load. You must write delay as string with postfix indicating time unit (see [this](https://golang.org/pkg/time/#ParseDuration) for more info about actual format). Also you can specify minimum and maximum delays using separator ':', server respond delay will be choosen at random between this values.
+```
+"delay": "1s:3m"
+```
+Default value is no delay at all.
 
 ## Features
 * Imposters created in json
@@ -292,6 +304,7 @@ In the CORS section of the file you can find the next options:
 * Allow write multiple imposters by file
 * Run mock server with predefined configuration with config yaml file
 * Configure your CORS server options
+* Simulate network issues and server high loads with imposter repsonse delay
 
 ## Next Features
 - [ ] Proxy server
