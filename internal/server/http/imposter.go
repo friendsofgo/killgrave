@@ -18,7 +18,7 @@ type Imposter struct {
 	Response Response `json:"response"`
 }
 
-// GetDelay returns delay for response that user can specify in imposter config
+// Delay returns delay for response that user can specify in imposter config
 func (i *Imposter) Delay() time.Duration {
 	return i.Response.Delay.Delay()
 }
