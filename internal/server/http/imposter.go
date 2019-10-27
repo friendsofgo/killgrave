@@ -19,7 +19,7 @@ type Imposter struct {
 }
 
 // GetDelay returns delay for response that user can specify in imposter config
-func (i *Imposter) GetDelay() time.Duration {
+func (i *Imposter) Delay() time.Duration {
 	return i.Response.Delay.Delay()
 }
 
