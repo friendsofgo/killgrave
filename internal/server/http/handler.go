@@ -11,9 +11,9 @@ import (
 // ImposterHandler create specific handler for the received imposter
 func ImposterHandler(imposter Imposter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-if imposter.Delay() > 0 {
-  time.Sleep(imposter.Delay()
-}
+		if imposter.Delay() > 0 {
+			time.Sleep(imposter.Delay())
+		}
 		writeHeaders(imposter, w)
 		w.WriteHeader(imposter.Response.Status)
 		writeBody(imposter, w)
