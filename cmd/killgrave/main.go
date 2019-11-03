@@ -9,12 +9,11 @@ import (
 	"os/signal"
 	"syscall"
 
+	killgrave "github.com/friendsofgo/killgrave/internal"
+	server "github.com/friendsofgo/killgrave/internal/server/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/radovskyb/watcher"
-
-	killgrave "github.com/friendsofgo/killgrave/internal"
-	server "github.com/friendsofgo/killgrave/internal/server/http"
 )
 
 var (
@@ -59,12 +58,11 @@ func main() {
 
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
-	var srv server.Server
-	srv = runServer(cfg.Host, cfg.Port, cfg)
+	srv := runServer(cfg.Host, cfg.Port, cfg)
 	srv.Run()
 
 	//Initialize and start the file watcher if the watcher option if true
-	w := runWatcher(*watcherFlag, cfg.ImpostersPath, &srv, cfg.Host, cfg.Port, cfg)
+	w := runWatcher(*watcherFlag, cfg.ImpostersPath, srv, cfg.Host, cfg.Port, cfg)
 
 	<-done
 	close(done)
@@ -89,13 +87,13 @@ func runWatcher(canWatch bool, pathToWatch string, currentSrv *server.Server, ho
 		if err := currentSrv.Shutdown(); err != nil {
 			log.Fatal(err)
 		}
-		*currentSrv = runServer(host, port, cfg)
+		currentSrv = runServer(host, port, cfg)
 		currentSrv.Run()
 	})
 	return w
 }
 
-func runServer(host string, port int, cfg killgrave.Config) server.Server {
+func runServer(host string, port int, cfg killgrave.Config) *server.Server {
 	router := mux.NewRouter()
 	httpAddr := fmt.Sprintf("%s:%d", host, port)
 
@@ -107,7 +105,7 @@ func runServer(host string, port int, cfg killgrave.Config) server.Server {
 	s := server.NewServer(
 		cfg.ImpostersPath,
 		router,
-		httpServer,
+		&httpServer,
 	)
 	if err := s.Build(); err != nil {
 		log.Fatal(err)

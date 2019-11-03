@@ -44,11 +44,12 @@ func findImposters(impostersDirectory string, done <-chan struct{}) (<-chan stri
 	errc := make(chan error, 1)
 	go func() {
 		defer close(imposterFiles)
+		defer close(errc)
 		errc <- filepath.Walk(impostersDirectory, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return fmt.Errorf("%w: error accsessing path %q", err, path)
 			}
-			if info.IsDir() || strings.HasSuffix(info.Name(), imposterExtension) {
+			if info.IsDir() || !strings.HasSuffix(info.Name(), imposterExtension) {
 				return nil
 			}
 			select {

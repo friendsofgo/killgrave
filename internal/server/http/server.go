@@ -3,12 +3,14 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/handlers"
@@ -19,6 +21,8 @@ var (
 	defaultCORSMethods        = []string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE", "PATCH", "TRACE", "CONNECT"}
 	defaultCORSHeaders        = []string{"X-Requested-With", "Content-Type", "Authorization"}
 	defaultCORSExposedHeaders = []string{"Cache-Control", "Content-Language", "Content-Type", "Expires", "Last-Modified", "Pragma"}
+
+	errMalformedFile = errors.New("imposter file is malformed")
 )
 
 // ServerOpt function that allow modify the current server
@@ -28,12 +32,12 @@ type ServerOpt func(s *Server)
 type Server struct {
 	impostersPath string
 	router        *mux.Router
-	httpServer    http.Server
+	httpServer    *http.Server
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router, httpServer http.Server) Server {
-	return Server{
+func NewServer(p string, r *mux.Router, httpServer *http.Server) *Server {
+	return &Server{
 		impostersPath: p,
 		router:        r,
 		httpServer:    httpServer,
@@ -73,31 +77,70 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 // handlers for each imposter
 func (s *Server) Build() error {
 	done := make(chan struct{})
-	imposterFiles, errc := findImposters(s.impostersPath, done)
-	go s.processImposters(imposterFiles, done)
+	defer close(done)
 
-	if err := <-errc; err != nil {
-		close(done)
-		return fmt.Errorf("%w: failed to find imposters", err)
+	var errs []<-chan error
+
+	imposterFiles, errc := findImposters(s.impostersPath, done)
+	errs = append(errs, errc)
+
+	errc = s.processImposters(imposterFiles, done)
+	errs = append(errs, errc)
+
+	return waitForBuild(errs)
+}
+
+func (s *Server) processImposters(imposterFiles <-chan string, done <-chan struct{}) <-chan error {
+	var imposters []Imposter
+	errc := make(chan error, 1)
+	go func() {
+		defer close(errc)
+		for f := range imposterFiles {
+			select {
+			case <-done:
+				return
+			default:
+				if err := s.unmarshalImposters(f, &imposters); err != nil {
+					errc <- fmt.Errorf("%w: error trying to load %s imposter: %v", errMalformedFile, f, err)
+					return
+				}
+				s.addImposterHandler(imposters, f)
+				log.Printf("imposter %s loaded\n", f)
+			}
+		}
+	}()
+	return errc
+}
+
+func waitForBuild(errs []<-chan error) error {
+	errc := mergeErrors(errs...)
+	for err := range errc {
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (s *Server) processImposters(imposterFiles <-chan string, done <-chan struct{}) {
-	var imposters []Imposter
-	for f := range imposterFiles {
-		select {
-		case <-done:
-			return
-		default:
-			if err := s.unmarshalImposters(f, &imposters); err != nil {
-				log.Printf("error trying to load %s imposter: %v", f, err)
-				continue
-			}
-			s.addImposterHandler(imposters, f)
-			log.Printf("imposter %s loaded\n", f)
+func mergeErrors(cs ...<-chan error) <-chan error {
+	var wg sync.WaitGroup
+	out := make(chan error, len(cs))
+	output := func(c <-chan error) {
+		for n := range c {
+			out <- n
 		}
+		wg.Done()
 	}
+	wg.Add(len(cs))
+	for _, c := range cs {
+		go output(c)
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
 }
 
 // Run run launch a previous configured http server if any error happens while the starting process

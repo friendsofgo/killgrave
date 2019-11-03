@@ -36,25 +36,33 @@ func TestServer_Build(t *testing.T) {
 			}
 		}
 	}
+	hasMalformedFileError := func() check {
+		return func(err error, t *testing.T) {
+			t.Helper()
+			if !errors.Is(err, errMalformedFile) {
+				t.Fatalf("expected to get malformed file error, got: %+v", err)
+			}
+		}
+	}
 
 	var serverData = []struct {
 		name     string
-		server   Server
+		server   *Server
 		errCheck check
 	}{
 		{
 			name:     "imposter directory not found",
-			server:   NewServer("failImposterPath", nil, http.Server{}),
+			server:   NewServer("failImposterPath", nil, &http.Server{}),
 			errCheck: hasNotExistError(),
 		},
 		{
 			name:     "malformatted json",
-			server:   NewServer("test/testdata/malformatted_imposters", nil, http.Server{}),
-			errCheck: hasNoError(),
+			server:   NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}),
+			errCheck: hasMalformedFileError(),
 		},
 		{
 			name:     "valid imposter",
-			server:   NewServer("test/testdata/imposters", mux.NewRouter(), http.Server{}),
+			server:   NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}),
 			errCheck: hasNoError(),
 		},
 	}
