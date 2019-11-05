@@ -1,7 +1,6 @@
 package killgrave
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -35,7 +34,7 @@ type ConfigProxy struct {
 }
 
 // ProxyMode is enumeration of proxy server modes
-type ProxyMode int
+type ProxyMode uint8
 
 const (
 	// ProxyNone server is off
@@ -46,22 +45,34 @@ const (
 	ProxyAll
 )
 
+func proxyModeParseString(t string) (ProxyMode, error) {
+	m := map[string]ProxyMode{
+		"none":    ProxyNone,
+		"missing": ProxyMissing,
+		"all":     ProxyAll,
+	}
+
+	p, ok := m[t]
+	if !ok {
+		return ProxyNone, fmt.Errorf("unknown proxy mode: %s", t)
+	}
+
+	return p, nil
+}
+
 // UnmarshalYAML implementation of yaml.Unmarshaler interface
 func (mode *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var textMode string
-	if err := unmarshal(&textMode); err != nil {
+	var proxyMode string
+	if err := unmarshal(&proxyMode); err != nil {
 		return err
 	}
-	switch textMode {
-	case "all":
-		*mode = ProxyAll
-	case "missing":
-		*mode = ProxyMissing
-	case "none":
-		*mode = ProxyNone
-	default:
-		return errors.New("unknown proxy mode: " + textMode)
+
+	m, err := proxyModeParseString(proxyMode)
+	if err != nil {
+		return err
 	}
+
+	*mode = m
 	return nil
 }
 

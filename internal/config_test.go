@@ -37,6 +37,32 @@ func TestNewConfig(t *testing.T) {
 	}
 }
 
+func TestProxyModeParseString(t *testing.T) {
+	testCases := map[string]struct {
+		input    string
+		expected ProxyMode
+		err      error
+	}{
+		"valid mode":   {"all", ProxyAll, nil},
+		"unknown mode": {"UnKnOwn1", ProxyNone, errors.New("error")},
+	}
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			mode, err := proxyModeParseString(tc.input)
+
+			if err != nil && tc.err == nil {
+				t.Fatalf("not expected any erros and got %v", err)
+			}
+			if err == nil && tc.err != nil {
+				t.Fatalf("expected an error and got nil")
+			}
+			if tc.expected != mode {
+				t.Fatalf("expected: %v, got: %v", tc.expected, mode)
+			}
+		})
+	}
+}
+
 func TestProxyModeUnmarshal(t *testing.T) {
 	testCases := map[string]struct {
 		input    interface{}
