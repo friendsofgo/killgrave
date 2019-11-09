@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const imposterExtension = ".imp.json"
@@ -15,6 +16,11 @@ type Imposter struct {
 	BasePath string
 	Request  Request  `json:"request"`
 	Response Response `json:"response"`
+}
+
+// Delay returns delay for response that user can specify in imposter config
+func (i *Imposter) Delay() time.Duration {
+	return i.Response.Delay.Delay()
 }
 
 // CalculateFilePath calculate file path based on basePath of imposter directory
@@ -37,6 +43,7 @@ type Response struct {
 	Body     string             `json:"body"`
 	BodyFile *string            `json:"bodyFile"`
 	Headers  *map[string]string `json:"headers"`
+	Delay    ResponseDelay      `json:"delay"`
 }
 
 func findImposters(impostersDirectory string, imposterFileCh chan string) error {
