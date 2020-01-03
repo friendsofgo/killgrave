@@ -48,7 +48,7 @@ func TestProxyModeParseString(t *testing.T) {
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			mode, err := proxyModeParseString(tc.input)
+			mode, err := StringToProxyMode(tc.input)
 
 			if err != nil && tc.err == nil {
 				t.Fatalf("not expected any erros and got %v", err)

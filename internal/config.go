@@ -45,7 +45,22 @@ const (
 	ProxyAll
 )
 
-func proxyModeParseString(t string) (ProxyMode, error) {
+func (p ProxyMode) String() string {
+	m := map[ProxyMode]string{
+		ProxyNone:    "none",
+		ProxyMissing: "missing",
+		ProxyAll:     "all",
+	}
+
+	s, ok := m[p]
+	if !ok {
+		return "none"
+	}
+	return s
+}
+
+// StringToProxyMode convert string into a proxyMode if not exists return a none mode and an error
+func StringToProxyMode(t string) (ProxyMode, error) {
 	m := map[string]ProxyMode{
 		"none":    ProxyNone,
 		"missing": ProxyMissing,
@@ -61,18 +76,18 @@ func proxyModeParseString(t string) (ProxyMode, error) {
 }
 
 // UnmarshalYAML implementation of yaml.Unmarshaler interface
-func (mode *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (p *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var proxyMode string
 	if err := unmarshal(&proxyMode); err != nil {
 		return err
 	}
 
-	m, err := proxyModeParseString(proxyMode)
+	m, err := StringToProxyMode(proxyMode)
 	if err != nil {
 		return err
 	}
 
-	*mode = m
+	*p = m
 	return nil
 }
 
@@ -115,6 +130,17 @@ func WithConfigFile(cfgPath string) ConfigOpt {
 		}
 
 		cfg.ImpostersPath = path.Join(path.Dir(cfgPath), cfg.ImpostersPath)
+
+		return nil
+	}
+}
+
+// WithProxyConfiguration preparing the server with the proxy configuration that the user has indicated
+func WithProxyConfiguration(proxyMode, proxyURL string) ConfigOpt {
+	return func(cfg *Config) error {
+		mode, _ := StringToProxyMode(proxyMode)
+		cfg.Proxy.Mode = mode
+		cfg.Proxy.Url = proxyURL
 
 		return nil
 	}
