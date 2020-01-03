@@ -8,6 +8,7 @@
 * Add `-watcher` flag to reload the server with any changes on `imposters` folder
 * Fix searching imposter files mechanism
 * Add proxy server feature
+* Allow to add latency to responses
 
 ## v0.3.3 (2019/05/11)
 

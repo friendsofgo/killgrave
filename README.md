@@ -118,6 +118,10 @@ However, since last versions, they are no longer needed, so you can simply overr
 Furthermore the `imposters_path` option in previous version towards reference to the path where the app was launched, but
 in the last version the `imposters_path` option is relative on where the config file is.
 
+The `delay` option is a time that server waits before response. This can help simulate network issues, or server high load. You must write delay as string with postfix indicating time unit (see [this](https://golang.org/pkg/time/#ParseDuration) for more info about actual format). Also you can specify minimum and maximum delays using separator ':', server respond delay will be choosen at random between this values.
+
+Default value is no delay at all.
+
 The option `cors` still being optional and his options can be an empty array,
 
 If you want more information about the CORS options, visit the [CORS section](#CORS).
@@ -149,7 +153,8 @@ imposters/create_gopher.imp.json
             "headers": {
                 "Content-Type": "application/json"
             },
-            "body": "{\"error\": \"Server error ocurred\"}"
+            "body": "{\"error\": \"Server error ocurred\"}",
+            "delay": "1s:5s"
         }
     },
     {
@@ -309,6 +314,7 @@ The `proxy-url` must be the root path. For example if we have endpoint api like,
 * Allow write multiple imposters by file
 * Run mock server with predefined configuration with config yaml file
 * Configure your CORS server options
+* Simulate network issues and server high loads with imposter repsonse delay
 * Proxy server
 
 ## Next Features
