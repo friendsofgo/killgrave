@@ -20,7 +20,7 @@ func TestNewConfig(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, err := NewConfig("", "", 0, WithConfigFile(tc.input))
+			got, err := NewConfig("", "", 0, WithProxyConfiguration(ProxyNone.String(), ""), WithConfigFile(tc.input))
 
 			if err != nil && tc.err == nil {
 				t.Fatalf("not expected any erros and got %v", err)
@@ -114,5 +114,41 @@ func validConfig() Config {
 			ExposedHeaders:   []string{"Cache-Control"},
 			AllowCredentials: true,
 		},
+	}
+}
+
+func TestProxyMode_String(t *testing.T) {
+	tests := []struct {
+		name string
+		p    ProxyMode
+		want string
+	}{
+		{
+			"ProxyNone must be return none string",
+			ProxyNone,
+			"none",
+		},
+		{
+			"ProxyNone must be return missing string",
+			ProxyMissing,
+			"missing",
+		},
+		{
+			"ProxyNone must be return all string",
+			ProxyAll,
+			"all",
+		},
+		{
+			"An invalid mode must return none string",
+			ProxyMode(33),
+			"none",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.p.String(); got != tt.want {
+				t.Errorf("String() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
