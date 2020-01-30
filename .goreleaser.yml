@@ -39,13 +39,14 @@ archives:
       - README.md
       - CHANGELOG.md
 brews:
-  name: killgrave
-  github:
-    owner: friendsofgo
-    name: homebrew-tap    
-  folder: Formula  
-  description: |
-    Simple way to generate fake servers
+  -
+    name: killgrave
+    github:
+      owner: friendsofgo
+      name: homebrew-tap
+    folder: Formula
+    description: |
+      Simple way to generate fake servers
 checksum:
   name_template: 'checksums.txt'
 changelog:
