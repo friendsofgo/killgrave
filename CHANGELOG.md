@@ -1,12 +1,13 @@
 # Changelog
 
-## v0.4.0 (TBD)
+## v0.4.0 (2020/01/30)
 * The config file option load the imposters path relative on where the config file is
 * Upgrade Killgrave to go1.13
 * Remove use of github.com/pkg/errors in favor to standard errors package
 * Remove backward compatibility with previous versions to go 1.13
 * Add `-watcher` flag to reload the server with any changes on `imposters` folder
 * Fix searching imposter files mechanism
+* Add proxy server feature
 * Allow to add latency to responses
 
 ## v0.3.3 (2019/05/11)

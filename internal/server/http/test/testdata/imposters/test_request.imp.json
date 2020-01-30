@@ -1,0 +1,12 @@
+[
+    {
+        "request": {
+            "method": "GET",
+            "endpoint": "/testRequest"
+        },
+        "response": {
+            "status": 200,
+            "body": "Handled"
+        }
+    }
+]

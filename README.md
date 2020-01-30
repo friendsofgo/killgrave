@@ -73,16 +73,22 @@ $ killgrave
 ```
 Or custome your server with this flags:
 ```sh
- -config string
+  -config string
         path with configuration file
- -host string
+  -host string
         if you run your server on a different host (default "localhost")
- -imposters string
-        directory where your imposter are saved (default "imposters")
- -port int
-        por to run the server (default 3000)
- -version
-        show the version of the application
+  -imposters string
+        directory where your imposters are saved (default "imposters")
+  -port int
+        port to run the server (default 3000)
+  -proxy-mode string
+        proxy mode you can choose between (all, missing or none) (default "none")
+  -proxy-url string
+        proxy url, you need to choose a proxy-mode
+  -version
+        show the _version of the application
+  -watcher
+        file watcher, reload the server with each file change
 ```
 
 Use `killgrave` with config file:
@@ -95,6 +101,9 @@ First of all you need create a file with a valid config, i.e:
 imposters_path: "imposters"
 port: 3000
 host: "localhost"
+proxy:
+  url: https://example.com
+  mode: missing
 cors:
   methods: ["GET"]
   headers: ["Content-Type"]
@@ -278,6 +287,14 @@ In the CORS section of the file you can find the next options:
 - **allow_credentials** (boolean)
   
   Represent the **Access-Control-Allow-Credentials header** you must indicate if true or false
+  
+## Proxy
+You can use Killgrave with a proxy mode, what it does mean that you can use the flags `proxy-mode` and `proxy-url` or the configuration file to declare one of these three modes:
+* none: by default mode, with this mode you don't use any proxy, and the mock server always will looks into the files with `.imp.json` extension.
+* missing: with this mode, the mock server will looks into the files with `.imp.json` extension but if you call to an endpoint that doesn't exist then the mock server will call to the real server, declared on the `proxy-url` configuration variable.
+* all: the mock server only will call to the real server, declared on the `proxy-url` configuration variable.
+
+The `proxy-url` must be the root path. For example if we have endpoint api like, `http://example.com/things`, the `proxy-url` will be, `http://example.com`
 
 ## Features
 * Imposters created in json
@@ -298,9 +315,9 @@ In the CORS section of the file you can find the next options:
 * Run mock server with predefined configuration with config yaml file
 * Configure your CORS server options
 * Simulate network issues and server high loads with imposter repsonse delay
+* Proxy server
 
 ## Next Features
-- [ ] Proxy server
 - [ ] Record proxy server
 - [ ] Better documentation with examples of each feature
 - [ ] Validate request body XML

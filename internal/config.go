@@ -11,10 +11,11 @@ import (
 
 // Config representation of config file yaml
 type Config struct {
-	ImpostersPath string     `yaml:"imposters_path"`
-	Port          int        `yaml:"port"`
-	Host          string     `yaml:"host"`
-	CORS          ConfigCORS `yaml:"cors"`
+	ImpostersPath string      `yaml:"imposters_path"`
+	Port          int         `yaml:"port"`
+	Host          string      `yaml:"host"`
+	CORS          ConfigCORS  `yaml:"cors"`
+	Proxy         ConfigProxy `yaml:"proxy"`
 }
 
 // ConfigCORS representation of section CORS of the yaml
@@ -24,6 +25,70 @@ type ConfigCORS struct {
 	Origins          []string `yaml:"origins"`
 	ExposedHeaders   []string `yaml:"exposed_headers"`
 	AllowCredentials bool     `yaml:"allow_credentials"`
+}
+
+// ConfigProxy is a representation of section proxy of the yaml
+type ConfigProxy struct {
+	Url  string    `yaml:"url"`
+	Mode ProxyMode `yaml:"mode"`
+}
+
+// ProxyMode is enumeration of proxy server modes
+type ProxyMode uint8
+
+const (
+	// ProxyNone server is off
+	ProxyNone ProxyMode = iota
+	// ProxyMissing handle only missing requests are proxied
+	ProxyMissing
+	// ProxyAll all requests are proxied
+	ProxyAll
+)
+
+func (p ProxyMode) String() string {
+	m := map[ProxyMode]string{
+		ProxyNone:    "none",
+		ProxyMissing: "missing",
+		ProxyAll:     "all",
+	}
+
+	s, ok := m[p]
+	if !ok {
+		return "none"
+	}
+	return s
+}
+
+// StringToProxyMode convert string into a ProxyMode if not exists return a none mode and an error
+func StringToProxyMode(t string) (ProxyMode, error) {
+	m := map[string]ProxyMode{
+		"none":    ProxyNone,
+		"missing": ProxyMissing,
+		"all":     ProxyAll,
+	}
+
+	p, ok := m[t]
+	if !ok {
+		return ProxyNone, fmt.Errorf("unknown proxy mode: %s", t)
+	}
+
+	return p, nil
+}
+
+// UnmarshalYAML implementation of yaml.Unmarshaler interface
+func (p *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var proxyMode string
+	if err := unmarshal(&proxyMode); err != nil {
+		return err
+	}
+
+	m, err := StringToProxyMode(proxyMode)
+	if err != nil {
+		return err
+	}
+
+	*p = m
+	return nil
 }
 
 // ConfigOpt function to encapsulate optional parameters
@@ -65,6 +130,17 @@ func WithConfigFile(cfgPath string) ConfigOpt {
 		}
 
 		cfg.ImpostersPath = path.Join(path.Dir(cfgPath), cfg.ImpostersPath)
+
+		return nil
+	}
+}
+
+// WithProxyConfiguration preparing the server with the proxy configuration that the user has indicated
+func WithProxyConfiguration(proxyMode, proxyURL string) ConfigOpt {
+	return func(cfg *Config) error {
+		mode, _ := StringToProxyMode(proxyMode)
+		cfg.Proxy.Mode = mode
+		cfg.Proxy.Url = proxyURL
 
 		return nil
 	}

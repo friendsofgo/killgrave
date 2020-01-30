@@ -27,6 +27,7 @@ const (
 	_defaultPort          = 3000
 	_defaultImpostersPath = "imposters"
 	_defaultConfigFile    = ""
+	_defaultProxyMode     = killgrave.ProxyNone
 )
 
 func main() {
@@ -37,6 +38,8 @@ func main() {
 		showVersion    = flag.Bool("version", false, "show the _version of the application")
 		configFilePath = flag.String("config", _defaultConfigFile, "path with configuration file")
 		watcherFlag    = flag.Bool("watcher", false, "file watcher, reload the server with each file change")
+		proxyModeFlag  = flag.String("proxy-mode", _defaultProxyMode.String(), "proxy mode you can choose between (all, missing or none)")
+		proxyURLFlag   = flag.String("proxy-url", "", "proxy url, you need to choose a proxy-mode")
 	)
 	flag.Parse()
 
@@ -45,10 +48,12 @@ func main() {
 		return
 	}
 
+	// The config file is mandatory over the flag options
 	cfg, err := killgrave.NewConfig(
 		*imposters,
 		*host,
 		*port,
+		killgrave.WithProxyConfiguration(*proxyModeFlag, *proxyURLFlag),
 		killgrave.WithConfigFile(*configFilePath),
 	)
 	if err != nil {
@@ -63,7 +68,7 @@ func main() {
 	srv = runServer(cfg.Host, cfg.Port, cfg)
 	srv.Run()
 
-	//Initialize and start the file watcher if the watcher option if true
+	// Initialize and start the file watcher if the watcher option is true
 	w := runWatcher(*watcherFlag, cfg.ImpostersPath, &srv, cfg.Host, cfg.Port, cfg)
 
 	<-done
@@ -104,10 +109,16 @@ func runServer(host string, port int, cfg killgrave.Config) server.Server {
 		Handler: handlers.CORS(server.PrepareAccessControl(cfg.CORS)...)(router),
 	}
 
+	proxyServer, err := server.NewProxy(cfg.Proxy.Url, cfg.Proxy.Mode)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	s := server.NewServer(
 		cfg.ImpostersPath,
 		router,
 		httpServer,
+		proxyServer,
 	)
 	if err := s.Build(); err != nil {
 		log.Fatal(err)
