@@ -38,7 +38,7 @@ archives:
       - LICENSE
       - README.md
       - CHANGELOG.md
-brew:
+brews:
   name: killgrave
   github:
     owner: friendsofgo
