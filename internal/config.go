@@ -59,7 +59,7 @@ func (p ProxyMode) String() string {
 	return s
 }
 
-// StringToProxyMode convert string into a proxyMode if not exists return a none mode and an error
+// StringToProxyMode convert string into a ProxyMode if not exists return a none mode and an error
 func StringToProxyMode(t string) (ProxyMode, error) {
 	m := map[string]ProxyMode{
 		"none":    ProxyNone,

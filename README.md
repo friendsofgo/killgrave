@@ -289,10 +289,10 @@ In the CORS section of the file you can find the next options:
   Represent the **Access-Control-Allow-Credentials header** you must indicate if true or false
   
 ## Proxy
-You can use Killgrave with a proxy mode, what does that mean, well you can use the flags `proxy-mode` and `proxy-url` or the configuration file to declare one of these three modes:
-* none: by default mode, with this mode you don't use any proxy, and the mock server always will looks into the files with `.imp.json` extensions.
-* missing: with this mode, the mock server will looks into the files with `.imp.json` extensions but if you call to an endpoint that doesn't exists then the mock server will call to the real server, declaring on the `proxy-url`.
-* all: the mock server only will call to the real server, declaring on the `proxy-url`.
+You can use Killgrave with a proxy mode, what it does mean that you can use the flags `proxy-mode` and `proxy-url` or the configuration file to declare one of these three modes:
+* none: by default mode, with this mode you don't use any proxy, and the mock server always will looks into the files with `.imp.json` extension.
+* missing: with this mode, the mock server will looks into the files with `.imp.json` extension but if you call to an endpoint that doesn't exist then the mock server will call to the real server, declared on the `proxy-url` configuration variable.
+* all: the mock server only will call to the real server, declared on the `proxy-url` configuration variable.
 
 The `proxy-url` must be the root path. For example if we have endpoint api like, `http://example.com/things`, the `proxy-url` will be, `http://example.com`
 

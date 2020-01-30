@@ -68,7 +68,7 @@ func main() {
 	srv = runServer(cfg.Host, cfg.Port, cfg)
 	srv.Run()
 
-	// Initialize and start the file watcher if the watcher option if true
+	// Initialize and start the file watcher if the watcher option is true
 	w := runWatcher(*watcherFlag, cfg.ImpostersPath, &srv, cfg.Host, cfg.Port, cfg)
 
 	<-done
