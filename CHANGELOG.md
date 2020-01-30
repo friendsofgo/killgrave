@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.4.0 (TBD)
+## v0.4.0 (2020/01/30)
 * The config file option load the imposters path relative on where the config file is
 * Upgrade Killgrave to go1.13
 * Remove use of github.com/pkg/errors in favor to standard errors package
