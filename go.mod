@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gorilla/handlers v1.4.2
-	github.com/gorilla/mux v1.7.3
+	github.com/gorilla/mux v1.7.4
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/radovskyb/watcher v1.0.7
 	github.com/stretchr/testify v1.4.0 // indirect
