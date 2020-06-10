@@ -1,4 +1,4 @@
-imposters_path: "imposters"
+impostors_path: "impostors"
 port: 3000
 host: "localhost"
 cors:

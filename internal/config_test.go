@@ -104,7 +104,7 @@ func TestProxyModeUnmarshal(t *testing.T) {
 
 func validConfig() Config {
 	return Config{
-		ImpostersPath: "test/testdata/imposters",
+		ImpostorsPath: "test/testdata/impostors",
 		Port:          3000,
 		Host:          "localhost",
 		CORS: ConfigCORS{

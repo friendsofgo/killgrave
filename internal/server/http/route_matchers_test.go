@@ -16,9 +16,9 @@ func TestMatcherBySchema(t *testing.T) {
 	emptyBody := ioutil.NopCloser(bytes.NewReader([]byte("")))
 	wrongBody := ioutil.NopCloser(errReader(0))
 
-	schemaGopherFile := "test/testdata/imposters/schemas/type_gopher.json"
-	schemaCatFile := "test/testdata/imposters/schemas/type_cat.json"
-	schemeFailFile := "test/testdata/imposters/schemas/type_gopher_fail.json"
+	schemaGopherFile := "test/testdata/impostors/schemas/type_gopher.json"
+	schemaCatFile := "test/testdata/impostors/schemas/type_cat.json"
+	schemeFailFile := "test/testdata/impostors/schemas/type_gopher_fail.json"
 
 	requestWithoutSchema := Request{
 		Method:     "POST",
@@ -53,13 +53,13 @@ func TestMatcherBySchema(t *testing.T) {
 		req *http.Request
 		res bool
 	}{
-		"correct request schema":               {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestA, true},
-		"imposter without request schema":      {MatcherBySchema(Imposter{Request: requestWithoutSchema, Response: okResponse}), httpRequestA, true},
-		"malformatted schema file":             {MatcherBySchema(Imposter{Request: requestWithWrongSchema, Response: okResponse}), httpRequestA, false},
-		"incorrect request schema":             {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestB, false},
-		"non-existing schema file":             {MatcherBySchema(Imposter{Request: requestWithNonExistingSchema, Response: okResponse}), httpRequestB, false},
-		"empty body with required schema file": {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: emptyBody}, false},
-		"invalid request body":                 {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: wrongBody}, false},
+		"correct request schema":               {MatcherBySchema(Impostor{Request: requestWithSchema, Response: okResponse}), httpRequestA, true},
+		"imposter without request schema":      {MatcherBySchema(Impostor{Request: requestWithoutSchema, Response: okResponse}), httpRequestA, true},
+		"malformatted schema file":             {MatcherBySchema(Impostor{Request: requestWithWrongSchema, Response: okResponse}), httpRequestA, false},
+		"incorrect request schema":             {MatcherBySchema(Impostor{Request: requestWithSchema, Response: okResponse}), httpRequestB, false},
+		"non-existing schema file":             {MatcherBySchema(Impostor{Request: requestWithNonExistingSchema, Response: okResponse}), httpRequestB, false},
+		"empty body with required schema file": {MatcherBySchema(Impostor{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: emptyBody}, false},
+		"invalid request body":                 {MatcherBySchema(Impostor{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: wrongBody}, false},
 	}
 
 	for name, tt := range matcherData {

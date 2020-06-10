@@ -11,20 +11,20 @@ import (
 
 const imposterExtension = ".imp.json"
 
-// Imposter define an imposter structure
-type Imposter struct {
+// Impostor define an imposter structure
+type Impostor struct {
 	BasePath string
 	Request  Request  `json:"request"`
 	Response Response `json:"response"`
 }
 
 // Delay returns delay for response that user can specify in imposter config
-func (i *Imposter) Delay() time.Duration {
+func (i *Impostor) Delay() time.Duration {
 	return i.Response.Delay.Delay()
 }
 
 // CalculateFilePath calculate file path based on basePath of imposter directory
-func (i *Imposter) CalculateFilePath(filePath string) string {
+func (i *Impostor) CalculateFilePath(filePath string) string {
 	return path.Join(i.BasePath, filePath)
 }
 
@@ -46,10 +46,10 @@ type Response struct {
 	Delay    ResponseDelay      `json:"delay"`
 }
 
-func findImposters(impostersDirectory string, imposterFileCh chan string) error {
-	err := filepath.Walk(impostersDirectory, func(path string, info os.FileInfo, err error) error {
+func findImposters(impostorsDirectory string, imposterFileCh chan string) error {
+	err := filepath.Walk(impostorsDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return fmt.Errorf("%w: error finding imposters", err)
+			return fmt.Errorf("%w: error finding impostors", err)
 		}
 		if !info.IsDir() && strings.HasSuffix(info.Name(), imposterExtension) {
 			imposterFileCh <- path

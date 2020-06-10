@@ -14,7 +14,7 @@ import (
 )
 
 // MatcherBySchema check if the request matching with the schema file
-func MatcherBySchema(imposter Imposter) mux.MatcherFunc {
+func MatcherBySchema(imposter Impostor) mux.MatcherFunc {
 	return func(req *http.Request, rm *mux.RouteMatch) bool {
 		err := validateSchema(imposter, req)
 
@@ -27,7 +27,7 @@ func MatcherBySchema(imposter Imposter) mux.MatcherFunc {
 	}
 }
 
-func validateSchema(imposter Imposter, req *http.Request) error {
+func validateSchema(imposter Impostor, req *http.Request) error {
 	if imposter.Request.SchemaFile == nil {
 		return nil
 	}

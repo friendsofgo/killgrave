@@ -25,7 +25,7 @@ var (
 const (
 	_defaultHost          = "localhost"
 	_defaultPort          = 3000
-	_defaultImpostersPath = "imposters"
+	_defaultImpostersPath = "impostors"
 	_defaultConfigFile    = ""
 	_defaultProxyMode     = killgrave.ProxyNone
 )
@@ -34,7 +34,7 @@ func main() {
 	var (
 		host           = flag.String("host", _defaultHost, "if you run your server on a different host")
 		port           = flag.Int("port", _defaultPort, "port to run the server")
-		imposters      = flag.String("imposters", _defaultImpostersPath, "directory where your imposters are saved")
+		impostors      = flag.String("impostors", _defaultImpostersPath, "directory where your impostors are saved")
 		showVersion    = flag.Bool("version", false, "show the _version of the application")
 		configFilePath = flag.String("config", _defaultConfigFile, "path with configuration file")
 		watcherFlag    = flag.Bool("watcher", false, "file watcher, reload the server with each file change")
@@ -50,7 +50,7 @@ func main() {
 
 	// The config file is mandatory over the flag options
 	cfg, err := killgrave.NewConfig(
-		*imposters,
+		*impostors,
 		*host,
 		*port,
 		killgrave.WithProxyConfiguration(*proxyModeFlag, *proxyURLFlag),

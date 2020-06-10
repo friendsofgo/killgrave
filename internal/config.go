@@ -11,7 +11,7 @@ import (
 
 // Config representation of config file yaml
 type Config struct {
-	ImpostersPath string      `yaml:"imposters_path"`
+	ImpostorsPath string      `yaml:"impostors_path"`
 	Port          int         `yaml:"port"`
 	Host          string      `yaml:"host"`
 	CORS          ConfigCORS  `yaml:"cors"`
@@ -86,7 +86,6 @@ func (p *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-
 	*p = m
 	return nil
 }
@@ -95,9 +94,9 @@ func (p *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
 type ConfigOpt func(cfg *Config) error
 
 // NewConfig initialize the config
-func NewConfig(impostersPath, host string, port int, opts ...ConfigOpt) (Config, error) {
+func NewConfig(impostorsPath, host string, port int, opts ...ConfigOpt) (Config, error) {
 	cfg := Config{
-		ImpostersPath: impostersPath,
+		ImpostorsPath: impostorsPath,
 		Host:          host,
 		Port:          port,
 	}
@@ -129,7 +128,7 @@ func WithConfigFile(cfgPath string) ConfigOpt {
 			return fmt.Errorf("%w: error while unmarshall configFile file %s, using default configuration instead", err, cfgPath)
 		}
 
-		cfg.ImpostersPath = path.Join(path.Dir(cfgPath), cfg.ImpostersPath)
+		cfg.ImpostorsPath = path.Join(path.Dir(cfgPath), cfg.ImpostorsPath)
 
 		return nil
 	}

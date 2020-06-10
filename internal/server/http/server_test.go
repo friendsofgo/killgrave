@@ -26,9 +26,9 @@ func TestServer_Build(t *testing.T) {
 		server Server
 		err    error
 	}{
-		{"imposter directory not found", NewServer("failImposterPath", nil, http.Server{}, &Proxy{}), errors.New("hello")},
-		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, http.Server{}, &Proxy{}), nil},
-		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), http.Server{}, &Proxy{}), nil},
+		{"imposter directory not found", NewServer("failImpostorPath", nil, http.Server{}, &Proxy{}), errors.New("hello")},
+		{"malformatted json", NewServer("test/testdata/malformatted_impostors", nil, http.Server{}, &Proxy{}), nil},
+		{"valid imposter", NewServer("test/testdata/impostors", mux.NewRouter(), http.Server{}, &Proxy{}), nil},
 	}
 
 	for _, tt := range serverData {
@@ -62,7 +62,7 @@ func TestBuildProxyMode(t *testing.T) {
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
 		}
-		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer)
+		server := NewServer("test/testdata/impostors", router, httpServer, proxyServer)
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -129,7 +129,7 @@ func TestBuildProxyMode(t *testing.T) {
 
 func TestServer_AccessControl(t *testing.T) {
 	config := killgrave.Config{
-		ImpostersPath: "imposters",
+		ImpostorsPath: "impostors",
 		Port:          3000,
 		Host:          "localhost",
 		CORS: killgrave.ConfigCORS{

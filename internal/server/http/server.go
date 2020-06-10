@@ -27,7 +27,7 @@ type ServerOpt func(s *Server)
 
 // Server definition of mock server
 type Server struct {
-	impostersPath string
+	impostorsPath string
 	router        *mux.Router
 	httpServer    http.Server
 	proxy         *Proxy
@@ -36,7 +36,7 @@ type Server struct {
 // NewServer initialize the mock server
 func NewServer(p string, r *mux.Router, httpServer http.Server, proxyServer *Proxy) Server {
 	return Server{
-		impostersPath: p,
+		impostorsPath: p,
 		router:        r,
 		httpServer:    httpServer,
 		proxy:         proxyServer,
@@ -72,36 +72,36 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 	return
 }
 
-// Build read all the files on the impostersPath and add different
+// Build read all the files on the impostorsPath and add different
 // handlers for each imposter
 func (s *Server) Build() error {
 	if s.proxy.mode == killgrave.ProxyAll {
 		s.handleAll(s.proxy.Handler())
 	}
-	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
-		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
+	if _, err := os.Stat(s.impostorsPath); os.IsNotExist(err) {
+		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostorsPath)
 	}
-	var imposterFileCh = make(chan string)
+	var impostorFileCh = make(chan string)
 	var done = make(chan bool)
 
 	go func() {
-		findImposters(s.impostersPath, imposterFileCh)
+		findImposters(s.impostorsPath, impostorFileCh)
 		done <- true
 	}()
 loop:
 	for {
 		select {
-		case f := <-imposterFileCh:
-			var imposters []Imposter
-			err := s.unmarshalImposters(f, &imposters)
+		case f := <-impostorFileCh:
+			var impostors []Impostor
+			err := s.unmarshalImposters(f, &impostors)
 			if err != nil {
 				log.Printf("error trying to load %s imposter: %v", f, err)
 			} else {
-				s.addImposterHandler(imposters, f)
+				s.addImposterHandler(impostors, f)
 				log.Printf("imposter %s loaded\n", f)
 			}
 		case <-done:
-			close(imposterFileCh)
+			close(impostorFileCh)
 			close(done)
 			break loop
 		}
@@ -134,8 +134,8 @@ func (s *Server) Shutdown() error {
 	return nil
 }
 
-func (s *Server) addImposterHandler(imposters []Imposter, imposterFilePath string) {
-	for _, imposter := range imposters {
+func (s *Server) addImposterHandler(impostors []Impostor, imposterFilePath string) {
+	for _, imposter := range impostors {
 		imposter.BasePath = filepath.Dir(imposterFilePath)
 		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
 			Methods(imposter.Request.Method).
@@ -155,12 +155,12 @@ func (s *Server) addImposterHandler(imposters []Imposter, imposterFilePath strin
 	}
 }
 
-func (s Server) unmarshalImposters(imposterFileName string, imposters *[]Imposter) error {
+func (s Server) unmarshalImposters(imposterFileName string, impostors *[]Impostor) error {
 	imposterFile, _ := os.Open(imposterFileName)
 	defer imposterFile.Close()
 
 	bytes, _ := ioutil.ReadAll(imposterFile)
-	if err := json.Unmarshal(bytes, imposters); err != nil {
+	if err := json.Unmarshal(bytes, impostors); err != nil {
 		return fmt.Errorf("%w: error while unmarshall imposter file %s", err, imposterFileName)
 	}
 	return nil

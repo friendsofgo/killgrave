@@ -9,7 +9,7 @@ import (
 )
 
 // ImposterHandler create specific handler for the received imposter
-func ImposterHandler(imposter Imposter) http.HandlerFunc {
+func ImposterHandler(imposter Impostor) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if imposter.Delay() > 0 {
 			time.Sleep(imposter.Delay())
@@ -20,7 +20,7 @@ func ImposterHandler(imposter Imposter) http.HandlerFunc {
 	}
 }
 
-func writeHeaders(imposter Imposter, w http.ResponseWriter) {
+func writeHeaders(imposter Impostor, w http.ResponseWriter) {
 	if imposter.Response.Headers == nil {
 		return
 	}
@@ -30,7 +30,7 @@ func writeHeaders(imposter Imposter, w http.ResponseWriter) {
 	}
 }
 
-func writeBody(imposter Imposter, w http.ResponseWriter) {
+func writeBody(imposter Impostor, w http.ResponseWriter) {
 	wb := []byte(imposter.Response.Body)
 
 	if imposter.Response.BodyFile != nil {

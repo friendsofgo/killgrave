@@ -23,9 +23,9 @@ func TestImposterHandler(t *testing.T) {
 	var headers = make(map[string]string)
 	headers["Content-Type"] = "application/json"
 
-	schemaFile := "test/testdata/imposters/schemas/create_gopher_request.json"
-	bodyFile := "test/testdata/imposters/responses/create_gopher_response.json"
-	bodyFileFake := "test/testdata/imposters/responses/create_gopher_response_fail.json"
+	schemaFile := "test/testdata/impostors/schemas/create_gopher_request.json"
+	bodyFile := "test/testdata/impostors/responses/create_gopher_response.json"
+	bodyFileFake := "test/testdata/impostors/responses/create_gopher_response_fail.json"
 	body := `{"test":true}`
 
 	validRequest := Request{
@@ -41,13 +41,13 @@ func TestImposterHandler(t *testing.T) {
 
 	var dataTest = []struct {
 		name         string
-		imposter     Imposter
+		imposter     Impostor
 		expectedBody string
 		statusCode   int
 	}{
-		{"valid imposter with body", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, Body: body}}, body, http.StatusOK},
-		{"valid imposter with bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFile}}, string(expectedBodyFileData), http.StatusOK},
-		{"valid imposter with not exists bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFileFake}}, "", http.StatusOK},
+		{"valid imposter with body", Impostor{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, Body: body}}, body, http.StatusOK},
+		{"valid imposter with bodyFile", Impostor{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFile}}, string(expectedBodyFileData), http.StatusOK},
+		{"valid imposter with not exists bodyFile", Impostor{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFileFake}}, "", http.StatusOK},
 	}
 
 	for _, tt := range dataTest {
@@ -86,11 +86,11 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 
 	var dataTest = []struct {
 		name       string
-		imposter   Imposter
+		imposter   Impostor
 		statusCode int
 		request    []byte
 	}{
-		{"valid request no schema", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers"}, Response: Response{Status: http.StatusOK, Body: "test ok"}}, http.StatusOK, validRequest},
+		{"valid request no schema", Impostor{Request: Request{Method: "POST", Endpoint: "/gophers"}, Response: Response{Status: http.StatusOK, Body: "test ok"}}, http.StatusOK, validRequest},
 	}
 
 	for _, tt := range dataTest {

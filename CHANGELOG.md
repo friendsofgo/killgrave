@@ -1,11 +1,11 @@
 # Changelog
 
 ## v0.4.0 (2020/01/30)
-* The config file option load the imposters path relative on where the config file is
+* The config file option load the impostors path relative on where the config file is
 * Upgrade Killgrave to go1.13
 * Remove use of github.com/pkg/errors in favor to standard errors package
 * Remove backward compatibility with previous versions to go 1.13
-* Add `-watcher` flag to reload the server with any changes on `imposters` folder
+* Add `-watcher` flag to reload the server with any changes on `impostors` folder
 * Fix searching imposter files mechanism
 * Add proxy server feature
 * Allow to add latency to responses
@@ -36,14 +36,14 @@
 * Standarize json files using [Google JSON style Guide](https://google.github.io/styleguide/jsoncstyleguide.xml)
 * Move to `internal` not exposable API
 * Dynamic responses based on query params
-* Allow organize your imposters with structured folders (using new extension `.imp.json`)
-* Allow write multiple imposters by file
+* Allow organize your impostors with structured folders (using new extension `.imp.json`)
+* Allow write multiple impostors by file
 
 ## v0.2.1 (2019/04/25)
 
 * Allow imposter's matching by request schema
 * Dynamic responses based on regex endpoint or request schema
-* Calculate files directory(body and schema) based on imposters path
+* Calculate files directory(body and schema) based on impostors path
 * Update REAMDE.md with resolved features and new future features
 
 ## v0.2.0 (2019/04/24)
@@ -58,5 +58,5 @@
 * Add CircleCI integration
 * Convert headers into canonical mime type
 * Run server with imposter configuration
-* Processing and parsing imposters file
+* Processing and parsing impostors file
 * Initial version

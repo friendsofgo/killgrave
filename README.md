@@ -78,8 +78,8 @@ Or custome your server with this flags:
         path with configuration file
   -host string
         if you run your server on a different host (default "localhost")
-  -imposters string
-        directory where your imposters are saved (default "imposters")
+  -impostors string
+        directory where your impostors are saved (default "impostors")
   -port int
         port to run the server (default 3000)
   -proxy-mode string
@@ -99,7 +99,7 @@ First of all you need create a file with a valid config, i.e:
 ```yaml
 #config.yml
 
-imposters_path: "imposters"
+impostors_path: "impostors"
 port: 3000
 host: "localhost"
 proxy:
@@ -113,11 +113,11 @@ cors:
   allow_credentials: true
 ```
 
-Historically, the options `imposters_path`, `port`, `host` were mandatory when using a configuration file.
+Historically, the options `impostors_path`, `port`, `host` were mandatory when using a configuration file.
 
 However, since last versions, they are no longer needed, so you can simply override those options you want to.
-Furthermore the `imposters_path` option in previous version towards reference to the path where the app was launched, but
-in the last version the `imposters_path` option is relative on where the config file is.
+Furthermore the `impostors_path` option in previous version towards reference to the path where the app was launched, but
+in the last version the `impostors_path` option is relative on where the config file is.
 
 The `delay` option is a time that server waits before response. This can help simulate network issues, or server high load. You must write delay as string with postfix indicating time unit (see [this](https://golang.org/pkg/time/#ParseDuration) for more info about actual format). Also you can specify minimum and maximum delays using separator ':', server respond delay will be choosen at random between this values.
 
@@ -130,13 +130,13 @@ If you want more information about the CORS options, visit the [CORS section](#C
 ## How to use
 
 ### Create an imposter
-You must be create an imposter to start to use the application, only files with the `.imp.json` extension will be interpreted as imposters files, and the base path for
+You must be create an imposter to start to use the application, only files with the `.imp.json` extension will be interpreted as impostors files, and the base path for
 the rest of the files will be the path of the `.imp.json` file.
 
-You need to organize your imposters from more restrictive to less. We use a rule-based system for create each imposter, for this reason you need to organize your imposters in the way that more restrictive to less, like the example below.
+You need to organize your impostors from more restrictive to less. We use a rule-based system for create each imposter, for this reason you need to organize your impostors in the way that more restrictive to less, like the example below.
 
 ```json
-imposters/create_gopher.imp.json
+impostors/create_gopher.imp.json
 
 [
     {
@@ -298,7 +298,7 @@ You can use Killgrave with a proxy mode, what it does mean that you can use the 
 The `proxy-url` must be the root path. For example if we have endpoint api like, `http://example.com/things`, the `proxy-url` will be, `http://example.com`
 
 ## Features
-* Imposters created in json
+* impostors created in json
 * Validate json schemas on requests
 * Validate requests headers
 * Check response status
@@ -311,8 +311,8 @@ The `proxy-url` must be the root path. For example if we have endpoint api like,
 * Dynamic responses based on regex endpoint or request schema
 * Dynamic responses based on headers
 * Dynamic responses based on query params
-* Allow organize your imposters with structured folders
-* Allow write multiple imposters by file
+* Allow organize your impostors with structured folders
+* Allow write multiple impostors by file
 * Run mock server with predefined configuration with config yaml file
 * Configure your CORS server options
 * Simulate network issues and server high loads with imposter repsonse delay
