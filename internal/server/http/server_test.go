@@ -26,9 +26,9 @@ func TestServer_Build(t *testing.T) {
 		server Server
 		err    error
 	}{
-		{"imposter directory not found", NewServer("failImposterPath", nil, http.Server{}, &Proxy{}), errors.New("hello")},
-		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, http.Server{}, &Proxy{}), nil},
-		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), http.Server{}, &Proxy{}), nil},
+		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false), errors.New("hello")},
+		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false), nil},
+		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false), nil},
 	}
 
 	for _, tt := range serverData {
@@ -62,7 +62,7 @@ func TestBuildProxyMode(t *testing.T) {
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
 		}
-		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer)
+		server := NewServer("test/testdata/imposters", router, &httpServer, proxyServer, false)
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -126,24 +126,55 @@ func TestBuildProxyMode(t *testing.T) {
 		})
 	}
 }
+func TestBuildTLSMode(t *testing.T) {
+	// proxyServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 	io.WriteString(w, "Proxied")
+	// }))
+	// defer proxyServer.Close()
+	// makeServer := func() (*Server, func()) {
+	// 	router := mux.NewRouter()
+	// 	httpServer := http.Server{Handler: router}
+	// 	proxyServer, err := NewProxy(proxyServer.URL, killgrave.ProxyNone)
+	// 	if err != nil {
+	// 		t.Fatal("NewProxy failed: ", err)
+	// 	}
+	// 	server := NewServer("test/testdata/imposters_tls", router, &httpServer, proxyServer, true)
+	// 	return &server, func() {
+	// 		httpServer.Close()
+	// 	}
+	// }
+	// testCases := map[string]struct {
+	// 	url    string
+	// 	body   string
+	// 	status int
+	// }{
+	// 	"ProxyNone_Hit": {
+	// 		url:    "/testRequest",
+	// 		body:   "Handled",
+	// 		status: http.StatusOK,
+	// 	},
+	// }
+	// for name, tc := range testCases {
+	// 	t.Run(name, func(t *testing.T) {
+	// 		s, cleanUp := makeServer()
+	// 		defer cleanUp()
+	// 		s.Build()
 
-func TestServer_AccessControl(t *testing.T) {
-	config := killgrave.Config{
-		ImpostersPath: "imposters",
-		Port:          3000,
-		Host:          "localhost",
-		CORS: killgrave.ConfigCORS{
-			Methods:          []string{"GET"},
-			Origins:          []string{"*"},
-			Headers:          []string{"Content-Type"},
-			ExposedHeaders:   []string{"Cache-Control"},
-			AllowCredentials: true,
-		},
-	}
+	// 		client := http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+	// 		// url := "https://" + proxyServer.Listener.Addr().String() + tc.url
+	// 		response, err := client.Get(proxyServer.URL + tc.url)
+	// 		if err != nil {
+	// 			log.Fatal(err)
+	// 		}
+	// 		defer response.Body.Close()
+	// 		body, _ := ioutil.ReadAll(response.Body)
 
-	h := PrepareAccessControl(config.CORS)
-
-	if len(h) <= 0 {
-		t.Fatal("Expected any CORS options and got empty")
-	}
+	// 		if string(body) != tc.body {
+	// 			t.Errorf("Expected body: %v, got: %s", tc.body, body)
+	// 		}
+	// 		if response.StatusCode != tc.status {
+	// 			t.Errorf("Expected status code: %v, got: %v", tc.status, response.StatusCode)
+	// 		}
+	// 	})
+	// }
 }

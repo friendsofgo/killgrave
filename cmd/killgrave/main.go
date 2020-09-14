@@ -25,6 +25,7 @@ var (
 const (
 	_defaultHost          = "localhost"
 	_defaultPort          = 3000
+	_defaultTLS           = false
 	_defaultImpostersPath = "imposters"
 	_defaultConfigFile    = ""
 	_defaultProxyMode     = killgrave.ProxyNone
@@ -34,6 +35,7 @@ func main() {
 	var (
 		host           = flag.String("host", _defaultHost, "if you run your server on a different host")
 		port           = flag.Int("port", _defaultPort, "port to run the server")
+		tls            = flag.Bool("tls", _defaultTLS, "if you run your server using TLS (https)")
 		imposters      = flag.String("imposters", _defaultImpostersPath, "directory where your imposters are saved")
 		showVersion    = flag.Bool("version", false, "show the _version of the application")
 		configFilePath = flag.String("config", _defaultConfigFile, "path with configuration file")
@@ -53,6 +55,7 @@ func main() {
 		*imposters,
 		*host,
 		*port,
+		*tls,
 		killgrave.WithProxyConfiguration(*proxyModeFlag, *proxyURLFlag),
 		killgrave.WithConfigFile(*configFilePath),
 	)
@@ -117,8 +120,9 @@ func runServer(host string, port int, cfg killgrave.Config) server.Server {
 	s := server.NewServer(
 		cfg.ImpostersPath,
 		router,
-		httpServer,
+		&httpServer,
 		proxyServer,
+		cfg.TLS,
 	)
 	if err := s.Build(); err != nil {
 		log.Fatal(err)

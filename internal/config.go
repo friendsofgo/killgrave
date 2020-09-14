@@ -16,6 +16,7 @@ type Config struct {
 	Host          string      `yaml:"host"`
 	CORS          ConfigCORS  `yaml:"cors"`
 	Proxy         ConfigProxy `yaml:"proxy"`
+	TLS           bool        `yaml:"tls"`
 }
 
 // ConfigCORS representation of section CORS of the yaml
@@ -95,11 +96,12 @@ func (p *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
 type ConfigOpt func(cfg *Config) error
 
 // NewConfig initialize the config
-func NewConfig(impostersPath, host string, port int, opts ...ConfigOpt) (Config, error) {
+func NewConfig(impostersPath, host string, port int, tls bool, opts ...ConfigOpt) (Config, error) {
 	cfg := Config{
 		ImpostersPath: impostersPath,
 		Host:          host,
 		Port:          port,
+		TLS:           tls,
 	}
 
 	for _, opt := range opts {

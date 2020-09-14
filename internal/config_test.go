@@ -20,7 +20,7 @@ func TestNewConfig(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, err := NewConfig("", "", 0, WithProxyConfiguration(ProxyNone.String(), ""), WithConfigFile(tc.input))
+			got, err := NewConfig("", "", 0, false, WithProxyConfiguration(ProxyNone.String(), ""), WithConfigFile(tc.input))
 
 			if err != nil && tc.err == nil {
 				t.Fatalf("not expected any erros and got %v", err)

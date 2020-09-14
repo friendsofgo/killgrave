@@ -29,17 +29,19 @@ type ServerOpt func(s *Server)
 type Server struct {
 	impostersPath string
 	router        *mux.Router
-	httpServer    http.Server
+	httpServer    *http.Server
 	proxy         *Proxy
+	tls           bool
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router, httpServer http.Server, proxyServer *Proxy) Server {
+func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, tls bool) Server {
 	return Server{
 		impostersPath: p,
 		router:        r,
 		httpServer:    httpServer,
 		proxy:         proxyServer,
+		tls:           tls,
 	}
 }
 
@@ -117,11 +119,18 @@ loop:
 func (s *Server) Run() {
 	go func() {
 		log.Printf("The fake server is on tap now: %s\n", s.httpServer.Addr)
-		err := s.httpServer.ListenAndServe()
+		err := s.run(s.tls)
 		if err != http.ErrServerClosed {
 			log.Fatal(err)
 		}
 	}()
+}
+
+func (s *Server) run(tls bool) error {
+	if tls {
+		return s.httpServer.ListenAndServeTLS("server.cert", "server.key")
+	}
+	return s.httpServer.ListenAndServe()
 }
 
 // Shutdown shutdown the current http server
