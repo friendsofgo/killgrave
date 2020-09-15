@@ -57,12 +57,12 @@ func TestBuildProxyMode(t *testing.T) {
 	defer proxyServer.Close()
 	makeServer := func(mode killgrave.ProxyMode) (*Server, func()) {
 		router := mux.NewRouter()
-		httpServer := http.Server{Handler: router}
+		httpServer := &http.Server{Handler: router}
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
 		}
-		server := NewServer("test/testdata/imposters", router, &httpServer, proxyServer, false)
+		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false)
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -133,12 +133,12 @@ func TestBuildSecureMode(t *testing.T) {
 	// defer proxyServer.Close()
 	// makeServer := func() (*Server, func()) {
 	// 	router := mux.NewRouter()
-	// 	httpServer := http.Server{Handler: router}
+	// 	httpServer := &http.Server{Handler: router}
 	// 	proxyServer, err := NewProxy(proxyServer.URL, killgrave.ProxyNone)
 	// 	if err != nil {
 	// 		t.Fatal("NewProxy failed: ", err)
 	// 	}
-	// 	server := NewServer("test/testdata/imposters_secure", router, &httpServer, proxyServer, true)
+	// 	server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true)
 	// 	return &server, func() {
 	// 		httpServer.Close()
 	// 	}

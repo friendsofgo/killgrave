@@ -107,7 +107,7 @@ func runServer(host string, port int, cfg killgrave.Config) server.Server {
 	router := mux.NewRouter()
 	httpAddr := fmt.Sprintf("%s:%d", host, port)
 
-	httpServer := http.Server{
+	httpServer := &http.Server{
 		Addr:    httpAddr,
 		Handler: handlers.CORS(server.PrepareAccessControl(cfg.CORS)...)(router),
 	}
@@ -120,7 +120,7 @@ func runServer(host string, port int, cfg killgrave.Config) server.Server {
 	s := server.NewServer(
 		cfg.ImpostersPath,
 		router,
-		&httpServer,
+		httpServer,
 		proxyServer,
 		cfg.Secure,
 	)
