@@ -78,7 +78,7 @@ Or custome your server with this flags:
         directory where your imposters are saved (default "imposters")
   -port int
         port to run the server (default 3000)
-  -tls bool
+  -secure bool
         if you run your server using TLS (https)
   -proxy-mode string
         proxy mode you can choose between (all, missing or none) (default "none")

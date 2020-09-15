@@ -16,7 +16,7 @@ type Config struct {
 	Host          string      `yaml:"host"`
 	CORS          ConfigCORS  `yaml:"cors"`
 	Proxy         ConfigProxy `yaml:"proxy"`
-	TLS           bool        `yaml:"tls"`
+	Secure        bool        `yaml:"secure"`
 }
 
 // ConfigCORS representation of section CORS of the yaml
@@ -30,7 +30,7 @@ type ConfigCORS struct {
 
 // ConfigProxy is a representation of section proxy of the yaml
 type ConfigProxy struct {
-	Url  string    `yaml:"url"`
+	URL  string    `yaml:"url"`
 	Mode ProxyMode `yaml:"mode"`
 }
 
@@ -96,12 +96,12 @@ func (p *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
 type ConfigOpt func(cfg *Config) error
 
 // NewConfig initialize the config
-func NewConfig(impostersPath, host string, port int, tls bool, opts ...ConfigOpt) (Config, error) {
+func NewConfig(impostersPath, host string, port int, secure bool, opts ...ConfigOpt) (Config, error) {
 	cfg := Config{
 		ImpostersPath: impostersPath,
 		Host:          host,
 		Port:          port,
-		TLS:           tls,
+		Secure:        secure,
 	}
 
 	for _, opt := range opts {
@@ -142,7 +142,7 @@ func WithProxyConfiguration(proxyMode, proxyURL string) ConfigOpt {
 	return func(cfg *Config) error {
 		mode, _ := StringToProxyMode(proxyMode)
 		cfg.Proxy.Mode = mode
-		cfg.Proxy.Url = proxyURL
+		cfg.Proxy.URL = proxyURL
 
 		return nil
 	}

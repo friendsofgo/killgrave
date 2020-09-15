@@ -31,17 +31,17 @@ type Server struct {
 	router        *mux.Router
 	httpServer    *http.Server
 	proxy         *Proxy
-	tls           bool
+	secure        bool
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, tls bool) Server {
+func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool) Server {
 	return Server{
 		impostersPath: p,
 		router:        r,
 		httpServer:    httpServer,
 		proxy:         proxyServer,
-		tls:           tls,
+		secure:        secure,
 	}
 }
 
@@ -119,15 +119,15 @@ loop:
 func (s *Server) Run() {
 	go func() {
 		log.Printf("The fake server is on tap now: %s\n", s.httpServer.Addr)
-		err := s.run(s.tls)
+		err := s.run(s.secure)
 		if err != http.ErrServerClosed {
 			log.Fatal(err)
 		}
 	}()
 }
 
-func (s *Server) run(tls bool) error {
-	if tls {
+func (s *Server) run(secure bool) error {
+	if secure {
 		return s.httpServer.ListenAndServeTLS("server.cert", "server.key")
 	}
 	return s.httpServer.ListenAndServe()

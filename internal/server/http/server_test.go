@@ -126,7 +126,7 @@ func TestBuildProxyMode(t *testing.T) {
 		})
 	}
 }
-func TestBuildTLSMode(t *testing.T) {
+func TestBuildSecureMode(t *testing.T) {
 	// proxyServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	// 	io.WriteString(w, "Proxied")
 	// }))
@@ -138,7 +138,7 @@ func TestBuildTLSMode(t *testing.T) {
 	// 	if err != nil {
 	// 		t.Fatal("NewProxy failed: ", err)
 	// 	}
-	// 	server := NewServer("test/testdata/imposters_tls", router, &httpServer, proxyServer, true)
+	// 	server := NewServer("test/testdata/imposters_secure", router, &httpServer, proxyServer, true)
 	// 	return &server, func() {
 	// 		httpServer.Close()
 	// 	}
