@@ -1,6 +1,7 @@
 package http
 
 import (
+	"crypto/tls"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -127,54 +128,55 @@ func TestBuildProxyMode(t *testing.T) {
 	}
 }
 func TestBuildSecureMode(t *testing.T) {
-	// proxyServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	// 	io.WriteString(w, "Proxied")
-	// }))
-	// defer proxyServer.Close()
-	// makeServer := func() (*Server, func()) {
-	// 	router := mux.NewRouter()
-	// 	httpServer := &http.Server{Handler: router}
-	// 	proxyServer, err := NewProxy(proxyServer.URL, killgrave.ProxyNone)
-	// 	if err != nil {
-	// 		t.Fatal("NewProxy failed: ", err)
-	// 	}
-	// 	server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true)
-	// 	return &server, func() {
-	// 		httpServer.Close()
-	// 	}
-	// }
-	// testCases := map[string]struct {
-	// 	url    string
-	// 	body   string
-	// 	status int
-	// }{
-	// 	"ProxyNone_Hit": {
-	// 		url:    "/testRequest",
-	// 		body:   "Handled",
-	// 		status: http.StatusOK,
-	// 	},
-	// }
-	// for name, tc := range testCases {
-	// 	t.Run(name, func(t *testing.T) {
-	// 		s, cleanUp := makeServer()
-	// 		defer cleanUp()
-	// 		s.Build()
+	proxyServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, "Proxied")
+	}))
+	defer proxyServer.Close()
+	makeServer := func(mode killgrave.ProxyMode) (*Server, func()) {
+		router := mux.NewRouter()
+		httpServer := &http.Server{Handler: router}
+		proxyServer, err := NewProxy(proxyServer.URL, mode)
+		if err != nil {
+			t.Fatal("NewProxy failed: ", err)
+		}
+		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true)
+		return &server, func() {
+			httpServer.Close()
+		}
+	}
+	testCases := map[string]struct {
+		mode   killgrave.ProxyMode
+		url    string
+		body   string
+		status int
+	}{
+		"ProxyNone_Hit": {
+			mode:   killgrave.ProxyNone,
+			url:    "/testHTTPSRequest",
+			body:   "Handled",
+			status: http.StatusOK,
+		},
+	}
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s, cleanUp := makeServer(tc.mode)
+			defer cleanUp()
+			s.Build()
 
-	// 		client := http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-	// 		// url := "https://" + proxyServer.Listener.Addr().String() + tc.url
-	// 		response, err := client.Get(proxyServer.URL + tc.url)
-	// 		if err != nil {
-	// 			log.Fatal(err)
-	// 		}
-	// 		defer response.Body.Close()
-	// 		body, _ := ioutil.ReadAll(response.Body)
+			client := http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+			response, err := client.Get(proxyServer.URL + tc.url)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer response.Body.Close()
+			body, _ := ioutil.ReadAll(response.Body)
 
-	// 		if string(body) != tc.body {
-	// 			t.Errorf("Expected body: %v, got: %s", tc.body, body)
-	// 		}
-	// 		if response.StatusCode != tc.status {
-	// 			t.Errorf("Expected status code: %v, got: %v", tc.status, response.StatusCode)
-	// 		}
-	// 	})
-	// }
+			if string(body) != tc.body {
+				t.Errorf("Expected body: %v, got: %s", tc.body, body)
+			}
+			if response.StatusCode != tc.status {
+				t.Errorf("Expected status code: %v, got: %v", tc.status, response.StatusCode)
+			}
+		})
+	}
 }
