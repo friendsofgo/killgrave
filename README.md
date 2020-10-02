@@ -22,7 +22,7 @@ Actually, `Killgrave` works using [`SemVer`](https://semver.org/) but in 0 versi
 
 ## Branch master
 
-The Master branch contains all the latest changes on the application. Therefore, the branch `master` is not a stable version.
+The Master branch contains all the latest changes on the application. Therefore, the `master` branch is not a stable version.
 If you want to have the latest changes then you will need to use the `master` branch, but remember that some breaking changes can be added to this branch.
 
 ## Future releases
