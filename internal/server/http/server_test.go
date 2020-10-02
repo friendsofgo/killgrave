@@ -132,9 +132,10 @@ func TestBuildSecureMode(t *testing.T) {
 		io.WriteString(w, "Proxied")
 	}))
 	defer proxyServer.Close()
+
 	makeServer := func(mode killgrave.ProxyMode) (*Server, func()) {
 		router := mux.NewRouter()
-		httpServer := &http.Server{Handler: router}
+		httpServer := &http.Server{Handler: router, Addr: ":443"}
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
@@ -152,8 +153,14 @@ func TestBuildSecureMode(t *testing.T) {
 	}{
 		"ProxyNone_Hit": {
 			mode:   killgrave.ProxyNone,
-			url:    "/testHTTPSRequest",
+			url:    "https://localhost/testHTTPSRequest",
 			body:   "Handled",
+			status: http.StatusOK,
+		},
+		"ProxyAlways_Hit": {
+			mode:   killgrave.ProxyAll,
+			url:    proxyServer.URL,
+			body:   "Proxied",
 			status: http.StatusOK,
 		},
 	}
@@ -161,12 +168,17 @@ func TestBuildSecureMode(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			s, cleanUp := makeServer(tc.mode)
 			defer cleanUp()
-			s.Build()
+
+			err := s.Build()
+			if err != nil {
+				t.Fatalf("Non expected error trying to build server: %v", err)
+			}
+			s.Run()
 
 			client := http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-			response, err := client.Get(proxyServer.URL + tc.url)
+			response, err := client.Get(tc.url)
 			if err != nil {
-				log.Fatal(err)
+				t.Fatal("Get calling to mock faliling:", err)
 			}
 			defer response.Body.Close()
 			body, _ := ioutil.ReadAll(response.Body)
