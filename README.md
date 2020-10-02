@@ -68,7 +68,7 @@ Use `killgrave` with default flags:
 $ killgrave
 2019/04/14 23:53:26 The fake server is on tap now: http://localhost:3000
 ```
-Or custome your server with this flags:
+Or custom your server with these flags:
 ```sh
   -config string
         path with configuration file
@@ -90,7 +90,7 @@ Or custome your server with this flags:
 
 Use `killgrave` with config file:
 
-First of all you need create a file with a valid config, i.e:
+First of all, you need create a file with a valid config, i.e:
 
 ```yaml
 #config.yml
@@ -114,7 +114,7 @@ Historically, the options `imposters_path`, `port`, `host` were mandatory when u
 However, since the last version, they are no longer needed, so you can simply override those options if you want to.
 Furthermore, the `imposters_path` option in previous version towards reference to the path where the app was launched, but in the last version it is relative on where the config file is.
 
-The `delay` option is the time that the server waits before responding. This can help simulate network issues, or server high load. You must write `delay` as a string with postfix indicating time unit (see [this](https://golang.org/pkg/time/#ParseDuration) for more info about actual format). Also you can specify minimum and maximum delays using separator ':', the server respond delay will be choosen at random between this values.
+The `delay` option is the time that the server waits before responding. This can help simulate network issues, or server high load. You must write `delay` as a string with postfix indicating time unit (see [this](https://golang.org/pkg/time/#ParseDuration) for more info about actual format). Also, you can specify minimum and maximum delays using separator ':', the server respond delay will be chosen at random between these values.
 
 Default value is no delay at all.
 
@@ -124,7 +124,7 @@ If you want more information about the CORS options, visit the [CORS section](#C
 ## How to use
 
 ### Create an imposter
-You must be create an imposter to start using the application, only files with the `.imp.json` extension will be interpreted as imposter files, and the base path for the rest of the files will be the path of the `.imp.json` file.
+You must be creating an imposter to start using the application, only files with the `.imp.json` extension will be interpreted as imposter files, and the base path for the rest of the files will be the path of the `.imp.json` file.
 
 You need to organize your imposters from more restrictive to less. We use a rule-based system for creating each imposter, for this reason you need to organize your imposters from the most restrictive to the least, like the example below.
 
@@ -276,7 +276,7 @@ In the CORS section of the file you can find the following options:
 
 - **origins** (string array)
   
-  Represent the **Access-Control-Allow-Origin header**, if you don't specify or leave as empty array this options has not default value
+  Represent the **Access-Control-Allow-Origin header**, if you don't specify or leave as empty array this option has not default value
 
 - **allow_credentials** (boolean)
   
@@ -288,7 +288,7 @@ You can use Killgrave with a proxy mode which means that you can use the flags `
 * missing: with this mode, the mock server will look into the files with `.imp.json` extension, but if you call to an endpoint that doesn't exist, then the mock server will call to the real server, declared on the `proxy-url` configuration variable.
 * all: the mock server only will call to the real server, declared on the `proxy-url` configuration variable.
 
-The `proxy-url` must be the root path. For example if we have endpoint api like, `http://example.com/things`, the `proxy-url` will be, `http://example.com`
+The `proxy-url` must be the root path. For example, if we have endpoint api like, `http://example.com/things`, the `proxy-url` will be, `http://example.com`
 
 ## Features
 * Imposters created in json
