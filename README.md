@@ -27,7 +27,7 @@ If you want to have the latest changes then you will need to use the `master` br
 
 ## Future releases
 This project is in continuous improvement so you can check the [Issues](https://github.com/friendsofgo/killgrave/issues) and hopefully give it support or create your own issue.
-Furthermore, on the `branch master` you can find the [CHANGELOG.md](https://github.com/friendsofgo/killgrave/blob/master/CHANGELOG.md) file that contains all the new features that will be added on the next release. 
+Furthermore, on the `master` branch you can find the [CHANGELOG.md](https://github.com/friendsofgo/killgrave/blob/master/CHANGELOG.md) file that contains all the new features that will be added on the next release. 
 
 ## Getting started
 
