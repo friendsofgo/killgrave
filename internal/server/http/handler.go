@@ -3,6 +3,7 @@ package http
 import (
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"time"
@@ -31,7 +32,8 @@ func writeHeaders(imposter Imposter, w http.ResponseWriter) {
 }
 
 func writeBody(imposter Imposter, w http.ResponseWriter) {
-	wb := []byte(imposter.Response.Body)
+	randomIndex := rand.Intn(len(imposter.Response.Body))
+	wb := []byte(imposter.Response.Body[randomIndex])
 
 	if imposter.Response.BodyFile != nil {
 		bodyFile := imposter.CalculateFilePath(*imposter.Response.BodyFile)

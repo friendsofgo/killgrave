@@ -40,7 +40,7 @@ type Request struct {
 // Response represent the structure of real response
 type Response struct {
 	Status   int                `json:"status"`
-	Body     string             `json:"body"`
+	Body     []string           `json:"body"`
 	BodyFile *string            `json:"bodyFile"`
 	Headers  *map[string]string `json:"headers"`
 	Delay    ResponseDelay      `json:"delay"`
