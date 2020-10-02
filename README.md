@@ -18,7 +18,7 @@ Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**,
 
 ## Versions
 
-Actually, `Killgrave` works using `sem ver` but in 0 version, for that the 'minor' will be changed when some broken changes are added to the application, and the 'patch' would be changed when a new feature with new changes are added or for bug fixing, when v1.0.0 will be released, `Killgrave` will be change to use a normal use of `sem ver`. 
+Actually, `Killgrave` works using [`SemVer`](https://semver.org/) but in 0 version, which means that the 'minor' will be changed when some broken changes are introduced into the application, and the 'patch' will be changed when a new feature with new changes is added or for bug fixing. As soon as v1.0.0 be released, `Killgrave` will start to use [`SemVer`](https://semver.org/) as usual.
 
 ## Branch master
 
