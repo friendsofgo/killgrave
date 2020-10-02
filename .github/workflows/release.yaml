@@ -1,0 +1,41 @@
+name: release
+on:
+  push:
+    tags:
+      - '*'
+jobs:
+  github:
+    name: Make a github release with GoReleaser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          version: latest
+          args: release --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  docker-hub:
+    name: Deploy to docker-hub
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Login to docker hub
+        uses: actions-hub/docker/login@master
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build image
+        if: success()
+        run: docker build -t ${GITHUB_REPOSITORY}/cli:${IMAGE_TAG} .
+
+      - name: Push to docker registry
+        if: success()
+        uses: actions-hub/docker/cli@master
+        with:
+          args: push ${GITHUB_REPOSITORY}/cli:${IMAGE_TAG}
