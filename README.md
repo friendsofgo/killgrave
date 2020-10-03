@@ -54,7 +54,7 @@ Or you can download the binary for your arch on:
 The application is also available through [Docker](https://hub.docker.com/r/friendsofgo/killgrave), just run:
 
 ```bash
-docker run -it --rm -p 3000:3000 -v $PWD/:/home -w /home friendsofgo/killgrave
+docker run -it --rm -p 3000:3000 -v $PWD/:/home -w /home friendsofgo/killgrave http
 ```
 Remember to use the [-p](https://docs.docker.com/engine/reference/run/#expose-incoming-ports) flag to expose the container port where the application is listening (3000 by default).
 
@@ -62,30 +62,28 @@ NOTE: If you want to use `killgrave` in Docker at the same time as using your ow
 
 ## Using Killgrave
 
-Use `killgrave` with default flags:
+Use `killgrave http` with default flags:
 
 ```sh
 $ killgrave
 2019/04/14 23:53:26 The fake server is on tap now: http://localhost:3000
 ```
-Or custom your server with these flags:
+Or custom your server:
 ```sh
-  -config string
-        path with configuration file
-  -host string
-        if you run your server on a different host (default "localhost")
-  -imposters string
-        directory where your imposters are saved (default "imposters")
-  -port int
-        port to run the server (default 3000)
-  -proxy-mode string
-        proxy mode you can choose between (all, missing or none) (default "none")
-  -proxy-url string
-        proxy url, you need to choose a proxy-mode
-  -version
-        show the _version of the application
-  -watcher
-        file watcher, reload the server with each file change
+Usage:
+  killgrave http [flags]
+
+Flags:
+  -h, --help           help for http
+  -H, --host string    Set a different host than localhost (default "localhost")
+  -P, --port int       Port to run the server (default 3000)
+  -p, --proxy string   Proxy mode, the options are all, missing or none (default "none")
+  -u, --url string     The url where your proxy will be call
+  -w, --watcher        File watcher will reload the server with each file changes
+
+Global Flags:
+  -c, --config string      Path to your configuration file
+  -i, --imposters string   Directory where your imposters are located (default "imposters")
 ```
 
 Use `killgrave` with config file:
