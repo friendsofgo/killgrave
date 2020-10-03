@@ -11,9 +11,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gorilla/mux"
-
 	killgrave "github.com/friendsofgo/killgrave/internal"
+	"github.com/gorilla/mux"
 )
 
 func TestMain(m *testing.M) {
