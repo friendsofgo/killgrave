@@ -47,7 +47,10 @@ const (
 )
 
 var (
-	ErrInvalidConfigPath = errors.New("invalid config file")
+	errInvalidConfigPath  = errors.New("invalid config file")
+	errEmptyImpostersPath = errors.New("imposters path can not be blank")
+	errEmptyHost          = errors.New("host can not be blank")
+	errInvalidPort        = errors.New("invalid port")
 )
 
 func (p ProxyMode) String() string {
@@ -105,18 +108,24 @@ func (cfg *Config) ConfigureProxy(proxyMode ProxyMode, proxyURL string) {
 // ConfigOpt function to encapsulate optional parameters
 type ConfigOpt func(cfg *Config) error
 
-// NewConfig initialize< the config
-func NewConfig(impostersPath, host string, port int, opts ...ConfigOpt) (Config, error) {
+// NewConfig initialize the config
+func NewConfig(impostersPath, host string, port int) (Config, error) {
+	if impostersPath == "" {
+		return Config{}, errEmptyImpostersPath
+	}
+
+	if host == "" {
+		return Config{}, errEmptyHost
+	}
+
+	if port <= 0 {
+		return Config{}, errInvalidPort
+	}
+
 	cfg := Config{
 		ImpostersPath: impostersPath,
 		Host:          host,
 		Port:          port,
-	}
-
-	for _, opt := range opts {
-		if err := opt(&cfg); err != nil {
-			return Config{}, err
-		}
 	}
 
 	return cfg, nil
@@ -125,7 +134,7 @@ func NewConfig(impostersPath, host string, port int, opts ...ConfigOpt) (Config,
 // NewConfigFromFile  unmarshal content of config file to initialize a Config struct
 func NewConfigFromFile(cfgPath string) (Config, error) {
 	if cfgPath == "" {
-		return Config{}, ErrInvalidConfigPath
+		return Config{}, errInvalidConfigPath
 	}
 	configFile, err := os.Open(cfgPath)
 	if err != nil {
