@@ -152,7 +152,7 @@ func TestBuildSecureMode(t *testing.T) {
 	}{
 		"ProxyNone_Hit": {
 			mode:   killgrave.ProxyNone,
-			url:    "https://localhost/testHTTPSRequest",
+			url:    "https://localhost:443/testHTTPSRequest",
 			body:   "Handled",
 			status: http.StatusOK,
 		},
