@@ -29,12 +29,12 @@ type ServerOpt func(s *Server)
 type Server struct {
 	impostersPath string
 	router        *mux.Router
-	httpServer    http.Server
+	httpServer    *http.Server
 	proxy         *Proxy
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router, httpServer http.Server, proxyServer *Proxy) Server {
+func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy) Server {
 	return Server{
 		impostersPath: p,
 		router:        r,

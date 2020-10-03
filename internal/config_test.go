@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestNewConfig(t *testing.T) {
+func TestNewConfigFromFile(t *testing.T) {
 	tests := map[string]struct {
 		input    string
 		expected Config
@@ -15,12 +15,12 @@ func TestNewConfig(t *testing.T) {
 		"valid config file": {"test/testdata/config.yml", validConfig(), nil},
 		"file not found":    {"test/testdata/file.yml", Config{}, errors.New("error")},
 		"wrong yaml file":   {"test/testdata/wrong_config.yml", Config{}, errors.New("error")},
-		"empty config file": {"", Config{}, nil},
+		"empty config file": {"", Config{}, errors.New("error")},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, err := NewConfig("", "", 0, WithProxyConfiguration(ProxyNone.String(), ""), WithConfigFile(tc.input))
+			got, err := NewConfigFromFile(tc.input)
 
 			if err != nil && tc.err == nil {
 				t.Fatalf("not expected any erros and got %v", err)

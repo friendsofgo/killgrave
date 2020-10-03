@@ -18,7 +18,6 @@ func InitializeWatcher(pathToWatch string) (*watcher.Watcher, error) {
 	if err := w.AddRecursive(pathToWatch); err != nil {
 		return nil, fmt.Errorf("%w: error trying to watch change on %s directory", err, pathToWatch)
 	}
-
 	return w, nil
 }
 
@@ -33,6 +32,14 @@ func AttachWatcher(w *watcher.Watcher, fn func()) {
 	}()
 
 	readEventsFromWatcher(w, fn)
+}
+
+func CloseWatcher(w *watcher.Watcher) {
+	if w == nil {
+		return
+	}
+
+	w.Close()
 }
 
 func readEventsFromWatcher(w *watcher.Watcher, fn func()) {
