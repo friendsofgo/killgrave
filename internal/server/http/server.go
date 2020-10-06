@@ -92,14 +92,14 @@ func (s *Server) Build() error {
 loop:
 	for {
 		select {
-		case config := <-imposterConfigCh:
+		case imposterConfig := <-imposterConfigCh:
 			var imposters []Imposter
-			err := s.unmarshalImposters(config, &imposters)
+			err := s.unmarshalImposters(imposterConfig, &imposters)
 			if err != nil {
-				log.Printf("error trying to load %v imposter: %v", config, err)
+				log.Printf("error trying to load %s imposter: %v", imposterConfig.FilePath, err)
 			} else {
-				s.addImposterHandler(imposters, config)
-				log.Printf("imposter %v loaded\n", config)
+				s.addImposterHandler(imposters, imposterConfig)
+				log.Printf("imposter %s loaded\n", imposterConfig.FilePath)
 			}
 		case <-done:
 			close(imposterConfigCh)
@@ -135,9 +135,9 @@ func (s *Server) Shutdown() error {
 	return nil
 }
 
-func (s Server) addImposterHandler(imposters []Imposter, config ImposterConfig) {
+func (s *Server) addImposterHandler(imposters []Imposter, imposterConfig ImposterConfig) {
 	for _, imposter := range imposters {
-		imposter.BasePath = filepath.Dir(config.FilePath)
+		imposter.BasePath = filepath.Dir(imposterConfig.FilePath)
 		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
 			Methods(imposter.Request.Method).
 			MatcherFunc(MatcherBySchema(imposter))
@@ -169,6 +169,8 @@ func (s *Server) unmarshalImposters(imposterConfig ImposterConfig, imposters *[]
 		parseError = json.Unmarshal(bytes, imposters)
 	case YAMLImposter:
 		parseError = yaml.Unmarshal(bytes, imposters)
+	default:
+		parseError = fmt.Errorf("Unsupported imposter type %v", imposterConfig.Type)
 	}
 
 	if parseError != nil {
