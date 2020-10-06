@@ -172,7 +172,7 @@ func (s *Server) unmarshalImposters(imposterConfig ImposterConfig, imposters *[]
 	}
 
 	if parseError != nil {
-		return fmt.Errorf("%w: error while unmarshall imposter file %s", parseError, imposterConfig.FilePath)
+		return fmt.Errorf("%w: error while unmarshalling imposter's file %s", parseError, imposterConfig.FilePath)
 	}
 
 	return nil
