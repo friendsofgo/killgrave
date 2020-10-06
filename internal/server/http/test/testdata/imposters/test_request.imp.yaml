@@ -1,7 +1,7 @@
 ---
 - request:
     method: GET
-    endpoint: /ymlTestRequest
+    endpoint: /yamlTestRequest
   response:
     status: 200
-    body: "Yml Handled"
+    body: "Yaml Handled"

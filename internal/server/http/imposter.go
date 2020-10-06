@@ -14,7 +14,8 @@ type ImposterType int
 
 const (
 	jsonImposterExtension = ".imp.json"
-	yamlImposterExtension = ".imp.yml"
+	ymlImposterExtension  = ".imp.yml"
+	yamlImposterExtension = ".imp.yaml"
 )
 
 const (
@@ -70,10 +71,12 @@ func findImposters(impostersDirectory string, imposterConfigCh chan ImposterConf
 		if err != nil {
 			return fmt.Errorf("%w: error finding imposters", err)
 		}
+
+		filename := info.Name()
 		if !info.IsDir() {
-			if strings.HasSuffix(info.Name(), jsonImposterExtension) {
+			if strings.HasSuffix(filename, jsonImposterExtension) {
 				imposterConfigCh <- ImposterConfig{JSONImposter, path}
-			} else if strings.HasSuffix(info.Name(), yamlImposterExtension) {
+			} else if strings.HasSuffix(filename, yamlImposterExtension) || strings.HasSuffix(filename, ymlImposterExtension) {
 				imposterConfigCh <- ImposterConfig{YAMLImposter, path}
 			}
 		}
