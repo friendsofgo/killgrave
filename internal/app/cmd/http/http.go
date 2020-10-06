@@ -26,7 +26,7 @@ const (
 var (
 	errGetDataFromImpostersFlag = errors.New("error trying to get data from imposters flag")
 	errGetDataFromHostFlag      = errors.New("error trying to get data from host flag")
-	errGetDataFromPortFlag      = errors.New("error trying to get data from Port flag")
+	errGetDataFromPortFlag      = errors.New("error trying to get data from port flag")
 	errMandatoryURL             = errors.New("the field url is mandatory if you selected a proxy mode")
 )
 
@@ -54,9 +54,9 @@ func NewHTTPCmd() *cobra.Command {
 
 	cmd.PersistentFlags().StringP("host", "H", _defaultHost, "Set a different host than localhost")
 	cmd.PersistentFlags().IntP("port", "P", _defaultPort, "Port to run the server")
-	cmd.PersistentFlags().BoolP("watcher", "w", false, "File watcher will reload the server with each file changes")
+	cmd.PersistentFlags().BoolP("watcher", "w", false, "File watcher will reload the server on each file change")
 	cmd.Flags().StringP("proxy", "p", _defaultProxyMode.String(), "Proxy mode, the options are all, missing or none")
-	cmd.Flags().StringP("url", "u", "", "The url where your proxy will be call")
+	cmd.Flags().StringP("url", "u", "", "The url where the proxy will redirect to")
 
 	return cmd
 }

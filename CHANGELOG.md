@@ -1,7 +1,7 @@
 # Changelog
 
 ## v0.5.0 (TBD)
-* Remove of use of `go flags` by `cobra`
+* Replace the use of `go flags` by `cobra`
 * Change all the `cli` commands and flags, more information on `README.md`
 
 ## v0.4.0 (2020/01/30)

@@ -118,7 +118,7 @@ func NewConfig(impostersPath, host string, port int) (Config, error) {
 		return Config{}, errEmptyHost
 	}
 
-	if port <= 0 {
+	if port < 0 || port > 65535 {
 		return Config{}, errInvalidPort
 	}
 
@@ -145,7 +145,7 @@ func NewConfigFromFile(cfgPath string) (Config, error) {
 	var cfg Config
 	bytes, _ := ioutil.ReadAll(configFile)
 	if err := yaml.Unmarshal(bytes, &cfg); err != nil {
-		return Config{}, fmt.Errorf("%w: error while unmarshall configFile file %s, using default configuration instead", err, cfgPath)
+		return Config{}, fmt.Errorf("%w: error while unmarshalling configFile file %s, using default configuration instead", err, cfgPath)
 	}
 
 	cfg.ImpostersPath = path.Join(path.Dir(cfgPath), cfg.ImpostersPath)

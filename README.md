@@ -68,7 +68,7 @@ Use `killgrave http` with default flags:
 $ killgrave
 2019/04/14 23:53:26 The fake server is on tap now: http://localhost:3000
 ```
-Or custom your server:
+Or customize your server:
 ```sh
 Usage:
   killgrave http [flags]
@@ -78,8 +78,8 @@ Flags:
   -H, --host string    Set a different host than localhost (default "localhost")
   -P, --port int       Port to run the server (default 3000)
   -p, --proxy string   Proxy mode, the options are all, missing or none (default "none")
-  -u, --url string     The url where your proxy will be call
-  -w, --watcher        File watcher will reload the server with each file changes
+  -u, --url string     The url where the proxy will redirect to
+  -w, --watcher        File watcher will reload the server on each file change
 
 Global Flags:
   -c, --config string      Path to your configuration file
