@@ -33,6 +33,7 @@ type Request struct {
 	Method     string             `json:"method"`
 	Endpoint   string             `json:"endpoint"`
 	SchemaFile *string            `json:"schemaFile"`
+	SchemaType string             `json:"schemaType"`
 	Params     *map[string]string `json:"params"`
 	Headers    *map[string]string `json:"headers"`
 }

@@ -16,7 +16,20 @@ import (
 // MatcherBySchema check if the request matching with the schema file
 func MatcherBySchema(imposter Imposter) mux.MatcherFunc {
 	return func(req *http.Request, rm *mux.RouteMatch) bool {
-		err := validateSchema(imposter, req)
+
+		if imposter.Request.SchemaFile == nil {
+			return true
+		}
+
+		var err error
+		switch imposter.Request.SchemaType {
+		case "json":
+			err = validateJSONSchema(imposter, req)
+		case "xml":
+			err = validateXMLSchema(imposter, req)
+		default:
+			err = validateJSONSchema(imposter, req)
+		}
 
 		// TODO: inject the logger
 		if err != nil {
@@ -27,11 +40,7 @@ func MatcherBySchema(imposter Imposter) mux.MatcherFunc {
 	}
 }
 
-func validateSchema(imposter Imposter, req *http.Request) error {
-	if imposter.Request.SchemaFile == nil {
-		return nil
-	}
-
+func validateJSONSchema(imposter Imposter, req *http.Request) error {
 	var b []byte
 
 	defer func() {
@@ -71,4 +80,8 @@ func validateSchema(imposter Imposter, req *http.Request) error {
 	}
 
 	return nil
+}
+
+func validateXMLSchema(imposter Imposter, req *http.Request) error {
+	return fmt.Errorf("XML is still under construction")
 }
