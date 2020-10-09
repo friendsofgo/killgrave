@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.0 (TBD)
+* Replace the use of `go flags` by `cobra`
+* Change all the `cli` commands and flags, more information on `README.md`
+
 ## v0.4.1(2021/04/24)
 * Migration to Github actions and remove the use of Circle CI
 * Deprecation go versions before to v1.16
@@ -58,13 +62,4 @@
 
 * Create an official docker image for the application
 * Update README.md with how to use the application with docker
-* Allow write headers for the response
-
-## v0.1.0 (2019/04/21)
-
-* Add Killgrave logo
-* Add CircleCI integration
-* Convert headers into canonical mime type
-* Run server with imposter configuration
-* Processing and parsing imposters file
-* Initial version
+* Allow write headers for the respons

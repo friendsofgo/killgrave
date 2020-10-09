@@ -2,44 +2,32 @@ package killgrave
 
 import (
 	"errors"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 )
 
-func TestNewConfig(t *testing.T) {
+func TestNewConfigFromFile(t *testing.T) {
 	tests := map[string]struct {
-		input    string
-		expected Config
-		err      error
+		input     string
+		expected  Config
+		wantError bool
 	}{
-		"valid config file": {"test/testdata/config.yml", validConfig(), nil},
-		"file not found":    {"test/testdata/file.yml", Config{}, errors.New("error")},
-		"wrong yaml file":   {"test/testdata/wrong_config.yml", Config{}, errors.New("error")},
-		"empty config file": {"", Config{}, nil},
+		"valid config file": {"test/testdata/config.yml", validConfig(), false},
+		"file not found":    {"test/testdata/file.yml", Config{}, true},
+		"wrong yaml file":   {"test/testdata/wrong_config.yml", Config{}, true},
+		"empty config file": {"", Config{}, true},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, err := NewConfig(
-				"",
-				"",
-				0,
-				false,
-				WithProxyConfiguration(ProxyNone.String(), ""),
-				WithConfigFile(tc.input),
-				WithWatcherConfiguration(tc.expected.Watcher))
-
-			if err != nil && tc.err == nil {
-				t.Fatalf("not expected any erros and got %v", err)
+			got, err := NewConfigFromFile(tc.input)
+			if tc.wantError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
-
-			if err == nil && tc.err != nil {
-				t.Fatalf("expected an error and got nil")
-			}
-
-			if !reflect.DeepEqual(tc.expected, got) {
-				t.Fatalf("expected: %v, got: %v", tc.expected, got)
-			}
+			assert.Equal(t, tc.expected, got)
 		})
 	}
 }
@@ -156,6 +144,77 @@ func TestProxyMode_String(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.p.String(); got != tt.want {
 				t.Errorf("String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewConfig(t *testing.T) {
+	type args struct {
+		impostersPath string
+		host          string
+		port          int
+	}
+	tests := []struct {
+		name string
+		args args
+		want Config
+		err  error
+	}{
+		{
+			name: "empty imposters path",
+			args: args{
+				impostersPath: "",
+				host:          "localhost",
+				port:          80,
+			},
+			want: Config{},
+			err:  errEmptyImpostersPath,
+		},
+		{
+			name: "empty host path",
+			args: args{
+				impostersPath: "imposters",
+				host:          "",
+				port:          80,
+			},
+			want: Config{},
+			err:  errEmptyHost,
+		},
+		{
+			name: "invalid port",
+			args: args{
+				impostersPath: "imposters",
+				host:          "localhost",
+				port:          -1000,
+			},
+			want: Config{},
+			err:  errInvalidPort,
+		},
+		{
+			name: "valid config",
+			args: args{
+				impostersPath: "imposters",
+				host:          "localhost",
+				port:          80,
+			},
+			want: Config{
+				ImpostersPath: "imposters",
+				Port:          80,
+				Host:          "localhost",
+			},
+			err: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewConfig(tt.args.impostersPath, tt.args.host, tt.args.port, false)
+			if tt.err != nil && !errors.Is(err, tt.err) {
+				t.Errorf("NewConfig() error got = %v, err want %v", err, tt.err)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewConfig() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

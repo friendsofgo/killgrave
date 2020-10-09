@@ -101,7 +101,7 @@ $ brew install friendsofgo/tap/killgrave
 The application is also available through [Docker](https://hub.docker.com/r/friendsofgo/killgrave).
 
 ```bash
-docker run -it --rm -p 3000:3000 -v $PWD/:/home -w /home friendsofgo/killgrave -host 0.0.0.0
+docker run -it --rm -p 3000:3000 -v $PWD/:/home -w /home friendsofgo/killgrave http
 ```
 
 `-p 3000:3000` [publishes](https://docs.docker.com/engine/reference/run/#expose-incoming-ports) port 3000 (Killgrave's default port) inside the
@@ -117,11 +117,10 @@ Windows and Linux users can download binaries from the [Github Releases](https:/
 ## Getting Started
 
 To start Killgrave, you simply run the following.
-
+Use `killgrave http` with default flags:
 ```sh
-$ killgrave
+$ killgrave http
 ```
-
 While you are welcome to provide your own configuration, Killgrave will default to the following configuration:
 
 * **imposters path**: `imposters`
@@ -131,31 +130,22 @@ While you are welcome to provide your own configuration, Killgrave will default 
 * **proxy**: `none`
 * **watcher**: `false`
 
-### Using Killgrave from the command line
-
-Killgrave takes the following command line options. Killgrave is almost fully configurable through the command line, except for `CORS`, which can only be configured using the [config file](#using-killgrave-by-config-file).
-
+Or customize your server:
 ```sh
-$ killgrave -h
+Usage:
+  killgrave http [flags]
 
-  -config string
-        path with configuration file
-  -host string
-        if you run your server on a different host (default "localhost")
-  -imposters string
-        directory where your imposters are saved (default "imposters")
-  -port int
-        port to run the server (default 3000)
-  -secure bool
-        if you run your server using TLS (https)
-  -proxy-mode string
-        proxy mode you can choose between (all, missing or none) (default "none")
-  -proxy-url string
-        proxy url, you need to choose a proxy-mode
-  -version
-        show the _version of the application
-  -watcher
-        file watcher, reload the server with each file change
+Flags:
+  -h, --help           help for http
+  -H, --host string    Set a different host than localhost (default "localhost")
+  -P, --port int       Port to run the server (default 3000)
+  -p, --proxy string   Proxy mode, the options are all, missing or none (default "none")
+  -u, --url string     The url where the proxy will redirect to
+  -w, --watcher        File watcher will reload the server on each file change
+
+Global Flags:
+  -c, --config string      Path to your configuration file
+  -i, --imposters string   Directory where your imposters are located (default "imposters")
 ```
 
 ### Using Killgrave by config file
@@ -173,7 +163,6 @@ host: "localhost"
 proxy:
   url: https://example.com
   mode: missing
-watcher: true
 cors:
   methods: ["GET"]
   headers: ["Content-Type"]
