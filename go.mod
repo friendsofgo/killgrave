@@ -6,9 +6,9 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gorilla/handlers v1.5.0
 	github.com/gorilla/mux v1.8.0
+	github.com/jbussdieker/golibxml v0.0.0-20190103165431-90c340ae5026
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/lestrrat/go-libxml2 v0.0.0-20180221004755-bb78334e2019
-	github.com/pkg/errors v0.9.1 // indirect
+	github.com/krolaw/xsd v0.0.0-20190108013600-03ca754cf4c5
 	github.com/radovskyb/watcher v1.0.7
 	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect

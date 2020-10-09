@@ -8,10 +8,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"unsafe"
 
 	"github.com/gorilla/mux"
-	"github.com/lestrrat/go-libxml2/parser"
-	"github.com/lestrrat/go-libxml2/xsd"
+	"github.com/jbussdieker/golibxml"
+	"github.com/krolaw/xsd"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -107,25 +108,28 @@ func validateXMLSchema(imposter Imposter, req *http.Request) error {
 		return fmt.Errorf("unexpected empty body request")
 	}
 
+	// Following example from https://godoc.org/github.com/krolaw/xsd
 	dir, _ := os.Getwd()
-	schemaFilePath := "file://" + dir + "/" + schemaFile
-	schema, err := xsd.ParseFromFile(schemaFilePath)
+	schemaFilePath := dir + "/" + schemaFile
+	schemaBytes, err := ioutil.ReadFile(schemaFilePath)
+	if err != nil {
+		println(schemaFilePath)
+		return fmt.Errorf("%w: error reading from xml schema file location", err)
+	}
+
+	schema, err := xsd.ParseSchema(schemaBytes)
 	if err != nil {
 		return fmt.Errorf("%w: error parsing xml schema", err)
 	}
 
-	p := parser.New(parser.XMLParseRecover)
-	document, err := p.Parse(b)
-	if err != nil {
-		return fmt.Errorf("%w: error parsing the xml request", err)
+	document := golibxml.ParseDoc(string(b))
+	if document == nil {
+		return fmt.Errorf("Error parsing the xml request")
 	}
+	defer document.Free()
 
-	defer schema.Free()
-	res := schema.Validate(document)
-	if res != nil {
-		for _, desc := range res.(xsd.SchemaValidationError).Errors() {
-			return errors.New(desc.Error())
-		}
+	if err := schema.Validate(xsd.DocPtr(unsafe.Pointer(document.Ptr))); err != nil {
+		return fmt.Errorf("%w: error validating the xml request", err)
 	}
 
 	return nil
