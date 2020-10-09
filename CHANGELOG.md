@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.0 (TBD)
+* Replace the use of `go flags` by `cobra`
+* Change all the `cli` commands and flags, more information on `README.md`
+
 ## v0.4.0 (2020/01/30)
 * The config file option load the imposters path relative on where the config file is
 * Upgrade Killgrave to go1.13

@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestNewConfig(t *testing.T) {
+func TestNewConfigFromFile(t *testing.T) {
 	tests := map[string]struct {
 		input    string
 		expected Config
@@ -15,15 +15,15 @@ func TestNewConfig(t *testing.T) {
 		"valid config file": {"test/testdata/config.yml", validConfig(), nil},
 		"file not found":    {"test/testdata/file.yml", Config{}, errors.New("error")},
 		"wrong yaml file":   {"test/testdata/wrong_config.yml", Config{}, errors.New("error")},
-		"empty config file": {"", Config{}, nil},
+		"empty config file": {"", Config{}, errors.New("error")},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, err := NewConfig("", "", 0, WithProxyConfiguration(ProxyNone.String(), ""), WithConfigFile(tc.input))
+			got, err := NewConfigFromFile(tc.input)
 
 			if err != nil && tc.err == nil {
-				t.Fatalf("not expected any erros and got %v", err)
+				t.Fatalf("not expected any errors and got %v", err)
 			}
 
 			if err == nil && tc.err != nil {
@@ -150,5 +150,98 @@ func TestProxyMode_String(t *testing.T) {
 				t.Errorf("String() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestNewConfig(t *testing.T) {
+	type args struct {
+		impostersPath string
+		host          string
+		port          int
+	}
+	tests := []struct {
+		name string
+		args args
+		want Config
+		err  error
+	}{
+		{
+			name: "empty imposters path",
+			args: args{
+				impostersPath: "",
+				host:          "localhost",
+				port:          80,
+			},
+			want: Config{},
+			err:  errEmptyImpostersPath,
+		},
+		{
+			name: "empty host path",
+			args: args{
+				impostersPath: "imposters",
+				host:          "",
+				port:          80,
+			},
+			want: Config{},
+			err:  errEmptyHost,
+		},
+		{
+			name: "invalid port",
+			args: args{
+				impostersPath: "imposters",
+				host:          "localhost",
+				port:          -1000,
+			},
+			want: Config{},
+			err:  errInvalidPort,
+		},
+		{
+			name: "valid config",
+			args: args{
+				impostersPath: "imposters",
+				host:          "localhost",
+				port:          80,
+			},
+			want: Config{
+				ImpostersPath: "imposters",
+				Port:          80,
+				Host:          "localhost",
+			},
+			err: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewConfig(tt.args.impostersPath, tt.args.host, tt.args.port)
+			if tt.err != nil && !errors.Is(err, tt.err) {
+				t.Errorf("NewConfig() error got = %v, err want %v", err, tt.err)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewConfig() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConfig_ConfigureProxy(t *testing.T) {
+	expected := Config{
+		ImpostersPath: "imposters",
+		Port:          80,
+		Host:          "localhost",
+		Proxy: ConfigProxy{
+			Url:  "https://friendsofgo.tech",
+			Mode: ProxyAll,
+		},
+	}
+
+	got, err := NewConfig("imposters", "localhost", 80)
+	if err != nil {
+		t.Fatalf("error not expected: %v", err)
+	}
+	got.ConfigureProxy(ProxyAll, "https://friendsofgo.tech")
+
+	if !reflect.DeepEqual(expected, got) {
+		t.Fatalf("got = %v, want %v", expected, got)
 	}
 }

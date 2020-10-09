@@ -1,6 +1,7 @@
 package killgrave
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -43,6 +44,13 @@ const (
 	ProxyMissing
 	// ProxyAll all requests are proxied
 	ProxyAll
+)
+
+var (
+	errInvalidConfigPath  = errors.New("invalid config file")
+	errEmptyImpostersPath = errors.New("imposters path can not be blank")
+	errEmptyHost          = errors.New("host can not be blank")
+	errInvalidPort        = errors.New("invalid port")
 )
 
 func (p ProxyMode) String() string {
@@ -91,57 +99,56 @@ func (p *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+// ConfigureProxy preparing the server with the proxy configuration that the user has indicated
+func (cfg *Config) ConfigureProxy(proxyMode ProxyMode, proxyURL string) {
+	cfg.Proxy.Mode = proxyMode
+	cfg.Proxy.Url = proxyURL
+}
+
 // ConfigOpt function to encapsulate optional parameters
 type ConfigOpt func(cfg *Config) error
 
 // NewConfig initialize the config
-func NewConfig(impostersPath, host string, port int, opts ...ConfigOpt) (Config, error) {
+func NewConfig(impostersPath, host string, port int) (Config, error) {
+	if impostersPath == "" {
+		return Config{}, errEmptyImpostersPath
+	}
+
+	if host == "" {
+		return Config{}, errEmptyHost
+	}
+
+	if port < 0 || port > 65535 {
+		return Config{}, errInvalidPort
+	}
+
 	cfg := Config{
 		ImpostersPath: impostersPath,
 		Host:          host,
 		Port:          port,
 	}
 
-	for _, opt := range opts {
-		if err := opt(&cfg); err != nil {
-			return Config{}, err
-		}
-	}
-
 	return cfg, nil
 }
 
-// WithConfigFile unmarshal content of config file to Config struct
-func WithConfigFile(cfgPath string) ConfigOpt {
-	return func(cfg *Config) error {
-		if cfgPath == "" {
-			return nil
-		}
-
-		configFile, err := os.Open(cfgPath)
-		if err != nil {
-			return fmt.Errorf("%w: error trying to read config file: %s, using default configuration instead", err, cfgPath)
-		}
-		defer configFile.Close()
-
-		bytes, _ := ioutil.ReadAll(configFile)
-		if err := yaml.Unmarshal(bytes, cfg); err != nil {
-			return fmt.Errorf("%w: error while unmarshall configFile file %s, using default configuration instead", err, cfgPath)
-		}
-
-		cfg.ImpostersPath = path.Join(path.Dir(cfgPath), cfg.ImpostersPath)
-
-		return nil
+// NewConfigFromFile  unmarshal content of config file to initialize a Config struct
+func NewConfigFromFile(cfgPath string) (Config, error) {
+	if cfgPath == "" {
+		return Config{}, errInvalidConfigPath
 	}
-}
-
-// WithProxyConfiguration preparing the server with the proxy configuration that the user has indicated
-func WithProxyConfiguration(proxyMode, proxyURL string) ConfigOpt {
-	return func(cfg *Config) error {
-		mode, _ := StringToProxyMode(proxyMode)
-		cfg.Proxy.Mode = mode
-		cfg.Proxy.Url = proxyURL
-
-		return nil
+	configFile, err := os.Open(cfgPath)
+	if err != nil {
+		return Config{}, fmt.Errorf("%w: error trying to read config file: %s, using default configuration instead", err, cfgPath)
 	}
+	defer configFile.Close()
+
+	var cfg Config
+	bytes, _ := ioutil.ReadAll(configFile)
+	if err := yaml.Unmarshal(bytes, &cfg); err != nil {
+		return Config{}, fmt.Errorf("%w: error while unmarshalling configFile file %s, using default configuration instead", err, cfgPath)
+	}
+
+	cfg.ImpostersPath = path.Join(path.Dir(cfgPath), cfg.ImpostersPath)
+
+	return cfg, nil
 }
