@@ -10,6 +10,8 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/lestrrat/go-libxml2/parser"
+	"github.com/lestrrat/go-libxml2/xsd"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -83,5 +85,48 @@ func validateJSONSchema(imposter Imposter, req *http.Request) error {
 }
 
 func validateXMLSchema(imposter Imposter, req *http.Request) error {
-	return fmt.Errorf("XML is still under construction")
+	var b []byte
+
+	defer func() {
+		req.Body.Close()
+		req.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+	}()
+
+	schemaFile := imposter.CalculateFilePath(*imposter.Request.SchemaFile)
+	if _, err := os.Stat(schemaFile); os.IsNotExist(err) {
+		return fmt.Errorf("%w: the schema file %s not found", err, schemaFile)
+	}
+
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return fmt.Errorf("%w: impossible read the request body", err)
+	}
+
+	contentBody := string(b)
+	if contentBody == "" {
+		return fmt.Errorf("unexpected empty body request")
+	}
+
+	dir, _ := os.Getwd()
+	schemaFilePath := "file://" + dir + "/" + schemaFile
+	schema, err := xsd.ParseFromFile(schemaFilePath)
+	if err != nil {
+		return fmt.Errorf("%w: error parsing xml schema", err)
+	}
+
+	p := parser.New(parser.XMLParseRecover)
+	document, err := p.Parse(b)
+	if err != nil {
+		return fmt.Errorf("%w: error parsing the xml request", err)
+	}
+
+	defer schema.Free()
+	res := schema.Validate(document)
+	if res != nil {
+		for _, desc := range res.(xsd.SchemaValidationError).Errors() {
+			return errors.New(desc.Error())
+		}
+	}
+
+	return nil
 }
