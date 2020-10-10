@@ -76,7 +76,7 @@ You can identify an `imposter` file on Killgrave because they must have the exte
 Yo can learn more about how to configure the imposters on the [Imposter Configuration Section](#imposter).
 
 ## Installing
-> :warning: Killgrave is a very robust tool and is using on some companies even on production environments, but we don't have a
+> :warning:  Killgrave is a very robust tool and is using on some companies even on production environments, but we don't have a
 version 1 for today. For that Killgrave works using [`SemVer`](https://semver.org/) but in 0 version, which means that the 'minor' will be changed when some broken changes are introduced into the application, and the 'patch' will be changed when a new feature with new changes is added or for bug fixing. As soon as v1.0.0 be released, `Killgrave` will start to use [`SemVer`](https://semver.org/) as usual.
 
 You can install Killgrave on different ways, but all of them are very simple:
@@ -99,7 +99,7 @@ If you are a mac user, you could install Killgrave using, [Homebrew](https://bre
 $ brew install friendsofgo/tap/killgrave
 ```
 
-:warning: If you are using the hombrew way, you only get the [last Killgrave version](https://github.com/friendsofgo/killgrave/releases), we hope fix this soon.
+:warning:  If you are using the hombrew way, you only get the [last Killgrave version](https://github.com/friendsofgo/killgrave/releases), we hope fix this soon.
 
 ### Docker
 
@@ -283,7 +283,7 @@ imposter example:
 This a very simple example but Killgrave have more possibilities to configure your imposters, let see some of them on the
 next sections.
 
-:warning: Remember that you will need escape any special char, in the properties that admit text.
+:warning:  Remember that you will need escape any special char, in the properties that admit text.
 
 ### Imposters Structure
 
@@ -583,148 +583,6 @@ json schema declared.
 
 So as you can see, we have first of all the imposters with the restrictive, `headers` and `json schema`, but
 our last `imposter` is a simple `imposter` that it will match with any call via POST to `/gophers`.
-
-
-## Future releases
-This project is in continuous improvement so you can check the [Issues](https://github.com/friendsofgo/killgrave/issues) and hopefully give it support or create your own issue.
-Furthermore, on the `master` branch you can find the [CHANGELOG.md](https://github.com/friendsofgo/killgrave/blob/master/CHANGELOG.md) file that contains all the new features that will be added on the next release. 
-
-
-
-
-
-
-
-
-
-## How to use
-
-### Create an imposter
-You must be creating an imposter to start using the application, only files with the `.imp.json` extension will be interpreted as imposter files, and the base path for the rest of the files will be the path of the `.imp.json` file.
-
-You need to organize your imposters from more restrictive to less. We use a rule-based system for creating each imposter, for this reason you need to organize your imposters from the most restrictive to the least, like the example below.
-
-```json
-imposters/create_gopher.imp.json
-
-[
-    {
-        "request": {
-            "method": "POST",
-            "endpoint": "/gophers",
-            "schemaFile": "schemas/create_gopher_request.json",
-            "headers": {
-                "Content-Type": "application/json",
-                "Return-Error": "error"
-            }
-        },
-        "response": {
-            "status": 500,
-            "headers": {
-                "Content-Type": "application/json"
-            },
-            "body": "{\"error\": \"Server error ocurred\"}",
-            "delay": "1s:5s"
-        }
-    },
-    {
-        "request": {
-            "method": "POST",
-            "endpoint": "/gophers",
-            "schemaFile": "schemas/create_gopher_request.json",
-            "headers": {
-                "Content-Type": "application/json"
-            }
-        },
-        "response": {
-            "status": 200,
-            "headers": {
-                "Content-Type": "application/json"
-            },
-            "bodyFile": "responses/create_gopher_response.json"
-        }
-    }
-]
-```
-And its related files
-
-```json
-schemas/create_gopher_request.json
-{
-    "type": "object",
-    "properties": {
-        "data": {
-            "type": "object",
-            "properties": {
-                "type": {
-                    "type": "string",
-                    "enum": [
-                        "gophers"
-                    ]
-                },
-                "attributes": {
-                    "type": "object",
-                    "properties": {
-                        "name": {
-                            "type": "string"
-                        },
-                        "color": {
-                            "type": "string"
-                        },
-                        "age": {
-                            "type": "integer"
-                        }
-                    },
-                    "required": [
-                        "name",
-                        "color",
-                        "age"
-                    ]
-                }
-            },
-            "required": [
-                "type",
-                "attributes"
-            ]
-        }
-    },
-    "required": [
-        "data"
-    ]
-}
-```
-
-```json
-responses/create_gopher_response.json
-{
-    "data": {
-        "type": "gophers",
-        "id": "01D8EMQ185CA8PRGE20DKZTGSR",
-        "attributes": {
-            "name": "Zebediah",
-            "color": "Purple",
-            "age": 55
-        }
-    }
-}
-```
-
-And then with the server on tap you can execute your request:
-```sh
-curl --header "Content-Type: application/json" \
-  --request POST \
-  --data '{
-            "data": {
-                "type": "gophers",
-                "attributes": {
-                "name": "Zebediah",
-                "color": "Purple",
-                "age": 55
-                }
-            }
-    }' \
-  http://localhost:3000/gophers
-```
 
 ## Contributing
 [Contributions](CONTRIBUTING.md) are more than welcome, if you are interested please follow our guidelines to help you get started.
