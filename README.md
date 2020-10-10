@@ -727,7 +727,7 @@ curl --header "Content-Type: application/json" \
 ```
 
 ## Contributing
-[Contributions](https://github.com/friendsofgo/killgrave/issues?q=is%3Aissue+is%3Aopen) are more than welcome, if you are interested please fork this repo and send your Pull Request.
+[Contributions](CONTRIBUTING.md) are more than welcome, if you are interested please follow our guidelines to help you get started.
 
 ## License
 MIT License, see [LICENSE](https://github.com/friendsofgo/killgrave/blob/master/LICENSE)
