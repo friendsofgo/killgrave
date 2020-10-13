@@ -1,12 +1,15 @@
 package cmd
 
 import (
+	"log"
+	"os/exec"
+
 	"github.com/friendsofgo/killgrave/internal/app/cmd/http"
 	"github.com/spf13/cobra"
 )
 
 var (
-	_version = "dev"
+	_version = getVersion()
 )
 
 const (
@@ -33,4 +36,14 @@ func NewKillgraveCmd() *cobra.Command {
 	rootCmd.AddCommand(http.NewHTTPCmd())
 
 	return rootCmd
+}
+
+func getVersion() string {
+	versionBytes, err := exec.Command("git", "describe", "--always", "--dirty").Output()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return string(versionBytes)
 }
