@@ -9,22 +9,22 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gorilla/mux"
 	"github.com/xeipuuv/gojsonschema"
 )
 
-// MatcherBySchema check if the request matching with the schema file
-func MatcherBySchema(imposter Imposter) mux.MatcherFunc {
-	return func(req *http.Request, rm *mux.RouteMatch) bool {
-		err := validateSchema(imposter, req)
+// SchemaValidationMiddleware check if the request matching with the schema file
+func SchemaValidationMiddleware(imposter Imposter, next http.Handler) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := validateSchema(imposter, r)
 
 		// TODO: inject the logger
 		if err != nil {
 			log.Println(err)
-			return false
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
-		return true
-	}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func validateSchema(imposter Imposter, req *http.Request) error {

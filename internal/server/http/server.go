@@ -137,9 +137,10 @@ func (s *Server) Shutdown() error {
 func (s *Server) addImposterHandler(imposters []Imposter, imposterFilePath string) {
 	for _, imposter := range imposters {
 		imposter.BasePath = filepath.Dir(imposterFilePath)
-		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
-			Methods(imposter.Request.Method).
-			MatcherFunc(MatcherBySchema(imposter))
+
+		handler := SchemaValidationMiddleware(imposter, ImposterHandler(imposter))
+		r := s.router.HandleFunc(imposter.Request.Endpoint, handler).
+			Methods(imposter.Request.Method)
 
 		if imposter.Request.Headers != nil {
 			for k, v := range *imposter.Request.Headers {
