@@ -106,11 +106,10 @@ $ brew install friendsofgo/tap/killgrave
 The application is also available through [Docker](https://hub.docker.com/r/friendsofgo/killgrave), just run:
 
 ```bash
-docker run -it --rm -p 3000:3000 -v $PWD/:/home -w /home friendsofgo/killgrave
+docker run -it --rm -p 3000:3000 -v $PWD/:/home -w /home friendsofgo/killgrave -h 0.0.0.0
 ```
-Remember to use the [-p](https://docs.docker.com/engine/reference/run/#expose-incoming-ports) flag to expose the container port where the application is listening (3000 by default).
 
-NOTE: If you want to use `killgrave` in Docker at the same time as using your own dockerised HTTP-based API please be careful with networking issues.
+`-h 0.0.0.0` is necessary to allow Killgrave to listen and respond to requests from outside the container (the default, `localhost`, will not capture requests from the host network).
 
 ### Other
 
