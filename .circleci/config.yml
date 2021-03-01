@@ -3,7 +3,7 @@ commands:
   install-sys-deps:
     description: "It installs the system dependencies required to run the pipelines"
     steps:
-      - run: sudo apt-get install libxml2
+      - run: sudo apt-get install libxml2-dev
 jobs:
   build-go1_14:
     docker:
