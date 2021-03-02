@@ -24,28 +24,24 @@ func TestMatcherByJSONSchema(t *testing.T) {
 		Method:     "POST",
 		Endpoint:   "/login",
 		SchemaFile: nil,
-		SchemaType: "json",
 	}
 
 	requestWithSchema := Request{
 		Method:     "POST",
 		Endpoint:   "/login",
 		SchemaFile: &schemaGopherFile,
-		SchemaType: "json",
 	}
 
 	requestWithNonExistingSchema := Request{
 		Method:     "POST",
 		Endpoint:   "/login",
 		SchemaFile: &schemaCatFile,
-		SchemaType: "json",
 	}
 
 	requestWithWrongSchema := Request{
 		Method:     "POST",
 		Endpoint:   "/login",
 		SchemaFile: &schemaFailFile,
-		SchemaType: "json",
 	}
 
 	httpRequestA := &http.Request{Body: bodyA}
@@ -91,28 +87,24 @@ func TestMatcherByXSDSchema(t *testing.T) {
 		Method:     "POST",
 		Endpoint:   "/login",
 		SchemaFile: nil,
-		SchemaType: "xml",
 	}
 
 	requestWithSchema := Request{
 		Method:     "POST",
 		Endpoint:   "/login",
 		SchemaFile: &schemaGopherFile,
-		SchemaType: "xml",
 	}
 
 	requestWithNonExistingSchema := Request{
 		Method:     "POST",
 		Endpoint:   "/login",
 		SchemaFile: &schemaCatFile,
-		SchemaType: "xml",
 	}
 
 	requestWithWrongSchema := Request{
 		Method:     "POST",
 		Endpoint:   "/login",
 		SchemaFile: &schemaFailFile,
-		SchemaType: "xml",
 	}
 
 	httpRequestA := &http.Request{Body: bodyA}

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"unsafe"
 
 	"github.com/gorilla/mux"
@@ -25,13 +26,13 @@ func MatcherBySchema(imposter Imposter) mux.MatcherFunc {
 		}
 
 		var err error
-		switch imposter.Request.SchemaType {
-		case "json":
+		switch filepath.Ext(*imposter.Request.SchemaFile) {
+		case ".json":
 			err = validateJSONSchema(imposter, req)
-		case "xml":
+		case ".xml", ".xsd":
 			err = validateXMLSchema(imposter, req)
 		default:
-			err = validateJSONSchema(imposter, req)
+			err = errors.New("unknown schema file extension")
 		}
 
 		// TODO: inject the logger

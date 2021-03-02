@@ -32,14 +32,6 @@ func TestImposterJSONHandler(t *testing.T) {
 		Method:     "POST",
 		Endpoint:   "/gophers",
 		SchemaFile: &schemaFile,
-		SchemaType: "json",
-		Headers:    &headers,
-	}
-
-	validRequestNoSchemaType := Request{
-		Method:     "POST",
-		Endpoint:   "/gophers",
-		SchemaFile: &schemaFile,
 		Headers:    &headers,
 	}
 
@@ -54,7 +46,6 @@ func TestImposterJSONHandler(t *testing.T) {
 		statusCode   int
 	}{
 		{"valid json imposter with body", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, Body: body}}, body, http.StatusOK},
-		{"valid json imposter no schemaType defaults to json", Imposter{Request: validRequestNoSchemaType, Response: Response{Status: http.StatusOK, Headers: &headers, Body: body}}, body, http.StatusOK},
 		{"valid json imposter with bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFile}}, string(expectedBodyFileData), http.StatusOK},
 		{"valid json imposter with not exists bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFileFake}}, "", http.StatusOK},
 	}
@@ -67,7 +58,7 @@ func TestImposterJSONHandler(t *testing.T) {
 			}
 
 			rec := httptest.NewRecorder()
-			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
+			handler := ImposterHandler(tt.imposter)
 
 			handler.ServeHTTP(rec, req)
 			if status := rec.Code; status != tt.statusCode {
@@ -93,6 +84,8 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 		}
 	  }`)
 
+	schemaFile := "test/testdata/imposters/schemas/create_gopher_request"
+
 	var dataTest = []struct {
 		name       string
 		imposter   Imposter
@@ -100,6 +93,7 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 		request    []byte
 	}{
 		{"valid request no schema", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers"}, Response: Response{Status: http.StatusOK, Body: "test ok"}}, http.StatusOK, validRequest},
+		{"valid request schema file with no extension", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers", SchemaFile: &schemaFile}, Response: Response{Status: http.StatusOK, Body: "test ok"}}, http.StatusOK, validRequest},
 	}
 
 	for _, tt := range dataTest {
@@ -110,7 +104,7 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 				t.Fatalf("could not created request: %v", err)
 			}
 			rec := httptest.NewRecorder()
-			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
+			handler := ImposterHandler(tt.imposter)
 
 			handler.ServeHTTP(rec, req)
 			if status := rec.Code; status != tt.statusCode {
@@ -154,7 +148,6 @@ func TestImposterXMLHandler(t *testing.T) {
 		Method:     "POST",
 		Endpoint:   "/gophers",
 		SchemaFile: &schemaFile,
-		SchemaType: "xml",
 		Headers:    &headers,
 	}
 
@@ -181,7 +174,7 @@ func TestImposterXMLHandler(t *testing.T) {
 			}
 
 			rec := httptest.NewRecorder()
-			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
+			handler := ImposterHandler(tt.imposter)
 
 			handler.ServeHTTP(rec, req)
 			if status := rec.Code; status != tt.statusCode {
