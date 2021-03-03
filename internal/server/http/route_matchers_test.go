@@ -81,7 +81,7 @@ func TestMatcherByJSONSchema(t *testing.T) {
 	}
 }
 
-func TestMatcherByXSDSchema(t *testing.T) {
+func TestMatcherByXMLSchema(t *testing.T) {
 	bodyA := ioutil.NopCloser(bytes.NewReader([]byte("<type>gopher</type>")))
 	bodyB := ioutil.NopCloser(bytes.NewReader([]byte("<type>cat</type>")))
 	emptyBody := ioutil.NopCloser(bytes.NewReader([]byte("")))

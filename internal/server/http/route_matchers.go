@@ -20,7 +20,6 @@ import (
 // MatcherBySchema check if the request matching with the schema file
 func MatcherBySchema(imposter Imposter) mux.MatcherFunc {
 	return func(req *http.Request, rm *mux.RouteMatch) bool {
-
 		if imposter.Request.SchemaFile == nil {
 			return true
 		}

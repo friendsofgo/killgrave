@@ -4,7 +4,6 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element type="xs:string" name="type"/>
-        <xs:element type="xs:string" name="id"/>
         <xs:element name="attributes">
           <xs:complexType>
             <xs:sequence>
