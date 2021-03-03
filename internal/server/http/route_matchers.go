@@ -59,7 +59,7 @@ func validateJSONSchema(imposter Imposter, req *http.Request) error {
 
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		return fmt.Errorf("%w: impossible read the request body", err)
+		return fmt.Errorf("%w: error reading the request body", err)
 	}
 
 	contentBody := string(b)
@@ -96,12 +96,12 @@ func validateXMLSchema(imposter Imposter, req *http.Request) error {
 
 	schemaFile := imposter.CalculateFilePath(*imposter.Request.SchemaFile)
 	if _, err := os.Stat(schemaFile); os.IsNotExist(err) {
-		return fmt.Errorf("%w: the schema file %s not found", err, schemaFile)
+		return fmt.Errorf("%w: xsd file %s not found", err, schemaFile)
 	}
 
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		return fmt.Errorf("%w: impossible read the request body", err)
+		return fmt.Errorf("%w: error reading the request body", err)
 	}
 
 	contentBody := string(b)
@@ -109,24 +109,21 @@ func validateXMLSchema(imposter Imposter, req *http.Request) error {
 		return fmt.Errorf("unexpected empty body request")
 	}
 
-	// Following example from https://godoc.org/github.com/krolaw/xsd
+	// Following the example from the official documentation:
+	// https://godoc.org/github.com/krolaw/xsd
 	dir, _ := os.Getwd()
 	schemaFilePath := dir + "/" + schemaFile
 	schemaBytes, err := ioutil.ReadFile(schemaFilePath)
 	if err != nil {
-		println(schemaFilePath)
-		return fmt.Errorf("%w: error reading from xml schema file location", err)
+		return fmt.Errorf("%w: error reading xsd file %s", err, schemaFilePath)
 	}
 
 	schema, err := xsd.ParseSchema(schemaBytes)
 	if err != nil {
-		return fmt.Errorf("%w: error parsing xml schema", err)
+		return fmt.Errorf("%w: error parsing xsd schema", err)
 	}
 
 	document := golibxml.ParseDoc(string(b))
-	if document == nil {
-		return fmt.Errorf("Error parsing the xml request")
-	}
 	defer document.Free()
 
 	if err := schema.Validate(xsd.DocPtr(unsafe.Pointer(document.Ptr))); err != nil {

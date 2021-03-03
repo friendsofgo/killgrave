@@ -19,6 +19,7 @@ func TestMatcherByJSONSchema(t *testing.T) {
 	schemaGopherFile := "test/testdata/imposters/schemas/type_gopher.json"
 	schemaCatFile := "test/testdata/imposters/schemas/type_cat.json"
 	schemaFailFile := "test/testdata/imposters/schemas/type_gopher_fail.json"
+	schemaNoExtFile := "test/testdata/imposters/schemas/type_gopher_json"
 
 	requestWithoutSchema := Request{
 		Method:     "POST",
@@ -44,6 +45,12 @@ func TestMatcherByJSONSchema(t *testing.T) {
 		SchemaFile: &schemaFailFile,
 	}
 
+	requestWithNoExtSchema := Request{
+		Method:     "POST",
+		Endpoint:   "/login",
+		SchemaFile: &schemaNoExtFile,
+	}
+
 	httpRequestA := &http.Request{Body: bodyA}
 	httpRequestB := &http.Request{Body: bodyB}
 	okResponse := Response{Status: http.StatusOK}
@@ -58,6 +65,7 @@ func TestMatcherByJSONSchema(t *testing.T) {
 		"malformatted json schema file":             {MatcherBySchema(Imposter{Request: requestWithWrongSchema, Response: okResponse}), httpRequestA, false},
 		"incorrect json request schema":             {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestB, false},
 		"non-existing json schema file":             {MatcherBySchema(Imposter{Request: requestWithNonExistingSchema, Response: okResponse}), httpRequestB, false},
+		"no extension json schema file":             {MatcherBySchema(Imposter{Request: requestWithNoExtSchema, Response: okResponse}), httpRequestB, false},
 		"empty json body with required schema file": {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: emptyBody}, false},
 		"invalid json request body":                 {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: wrongBody}, false},
 	}
@@ -82,6 +90,7 @@ func TestMatcherByXSDSchema(t *testing.T) {
 	schemaGopherFile := "test/testdata/imposters/schemas/type_gopher.xsd"
 	schemaCatFile := "test/testdata/imposters/schemas/type_cat.xsd"
 	schemaFailFile := "test/testdata/imposters/schemas/type_gopher_fail.xsd"
+	schemaNoExtFile := "test/testdata/imposters/schemas/type_gopher_xsd"
 
 	requestWithoutSchema := Request{
 		Method:     "POST",
@@ -107,6 +116,12 @@ func TestMatcherByXSDSchema(t *testing.T) {
 		SchemaFile: &schemaFailFile,
 	}
 
+	requestWithNoExtSchema := Request{
+		Method:     "POST",
+		Endpoint:   "/login",
+		SchemaFile: &schemaNoExtFile,
+	}
+
 	httpRequestA := &http.Request{Body: bodyA}
 	httpRequestB := &http.Request{Body: bodyB}
 	okResponse := Response{Status: http.StatusOK}
@@ -118,9 +133,10 @@ func TestMatcherByXSDSchema(t *testing.T) {
 	}{
 		"correct xml request schema":               {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestA, true},
 		"xml imposter without request schema":      {MatcherBySchema(Imposter{Request: requestWithoutSchema, Response: okResponse}), httpRequestA, true},
-		"malformatted xml schema file":             {MatcherBySchema(Imposter{Request: requestWithWrongSchema, Response: okResponse}), httpRequestA, false},
+		"malformatted xsd file":                    {MatcherBySchema(Imposter{Request: requestWithWrongSchema, Response: okResponse}), httpRequestA, false},
 		"incorrect xml request schema":             {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestB, false},
-		"non-existing xml schema file":             {MatcherBySchema(Imposter{Request: requestWithNonExistingSchema, Response: okResponse}), httpRequestB, false},
+		"non-existing xsd file":                    {MatcherBySchema(Imposter{Request: requestWithNonExistingSchema, Response: okResponse}), httpRequestB, false},
+		"no extension xsd file":                    {MatcherBySchema(Imposter{Request: requestWithNoExtSchema, Response: okResponse}), httpRequestB, false},
 		"empty xml body with required schema file": {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: emptyBody}, false},
 		"invalid xml request body":                 {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: wrongBody}, false},
 	}
