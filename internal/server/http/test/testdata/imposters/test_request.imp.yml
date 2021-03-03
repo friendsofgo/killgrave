@@ -1,0 +1,21 @@
+---
+- request:
+    method: GET
+    endpoint: /ymlTestRequest
+  response:
+    status: 200
+    body: "Yml Handled"
+    delay: "1s:5s"
+- request:
+    method: POST
+    endpoint: /yamlGophers
+    schemaFile: "schemas/create_gopher_request.json"
+    headers:
+      "Content-Type": "application/json"
+  response:
+    status: 201
+    headers:
+      "Content-Type": "application/json"
+      "X-Source": "YAML"
+    bodyFile: "responses/create_gopher_response.json"
+- t: "random_text"

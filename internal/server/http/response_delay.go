@@ -23,15 +23,33 @@ func (d *ResponseDelay) Delay() time.Duration {
 	return time.Duration(d.delay + offset)
 }
 
+// UnmarshalYAML of yaml.Unmarshaler interface.
+// Input should be string, consisting of substring that can be parsed by time.ParseDuration,
+// or two similar substrings seperated by ":".
+func (d *ResponseDelay) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var input string
+	if err := unmarshal(&input); err != nil {
+		return err
+	}
+
+	return d.parseDelay(input)
+}
+
 // UnmarshalJSON of json.Unmarshaler interface.
 // Input should be string, consisting of substring that can be parsed by time.ParseDuration,
 // or two similar substrings seperated by ":".
 func (d *ResponseDelay) UnmarshalJSON(data []byte) error {
-	const delimiter = ":"
 	var input string
 	if err := json.Unmarshal(data, &input); err != nil {
 		return err
 	}
+
+	return d.parseDelay(input)
+}
+
+func (d *ResponseDelay) parseDelay(input string) error {
+	const delimiter = ":"
+
 	if input == "" {
 		return nil
 	}
