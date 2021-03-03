@@ -56,7 +56,7 @@ func MatcherBySchema(imposter Imposter) mux.MatcherFunc {
 
 func readBodyBytes(req *http.Request) (bodyBytes []byte, err error) {
 	defer func() {
-		err = req.Body.Close()
+		req.Body.Close()
 		req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 	}()
 
