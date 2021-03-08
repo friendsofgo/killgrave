@@ -99,24 +99,25 @@ If you are a mac user, you could install Killgrave using, [Homebrew](https://bre
 $ brew install friendsofgo/tap/killgrave
 ```
 
-:warning:  If you are using the hombrew way, you only get the [last Killgrave version](https://github.com/friendsofgo/killgrave/releases), we hope fix this soon.
+:warning:  If you are installing via homebrew, you only get the [last Killgrave version](https://github.com/friendsofgo/killgrave/releases), we hope fix this soon.
 
 ### Docker
 
-The application is also available through [Docker](https://hub.docker.com/r/friendsofgo/killgrave), just run:
+The application is also available through [Docker](https://hub.docker.com/r/friendsofgo/killgrave).
 
 ```bash
-docker run -it --rm -p 3000:3000 -v $PWD/:/home -w /home friendsofgo/killgrave
+docker run -it --rm -p 3000:3000 -v $PWD/:/home -w /home friendsofgo/killgrave -h 0.0.0.0
 ```
-Remember to use the [-p](https://docs.docker.com/engine/reference/run/#expose-incoming-ports) flag to expose the container port where the application is listening (3000 by default).
 
-NOTE: If you want to use `killgrave` in Docker at the same time as using your own dockerised HTTP-based API please be careful with networking issues.
+`-p 3000:3000` [publishes](https://docs.docker.com/engine/reference/run/#expose-incoming-ports) port 3000 inside the
+container (where Killgrave is listening by default) to port 3000 on the host machine.
+
+`-h 0.0.0.0` is necessary to allow Killgrave to listen and respond to requests from outside the container (the default,
+`localhost`, will not capture requests from the host network).
 
 ### Other
 
-If you are using, windows or linux you could get the binary for your arch on the release section:
-
-[https://github.com/friendsofgo/killgrave/releases](https://github.com/friendsofgo/killgrave/releases)
+Windows and Linux users can download binaries from the [Github Releases](https://github.com/friendsofgo/killgrave/releases) page.
 
 ## Getting Started
 
