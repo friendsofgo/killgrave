@@ -7,9 +7,6 @@
             "headers": {
                 "Content-Type": "application/json"
             },
-            "params": {
-                "gopherColor": "{v:[a-z]+}"
-            }
         },
         "response": {
             "status": 200,
@@ -17,6 +14,23 @@
                 "Content-Type": "application/json"
             },
             "bodyFile": "responses/create_gopher_response.json"
+        }
+    },
+    {
+        "request": {
+            "method": "POST",
+            "endpoint": "/gophers",
+            "schemaFile": "schemas/create_gopher_request.xsd",
+            "headers": {
+                "Content-Type": "application/xml"
+            },
+        },
+        "response": {
+            "status": 200,
+            "headers": {
+                "Content-Type": "application/xml"
+            },
+            "bodyFile": "responses/create_gopher_response.xml"
         }
     },
     {
