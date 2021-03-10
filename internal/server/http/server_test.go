@@ -3,6 +3,7 @@ package http
 import (
 	"crypto/tls"
 	"errors"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"io/ioutil"
 	"log"
@@ -133,7 +134,7 @@ func TestBuildSecureMode(t *testing.T) {
 	}))
 	defer proxyServer.Close()
 
-	makeServer := func(mode killgrave.ProxyMode) (Server, func()) {
+	makeServer := func(mode killgrave.ProxyMode) (*Server, func()) {
 		router := mux.NewRouter()
 		cert, _ := tls.X509KeyPair([]byte(serverCert), []byte(serverKey))
 		httpServer := &http.Server{Handler: router, Addr: ":443", TLSConfig: &tls.Config{
@@ -144,7 +145,7 @@ func TestBuildSecureMode(t *testing.T) {
 			t.Fatal("NewProxy failed: ", err)
 		}
 		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true)
-		return server, func() {
+		return &server, func() {
 			httpServer.Close()
 		}
 	}
@@ -181,28 +182,28 @@ func TestBuildSecureMode(t *testing.T) {
 			}
 			s.Run()
 
-			// wait to the server is up and running
-			time.Sleep(1 * time.Second)
-
 			client := tc.server.Client()
 			client.Transport = &http.Transport{
 				TLSClientConfig: &tls.Config{
 					InsecureSkipVerify: true,
 				},
 			}
-			response, err := client.Get(tc.url)
-			if err != nil {
-				t.Fatal("Get calling to mock faliling:", err)
-			}
-			defer response.Body.Close()
-			body, _ := ioutil.ReadAll(response.Body)
 
-			if string(body) != tc.body {
-				t.Errorf("Expected body: %v, got: %s", tc.body, body)
-			}
-			if response.StatusCode != tc.status {
-				t.Errorf("Expected status code: %v, got: %v", tc.status, response.StatusCode)
-			}
+			assert.Eventually(t, func() bool {
+				response, err := client.Get(tc.url)
+				if err != nil {
+					return false
+				}
+
+				defer response.Body.Close()
+
+				body, err := ioutil.ReadAll(response.Body)
+				if err != nil {
+					return false
+				}
+
+				return string(body) == tc.body && response.StatusCode != tc.status
+			}, 5*time.Second, 100*time.Millisecond)
 		})
 	}
 }
