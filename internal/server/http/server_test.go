@@ -182,7 +182,7 @@ func TestBuildSecureMode(t *testing.T) {
 			s.Run()
 
 			// wait to the server is up and running
-			time.Sleep(1 * time.Second)
+			time.Sleep(5 * time.Second)
 
 			client := tc.server.Client()
 			client.Transport = &http.Transport{
