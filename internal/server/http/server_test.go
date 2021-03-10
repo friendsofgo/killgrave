@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/mux"
@@ -131,6 +132,9 @@ func TestBuildSecureMode(t *testing.T) {
 		io.WriteString(w, "Proxied")
 	}))
 	defer proxyServer.Close()
+
+	// wait to the server is up and running
+	time.Sleep(1 * time.Second)
 
 	makeServer := func(mode killgrave.ProxyMode) (Server, func()) {
 		router := mux.NewRouter()
