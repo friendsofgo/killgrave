@@ -107,6 +107,7 @@ cors:
   exposed_headers: ["Cache-Control"]
   origins: ["*"]
   allow_credentials: true
+watcher: true
 ```
 
 Historically, the options `imposters_path`, `port`, `host` were mandatory when using a configuration file.
@@ -120,6 +121,8 @@ Default value is no delay at all.
 
 The option `cors` still being optional and its options can be an empty array.
 If you want more information about the CORS options, visit the [CORS section](#CORS).
+
+The `watcher` configuration field is optional, with this setting you can enable hot-reloads on imposter changes. Disabled by default.
 
 ## How to use
 
