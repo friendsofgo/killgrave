@@ -122,7 +122,7 @@ Default value is no delay at all.
 The option `cors` still being optional and its options can be an empty array.
 If you want more information about the CORS options, visit the [CORS section](#CORS).
 
-The `watcher` option is optional, with this field you could decide if you want that you server does an auto-reload when the imposters change.
+The `watcher` configuration field is optional, with this setting you can enable hot-reloads on imposter changes. Disabled by default.
 
 ## How to use
 
