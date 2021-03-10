@@ -133,9 +133,6 @@ func TestBuildSecureMode(t *testing.T) {
 	}))
 	defer proxyServer.Close()
 
-	// wait to the server is up and running
-	time.Sleep(1 * time.Second)
-
 	makeServer := func(mode killgrave.ProxyMode) (Server, func()) {
 		router := mux.NewRouter()
 		cert, _ := tls.X509KeyPair([]byte(serverCert), []byte(serverKey))
@@ -183,6 +180,9 @@ func TestBuildSecureMode(t *testing.T) {
 				t.Fatalf("Non expected error trying to build server: %v", err)
 			}
 			s.Run()
+
+			// wait to the server is up and running
+			time.Sleep(1 * time.Second)
 
 			client := tc.server.Client()
 			client.Transport = &http.Transport{
