@@ -57,6 +57,7 @@ func main() {
 		*port,
 		*secure,
 		killgrave.WithProxyConfiguration(*proxyModeFlag, *proxyURLFlag),
+		killgrave.WithWatcherConfiguration(*watcherFlag),
 		killgrave.WithConfigFile(*configFilePath),
 	)
 	if err != nil {
@@ -72,7 +73,7 @@ func main() {
 	srv.Run()
 
 	// Initialize and start the file watcher if the watcher option is true
-	w := runWatcher(*watcherFlag, cfg.ImpostersPath, &srv, cfg.Host, cfg.Port, cfg)
+	w := runWatcher(cfg.Watcher, cfg.ImpostersPath, &srv, cfg.Host, cfg.Port, cfg)
 
 	<-done
 	close(done)

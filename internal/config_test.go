@@ -20,7 +20,14 @@ func TestNewConfig(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, err := NewConfig("", "", 0, false, WithProxyConfiguration(ProxyNone.String(), ""), WithConfigFile(tc.input))
+			got, err := NewConfig(
+				"",
+				"",
+				0,
+				false,
+				WithProxyConfiguration(ProxyNone.String(), ""),
+				WithConfigFile(tc.input),
+				WithWatcherConfiguration(tc.expected.Watcher))
 
 			if err != nil && tc.err == nil {
 				t.Fatalf("not expected any erros and got %v", err)
@@ -114,6 +121,7 @@ func validConfig() Config {
 			ExposedHeaders:   []string{"Cache-Control"},
 			AllowCredentials: true,
 		},
+		Watcher: true,
 	}
 }
 

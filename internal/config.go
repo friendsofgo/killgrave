@@ -17,6 +17,7 @@ type Config struct {
 	CORS          ConfigCORS  `yaml:"cors"`
 	Proxy         ConfigProxy `yaml:"proxy"`
 	Secure        bool        `yaml:"secure"`
+	Watcher       bool        `yaml:"watcher"`
 }
 
 // ConfigCORS representation of section CORS of the yaml
@@ -144,6 +145,15 @@ func WithProxyConfiguration(proxyMode, proxyURL string) ConfigOpt {
 		cfg.Proxy.Mode = mode
 		cfg.Proxy.URL = proxyURL
 
+		return nil
+	}
+}
+
+// WithWatcherConfiguration preparing server to do auto-reload
+func WithWatcherConfiguration(watcher bool) ConfigOpt {
+	return func(cfg *Config) error {
+
+		cfg.Watcher = watcher
 		return nil
 	}
 }

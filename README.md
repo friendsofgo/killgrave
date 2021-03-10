@@ -18,16 +18,16 @@ Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**,
 
 ## Versions
 
-Actually, `Killgrave` works using `sem ver` but in 0 version, for that the 'minor' will be change when some broken changes are added to the application, and the 'patch' would be changed when a new feature with new changes are added or for bug fixing, when v1.0.0 will be released, `Killgrave` will be change to use a normal use of `sem ver`. 
+Actually, `Killgrave` works using [`SemVer`](https://semver.org/) but in 0 version, which means that the 'minor' will be changed when some broken changes are introduced into the application, and the 'patch' will be changed when a new feature with new changes is added or for bug fixing. As soon as v1.0.0 be released, `Killgrave` will start to use [`SemVer`](https://semver.org/) as usual.
 
 ## Branch master
 
-Master branch contains all the latest changes on the application, for that the branch `master` is not an stable version.
-If you want to have those changes then you will need to use the branch master, but remember that some breaking changes can be added to this branch.
+The Master branch contains all the latest changes on the application. Therefore, the `master` branch is not a stable version.
+If you want to have the latest changes then you will need to use the `master` branch, but remember that some breaking changes can be added to this branch.
 
 ## Future releases
-This project is in continuous improvement so you can check the [Issues](https://github.com/friendsofgo/killgrave/issues) created for give it support or create your owns.
-Furthermore, on the `branch master` you can find the [CHANGELOG.md](https://github.com/friendsofgo/killgrave/blob/master/CHANGELOG.md) file that contains all the new features that would be added on the next release. 
+This project is in continuous improvement so you can check the [Issues](https://github.com/friendsofgo/killgrave/issues) and hopefully give it support or create your own issue.
+Furthermore, on the `master` branch you can find the [CHANGELOG.md](https://github.com/friendsofgo/killgrave/blob/master/CHANGELOG.md) file that contains all the new features that will be added on the next release. 
 
 ## Getting started
 
@@ -58,7 +58,7 @@ docker run -it --rm -p 3000:3000 -v $PWD/:/home -w /home friendsofgo/killgrave
 ```
 Remember to use the [-p](https://docs.docker.com/engine/reference/run/#expose-incoming-ports) flag to expose the container port where the application is listening (3000 by default).
 
-NOTE: If you want to use `killgrave` through Docker at the same time you use your own dockerised HTTP-based API, be careful with networking issues.
+NOTE: If you want to use `killgrave` in Docker at the same time as using your own dockerised HTTP-based API please be careful with networking issues.
 
 ## Using Killgrave
 
@@ -68,7 +68,7 @@ Use `killgrave` with default flags:
 $ killgrave
 2019/04/14 23:53:26 The fake server is on tap now: http://localhost:3000
 ```
-Or custome your server with this flags:
+Or custom your server with these flags:
 ```sh
   -config string
         path with configuration file
@@ -92,7 +92,7 @@ Or custome your server with this flags:
 
 Use `killgrave` with config file:
 
-First of all you need create a file with a valid config, i.e:
+First of all, you need create a file with a valid config, i.e:
 
 ```yaml
 #config.yml
@@ -109,26 +109,29 @@ cors:
   exposed_headers: ["Cache-Control"]
   origins: ["*"]
   allow_credentials: true
+watcher: true
 ```
 
 Historically, the options `imposters_path`, `port`, `host` were mandatory when using a configuration file.
 
-However, since last versions, they are no longer needed, so you can simply override those options you want to.
+However, since the last version, they are no longer needed, so you can simply override those options if you want to.
 Furthermore, the `imposters_path` option in previous version towards reference to the path where the app was launched, but in the last version it is relative on where the config file is.
 
-The `delay` option is the time that the server waits before responding. This can help simulate network issues, or server high load. You must write `delay` as string with postfix indicating time unit (see [this](https://golang.org/pkg/time/#ParseDuration) for more info about actual format). Also you can specify minimum and maximum delays using separator ':', server respond delay will be choosen at random between this values.
+The `delay` option is the time that the server waits before responding. This can help simulate network issues, or server high load. You must write `delay` as a string with postfix indicating time unit (see [this](https://golang.org/pkg/time/#ParseDuration) for more info about actual format). Also, you can specify minimum and maximum delays using separator ':', the server respond delay will be chosen at random between these values.
 
 Default value is no delay at all.
 
 The option `cors` still being optional and its options can be an empty array.
 If you want more information about the CORS options, visit the [CORS section](#CORS).
 
+The `watcher` configuration field is optional, with this setting you can enable hot-reloads on imposter changes. Disabled by default.
+
 ## How to use
 
 ### Create an imposter
-You must be create an imposter to start using the application, only files with the `.imp.json` extension will be interpreted as imposters files, and the base path for the rest of the files will be the path of the `.imp.json` file.
+You must be creating an imposter to start using the application, only files with the `.imp.json` extension will be interpreted as imposter files, and the base path for the rest of the files will be the path of the `.imp.json` file.
 
-You need to organize your imposters from more restrictive to less. We use a rule-based system for create each imposter, for this reason you need to organize your imposters in the way that more restrictive to less, like the example below.
+You need to organize your imposters from more restrictive to less. We use a rule-based system for creating each imposter, for this reason you need to organize your imposters from the most restrictive to the least, like the example below.
 
 ```json
 imposters/create_gopher.imp.json
@@ -256,7 +259,7 @@ curl --header "Content-Type: application/json" \
 
 If you want to use `killgrave` on your client application you must consider to configure correctly all about CORS, thus we offer the possibility to configure it as you need through a config file.
 
-In the CORS section of the file you can find the next options:
+In the CORS section of the file you can find the following options:
 
 - **methods** (string array)
   
@@ -278,19 +281,19 @@ In the CORS section of the file you can find the next options:
 
 - **origins** (string array)
   
-  Represent the **Access-Control-Allow-Origin header**, if you don't specify or leave as empty array this options has not default value
+  Represent the **Access-Control-Allow-Origin header**, if you don't specify or leave as empty array this option has not default value
 
 - **allow_credentials** (boolean)
   
   Represent the **Access-Control-Allow-Credentials header** you must indicate if true or false
   
 ## Proxy
-You can use Killgrave with a proxy mode, what it does mean that you can use the flags `proxy-mode` and `proxy-url` or the configuration file to declare one of these three modes:
+You can use Killgrave with a proxy mode which means that you can use the flags `proxy-mode` and `proxy-url` or the configuration file to declare one of these three modes:
 * none: by default mode, with this mode you don't use any proxy, and the mock server will always look into the files with `.imp.json` extension.
 * missing: with this mode, the mock server will look into the files with `.imp.json` extension, but if you call to an endpoint that doesn't exist, then the mock server will call to the real server, declared on the `proxy-url` configuration variable.
 * all: the mock server only will call to the real server, declared on the `proxy-url` configuration variable.
 
-The `proxy-url` must be the root path. For example if we have endpoint api like, `http://example.com/things`, the `proxy-url` will be, `http://example.com`
+The `proxy-url` must be the root path. For example, if we have endpoint api like, `http://example.com/things`, the `proxy-url` will be, `http://example.com`
 
 ## Features
 * Imposters created in json
