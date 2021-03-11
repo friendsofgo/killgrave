@@ -203,7 +203,7 @@ func TestBuildSecureMode(t *testing.T) {
 					return false
 				}
 
-				return string(body) == tc.body && response.StatusCode != tc.status
+				return string(body) == tc.body && response.StatusCode == tc.status
 			}, 1*time.Second, 50*time.Millisecond)
 		})
 	}
