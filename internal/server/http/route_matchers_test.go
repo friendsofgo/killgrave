@@ -5,9 +5,8 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"testing"
-
-	"github.com/gorilla/mux"
 )
 
 func TestMatcherBySchema(t *testing.T) {
@@ -49,24 +48,31 @@ func TestMatcherBySchema(t *testing.T) {
 	okResponse := Response{Status: http.StatusOK}
 
 	var matcherData = map[string]struct {
-		fn  mux.MatcherFunc
+		im  Imposter
 		req *http.Request
-		res bool
+		res int
 	}{
-		"correct request schema":               {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestA, true},
-		"imposter without request schema":      {MatcherBySchema(Imposter{Request: requestWithoutSchema, Response: okResponse}), httpRequestA, true},
-		"malformatted schema file":             {MatcherBySchema(Imposter{Request: requestWithWrongSchema, Response: okResponse}), httpRequestA, false},
-		"incorrect request schema":             {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestB, false},
-		"non-existing schema file":             {MatcherBySchema(Imposter{Request: requestWithNonExistingSchema, Response: okResponse}), httpRequestB, false},
-		"empty body with required schema file": {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: emptyBody}, false},
-		"invalid request body":                 {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: wrongBody}, false},
+		"correct request schema":               {Imposter{Request: requestWithSchema, Response: okResponse}, httpRequestA, http.StatusOK},
+		"imposter without request schema":      {Imposter{Request: requestWithoutSchema, Response: okResponse}, httpRequestA, http.StatusOK},
+		"malformatted schema file":             {Imposter{Request: requestWithWrongSchema, Response: okResponse}, httpRequestA, http.StatusBadRequest},
+		"incorrect request schema":             {Imposter{Request: requestWithSchema, Response: okResponse}, httpRequestB, http.StatusBadRequest},
+		"non-existing schema file":             {Imposter{Request: requestWithNonExistingSchema, Response: okResponse}, httpRequestB, http.StatusBadRequest},
+		"empty body with required schema file": {Imposter{Request: requestWithSchema, Response: okResponse}, &http.Request{Body: emptyBody}, http.StatusBadRequest},
+		"invalid request body":                 {Imposter{Request: requestWithSchema, Response: okResponse}, &http.Request{Body: wrongBody}, http.StatusBadRequest},
 	}
 
+	dummyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	for name, tt := range matcherData {
+		rr := httptest.NewRecorder()
+		h := SchemaValidationMiddleware(tt.im, dummyHandler)
 		t.Run(name, func(t *testing.T) {
-			res := tt.fn(tt.req, nil)
-			if res != tt.res {
-				t.Fatalf("error while matching by request schema - expected: %t, given: %t", tt.res, res)
+			h.ServeHTTP(rr, tt.req)
+			code := rr.Code
+			if code != tt.res {
+				t.Fatalf(
+					"error while matching by request schema - expected: %d, given: %d, error: %v",
+					tt.res, code, rr.Body.String(),
+				)
 			}
 		})
 
