@@ -128,6 +128,7 @@ func TestBuildProxyMode(t *testing.T) {
 		})
 	}
 }
+
 func TestBuildSecureMode(t *testing.T) {
 	proxyServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "Proxied")
@@ -137,7 +138,7 @@ func TestBuildSecureMode(t *testing.T) {
 	makeServer := func(mode killgrave.ProxyMode) (*Server, func()) {
 		router := mux.NewRouter()
 		cert, _ := tls.X509KeyPair([]byte(serverCert), []byte(serverKey))
-		httpServer := &http.Server{Handler: router, Addr: ":443", TLSConfig: &tls.Config{
+		httpServer := &http.Server{Handler: router, Addr: ":4430", TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{cert},
 		}}
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
@@ -158,7 +159,7 @@ func TestBuildSecureMode(t *testing.T) {
 	}{
 		"ProxyNone_Hit": {
 			mode:   killgrave.ProxyNone,
-			url:    "https://localhost:443/testHTTPSRequest",
+			url:    "https://localhost:4430/testHTTPSRequest",
 			body:   "Handled",
 			status: http.StatusOK,
 			server: proxyServer,
@@ -203,7 +204,7 @@ func TestBuildSecureMode(t *testing.T) {
 				}
 
 				return string(body) == tc.body && response.StatusCode != tc.status
-			}, 5*time.Second, 100*time.Millisecond)
+			}, 1*time.Second, 50*time.Millisecond)
 		})
 	}
 }
