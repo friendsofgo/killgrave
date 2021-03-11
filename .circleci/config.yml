@@ -1,18 +1,25 @@
 version: 2.1
-jobs:
-  build-go1_14:
-    docker:
-      - image: circleci/golang:1.14
-    working_directory: /go/src/github.com/friendsofgo/killgrave
+commands:
+  install-sys-deps:
+    description: "It installs the system dependencies required to run the pipelines"
     steps:
-      - checkout
-      - run: go test -v -race ./...
-      - run: go build -race cmd/killgrave/main.go
+      - run: sudo apt-get install libxml2-dev
+jobs:
   build-go1_15:
     docker:
       - image: circleci/golang:1.15
     working_directory: /go/src/github.com/friendsofgo/killgrave
     steps:
+      - install-sys-deps
+      - checkout
+      - run: go test -v -race ./...
+      - run: go build -race cmd/killgrave/main.go
+  build-go1_16:
+    docker:
+      - image: circleci/golang:1.16
+    working_directory: /go/src/github.com/friendsofgo/killgrave
+    steps:
+      - install-sys-deps
       - checkout
       - run: go test -v -race ./...
       - run: go build -race cmd/killgrave/main.go
@@ -21,6 +28,7 @@ jobs:
       - image: circleci/golang:latest
     working_directory: /go/src/github.com/friendsofgo/killgrave
     steps:
+      - install-sys-deps
       - checkout
       - run: go test -v -race ./...
       - run: go build -race cmd/killgrave/main.go      
@@ -31,6 +39,7 @@ jobs:
           GO111MODULE: "on"
     working_directory: /go/src/github.com/friendsofgo/killgrave
     steps:
+      - install-sys-deps
       - checkout
       - run: make coverage      
       - run: bash <(curl -s https://codecov.io/bash)
@@ -40,14 +49,15 @@ jobs:
         environment:
           GO111MODULE: "on"
     steps:
+     - install-sys-deps
      - checkout
      - run: curl -sL https://git.io/goreleaser | bash
 workflows:
   version: 2
   build_and_test:
     jobs:
-      - build-go1_14
       - build-go1_15
+      - build-go1_16
       - build-go_latest
       - coverage
       - release:
