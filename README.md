@@ -110,6 +110,7 @@ cors:
   origins: ["*"]
   allow_credentials: true
 watcher: true
+secure: true
 ```
 
 Historically, the options `imposters_path`, `port`, `host` were mandatory when using a configuration file.
@@ -125,6 +126,9 @@ The option `cors` still being optional and its options can be an empty array.
 If you want more information about the CORS options, visit the [CORS section](#CORS).
 
 The `watcher` configuration field is optional, with this setting you can enable hot-reloads on imposter changes. Disabled by default.
+
+The `secure` option by default is false, but if you want to run your server using TLS options with a dummy certificates, you could enable
+this option, then the mockserver be able to work with `HTTPS` protocol.
 
 ## How to use
 
