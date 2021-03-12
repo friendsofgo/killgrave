@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"crypto/tls"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -18,56 +19,11 @@ import (
 	killgrave "github.com/friendsofgo/killgrave/internal"
 )
 
-const (
-	serverCert = `-----BEGIN CERTIFICATE-----
-MIIDHjCCAgYCCQC9DwH2RNHUejANBgkqhkiG9w0BAQsFADBQMRYwFAYDVQQKDA1G
-cmllbmRzIG9mIEdvMRIwEAYDVQQDDAlraWxsZ3JhdmUxIjAgBgkqhkiG9w0BCQEW
-E2l0QGZyaWVuZHNvZmdvLnRlY2gwIBcNMjEwMzEwMjI0OTM0WhgPMjEyMTAyMTQy
-MjQ5MzRaMFAxFjAUBgNVBAoMDUZyaWVuZHMgb2YgR28xEjAQBgNVBAMMCWtpbGxn
-cmF2ZTEiMCAGCSqGSIb3DQEJARYTaXRAZnJpZW5kc29mZ28udGVjaDCCASIwDQYJ
-KoZIhvcNAQEBBQADggEPADCCAQoCggEBALKWzDXl072p4FV9S16u2gwUStdHRYZd
-xyyE5BEusNADQVB5nQ66/4VhxGebQWootaaZStWUl8Et07bvHhk0cpy3Jd6gQaRu
-g+FXiwtLsE8xMbdAbX4QvQCwZ39Ay6uNHZ4GRX5qVr46myvnL+GaemgcZpbsGGrE
-reAba2WUXNpDIBEQ/aCEe+rwpdN7d1obLMoT3H9iPqJwQAaTaOzTg3WhaSYOkInF
-RAG/FOCXoDZUb8pDWSefF8ZF26uRF9iwiTSTu29hR65ld4V0RS9kUvNu010tMew8
-dBGRwRcTaqmZyWZKe/5EHaZD9p7MmfrQs7xup0hHeg0EZuC89S/uDkcCAwEAATAN
-BgkqhkiG9w0BAQsFAAOCAQEAHPwIBPl25v/kGAtPZsmHsKMl2TgfRYjid0yDkbPm
-Nb+BzsCoUCnA5EMpIyBbyapsI6lBe8SObwRXSra9XwOSEWwsSpql3occvSNCCaS/
-Ti6NSUpFzq/wIMC9JU4KH7SPXSTHOJ32GfbaI5TECu27hvDUBmML4zyeGSf3h6pa
-mpf1bMqqXgxfzWaLn3Q859ejR2whS4eeqMFKl3RxV8QvW5JfUij+2LwCzttFcKKg
-i4s0QCjR8eIreIcMvZP/T7zSIcw1dx1lFh8b+hbuVXhOojMY/hHWEPNf/Uu0PZy7
-THHLAlBA4Lbms9gg0dF8czJ3AzH+UG9xpRkR4KQ1Md+zJw==
------END CERTIFICATE-----`
+//go:embed cert/server.key
+var serverKey []byte
 
-	serverKey = `-----BEGIN RSA PRIVATE KEY-----
-MIIEogIBAAKCAQEAspbMNeXTvangVX1LXq7aDBRK10dFhl3HLITkES6w0ANBUHmd
-Drr/hWHEZ5tBaii1pplK1ZSXwS3Ttu8eGTRynLcl3qBBpG6D4VeLC0uwTzExt0Bt
-fhC9ALBnf0DLq40dngZFfmpWvjqbK+cv4Zp6aBxmluwYasSt4BtrZZRc2kMgERD9
-oIR76vCl03t3WhssyhPcf2I+onBABpNo7NODdaFpJg6QicVEAb8U4JegNlRvykNZ
-J58XxkXbq5EX2LCJNJO7b2FHrmV3hXRFL2RS827TXS0x7Dx0EZHBFxNqqZnJZkp7
-/kQdpkP2nsyZ+tCzvG6nSEd6DQRm4Lz1L+4ORwIDAQABAoIBABV5HES+xZ7gdiDR
-V+aij4U0S2tnHmzxialIsUN/obLhMVFDziafRWn8P2lVuZ/SFUVa2SylGToZEIPG
-bJALRlyhiOQj0MC8qQ7HP+izyRc8iwXFsWSfDpqum0Mpv1N5PD5r8p8omhV1ZoL4
-4UD3GhC6mXs8GBN+Yom3wkoMdL2pcRaLDqkQTJnZquGo6QndS0X5liqmRWROXug6
-Uona653GyEpokP6saepfdO5rXMHdTeFCRZPfloNK9ulw62Evww7tviokNTVABz/f
-tbcdHewrNMFL1y8QuF+/6QJtaV8utLwpdwLTHvlcPuSF92jXqi2mSS9ptqYHwB3B
-3YDQ/QECgYEA3U8RcHnaxEZyP2xvBJ7pNqMG4b7bMak4W9pqfzvXtt3ZBNWQQewN
-IrRKdKgALf5VBjcSDjr5sUR8lRqAFURMkr97oDmhFFMV6ywo/t/DjdHlCIHPIJYD
-LjBxKlD9k7f73xtKzLg5hJXR8WBJ9JBfPNv10icEyNNYnGwlfuu3vfECgYEAzpVr
-wo5lcJ7VDWi+pp7rnz2BBQKoUPux8G7p7XQ/+Yhe75TRn7qm9SjD6uGEHEhN6PjO
-1DYHkIRWVDK6kTIL+qiHLWgYEUM63r1jhgY+n+x7d82Sz798WFEiYjLGL/CTIdFs
-vSsz3QMWAhm08E4k9MFE5ATWYKpCVQ/yUg2ut7cCgYBlca4DyceO+t+51OGa06EB
-a39nEU52mCP+bsMsaWj7KPwmrCKBJUvsIYqTqMLUUmX1AF9laIE2UbdtvYUCupkD
-F4T6sA/3OhKtB0QPeNCx/Imo+Z/RRxJUJN5q0E88XDS3U1JZPwUWknp203VzBo6x
-Xf5zg3E9ASv4H9acND64cQKBgHZavukxQca7CN7s0sWNKPsLdp6TPjFfcjuIn/cN
-8hUZXyKtxUdY3Yx5dX1dBJ5bgl9mJMEJz12po/gLND45SQmrgf6us5M4TEMOiDVh
-4IEpMDecDG9/ilLi8OsHoeoXT4RBgqYCWW1W9kXvym0eqCedjsWAS/4HrYckYrVF
-54KTAoGAc1L9pjJhQZuf6uE0rh0WiUIPE9R2q2FKQqfPss0KHv9pENH/DPI3y3jF
-1/BE5jythAgP8biHGC126xW4dP/2NyTN1Ek8/N5ibdSMSG02FNFQNmqmdwP/HUXj
-vfIUhmkGtpT6HYWjKI2+47PcdpJgZg4X4mTX5frT0eSeiNwfePs=
------END RSA PRIVATE KEY-----
-`
-)
+//go:embed cert/server.cert
+var serverCert []byte
 
 var (
 	defaultCORSMethods        = []string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE", "PATCH", "TRACE", "CONNECT"}
@@ -184,7 +140,7 @@ func (s *Server) run(secure bool) error {
 		return s.httpServer.ListenAndServe()
 	}
 
-	cert, err := tls.X509KeyPair([]byte(serverCert), []byte(serverKey))
+	cert, err := tls.X509KeyPair(serverCert, serverKey)
 	if err != nil {
 		log.Fatal(err)
 	}

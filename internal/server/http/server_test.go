@@ -137,7 +137,7 @@ func TestBuildSecureMode(t *testing.T) {
 
 	makeServer := func(mode killgrave.ProxyMode) (*Server, func()) {
 		router := mux.NewRouter()
-		cert, _ := tls.X509KeyPair([]byte(serverCert), []byte(serverKey))
+		cert, _ := tls.X509KeyPair(serverCert, serverKey)
 		httpServer := &http.Server{Handler: router, Addr: ":4430", TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{cert},
 		}}
