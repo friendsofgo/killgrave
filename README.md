@@ -127,8 +127,7 @@ If you want more information about the CORS options, visit the [CORS section](#C
 
 The `watcher` configuration field is optional, with this setting you can enable hot-reloads on imposter changes. Disabled by default.
 
-The `secure` option by default is false, but if you want to run your server using TLS options with a dummy certificates, you could enable
-this option, then the mockserver be able to work with `HTTPS` protocol.
+The `secure` configuration field is optional, with this setting you can run your server using TLS options with a dummy certificate, so to make it work with the `HTTPS` protocol. Disabled by default.
 
 ## How to use
 
