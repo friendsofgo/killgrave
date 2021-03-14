@@ -28,6 +28,7 @@ const (
 	_defaultImpostersPath = "imposters"
 	_defaultConfigFile    = ""
 	_defaultProxyMode     = killgrave.ProxyNone
+	_defaultStrictSlash   = true
 )
 
 func main() {
@@ -102,7 +103,7 @@ func runWatcher(canWatch bool, pathToWatch string, currentSrv *server.Server, ho
 }
 
 func runServer(host string, port int, cfg killgrave.Config) server.Server {
-	router := mux.NewRouter()
+	router := mux.NewRouter().StrictSlash(_defaultStrictSlash)
 	httpAddr := fmt.Sprintf("%s:%d", host, port)
 
 	httpServer := http.Server{
