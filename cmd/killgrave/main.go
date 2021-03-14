@@ -101,7 +101,7 @@ func runWatcher(canWatch bool, pathToWatch string, currentSrv *server.Server, ho
 }
 
 func runServer(host string, port int, cfg killgrave.Config) server.Server {
-	router := mux.NewRouter()
+	router := mux.NewRouter().StrictSlash(cfg.StrictSlash)
 	httpAddr := fmt.Sprintf("%s:%d", host, port)
 
 	httpServer := http.Server{

@@ -178,6 +178,7 @@ proxy:
   url: https://example.com
   mode: missing
 watcher: true
+strict_slash: false
 cors:
   methods: ["GET"]
   headers: ["Content-Type"]

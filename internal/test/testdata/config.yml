@@ -1,6 +1,7 @@
 imposters_path: "imposters"
 port: 3000
 host: "localhost"
+strict_slash: false
 cors:
   methods: ["GET"]
   headers: ["Content-Type"]

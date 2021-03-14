@@ -16,6 +16,7 @@ type Config struct {
 	Host          string      `yaml:"host"`
 	CORS          ConfigCORS  `yaml:"cors"`
 	Proxy         ConfigProxy `yaml:"proxy"`
+	StrictSlash   bool        `yaml:"strict_slash"`
 }
 
 // ConfigCORS representation of section CORS of the yaml
