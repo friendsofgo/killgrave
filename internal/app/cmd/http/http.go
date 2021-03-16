@@ -21,6 +21,7 @@ const (
 	_defaultHost      = "localhost"
 	_defaultPort      = 3000
 	_defaultProxyMode = killgrave.ProxyNone
+	_defaultStrictSlash   = true
 )
 
 var (
@@ -89,7 +90,7 @@ func runHTTP(cmd *cobra.Command, cfg killgrave.Config) error {
 
 // TODO: refactor the method NewServer of the pkg server/http should be contain how to initialize the http server
 func runServer(cfg killgrave.Config) server.Server {
-	router := mux.NewRouter()
+	router := mux.NewRouter().StrictSlash(_defaultStrictSlash)
 	httpAddr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 
 	httpServer := http.Server{
