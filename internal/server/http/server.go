@@ -2,6 +2,8 @@ package http
 
 import (
 	"context"
+	"crypto/tls"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -17,6 +19,12 @@ import (
 	killgrave "github.com/friendsofgo/killgrave/internal"
 )
 
+//go:embed cert/server.key
+var serverKey []byte
+
+//go:embed cert/server.cert
+var serverCert []byte
+
 var (
 	defaultCORSMethods        = []string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE", "PATCH", "TRACE", "CONNECT"}
 	defaultCORSHeaders        = []string{"X-Requested-With", "Content-Type", "Authorization"}
@@ -30,17 +38,19 @@ type ServerOpt func(s *Server)
 type Server struct {
 	impostersPath string
 	router        *mux.Router
-	httpServer    http.Server
+	httpServer    *http.Server
 	proxy         *Proxy
+	secure        bool
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router, httpServer http.Server, proxyServer *Proxy) Server {
+func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool) Server {
 	return Server{
 		impostersPath: p,
 		router:        r,
 		httpServer:    httpServer,
 		proxy:         proxyServer,
+		secure:        secure,
 	}
 }
 
@@ -118,11 +128,28 @@ loop:
 func (s *Server) Run() {
 	go func() {
 		log.Printf("The fake server is on tap now: %s\n", s.httpServer.Addr)
-		err := s.httpServer.ListenAndServe()
+		err := s.run(s.secure)
 		if err != http.ErrServerClosed {
 			log.Fatal(err)
 		}
 	}()
+}
+
+func (s *Server) run(secure bool) error {
+	if !secure {
+		return s.httpServer.ListenAndServe()
+	}
+
+	cert, err := tls.X509KeyPair(serverCert, serverKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s.httpServer.TLSConfig = &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+
+	return s.httpServer.ListenAndServeTLS("", "")
 }
 
 // Shutdown shutdown the current http server

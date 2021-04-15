@@ -3,6 +3,7 @@ FROM golang:alpine AS build
 LABEL MAINTAINER = 'Friends of Go (it@friendsofgo.tech)'
 
 RUN apk add --update git
+RUN apk add ca-certificates
 WORKDIR /go/src/github.com/friendsofgo/killgrave
 COPY . .
 RUN export GO111MODULE=on && go mod tidy && TAG=$(git describe --tags --abbrev=0) \
@@ -12,4 +13,5 @@ RUN export GO111MODULE=on && go mod tidy && TAG=$(git describe --tags --abbrev=0
 # Building image with the binary
 FROM scratch
 COPY --from=build /go/bin/killgrave /go/bin/killgrave
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 ENTRYPOINT ["/go/bin/killgrave"]

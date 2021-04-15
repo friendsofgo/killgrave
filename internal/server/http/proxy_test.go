@@ -11,18 +11,18 @@ import (
 
 func TestNewProxy(t *testing.T) {
 	testCases := map[string]struct {
-		rawUrl string
+		rawURL string
 		mode   killgrave.ProxyMode
 		err    error
 	}{
 		"valid all":       {"all", killgrave.ProxyAll, nil},
 		"valid mode none": {"none", killgrave.ProxyNone, nil},
-		"error rawUrl":    {":http!/gogle.com", killgrave.ProxyNone, errors.New("error")},
+		"error rawURL":    {":http!/gogle.com", killgrave.ProxyNone, errors.New("error")},
 	}
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			proxy, err := NewProxy(tc.rawUrl, tc.mode)
+			proxy, err := NewProxy(tc.rawURL, tc.mode)
 			if err != nil && tc.err == nil {
 				t.Fatalf("not expected any erros and got %v", err)
 			}

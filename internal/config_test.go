@@ -24,6 +24,7 @@ func TestNewConfig(t *testing.T) {
 				"",
 				"",
 				0,
+				false,
 				WithProxyConfiguration(ProxyNone.String(), ""),
 				WithConfigFile(tc.input),
 				WithWatcherConfiguration(tc.expected.Watcher))

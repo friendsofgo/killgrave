@@ -78,6 +78,8 @@ Or custom your server with these flags:
         directory where your imposters are saved (default "imposters")
   -port int
         port to run the server (default 3000)
+  -secure bool
+        if you run your server using TLS (https)
   -proxy-mode string
         proxy mode you can choose between (all, missing or none) (default "none")
   -proxy-url string
@@ -108,6 +110,7 @@ cors:
   origins: ["*"]
   allow_credentials: true
 watcher: true
+secure: true
 ```
 
 Historically, the options `imposters_path`, `port`, `host` were mandatory when using a configuration file.
@@ -123,6 +126,8 @@ The option `cors` still being optional and its options can be an empty array.
 If you want more information about the CORS options, visit the [CORS section](#CORS).
 
 The `watcher` configuration field is optional, with this setting you can enable hot-reloads on imposter changes. Disabled by default.
+
+The `secure` configuration field is optional, with this setting you can run your server using TLS options with a dummy certificate, so to make it work with the `HTTPS` protocol. Disabled by default.
 
 ## How to use
 
