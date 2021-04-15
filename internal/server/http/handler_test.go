@@ -10,61 +10,55 @@ import (
 )
 
 func TestImposterHandler(t *testing.T) {
+	bodyRequest := []byte(`{
+		"data": {
+			"type": "gophers",
+		  "attributes": {
+			"name": "Zebediah",
+			"color": "Purple",
+			"age": 55
+		  }
+		}
+	  }`)
 	var headers = make(map[string]string)
 	headers["Content-Type"] = "application/json"
 
-	bodyXMLFile := "test/testdata/imposters/responses/create_gopher_response.xml"
-	f, _ := os.Open(bodyXMLFile)
-	defer f.Close()
-	expectedXMLBodyFileData, _ := ioutil.ReadAll(f)
-
-	xmlBody := `<?xml version="1.0" encoding="UTF-8" ?><data><type>gophers</type></data>`
-
-	bodyJSONFile := "test/testdata/imposters/responses/create_gopher_response.json"
-	f, _ = os.Open(bodyJSONFile)
-	defer f.Close()
-	expectedJSONBodyFileData, _ := ioutil.ReadAll(f)
-
-	jsonBody := `{"test":true}`
-
+	schemaFile := "test/testdata/imposters/schemas/create_gopher_request.json"
+	bodyFile := "test/testdata/imposters/responses/create_gopher_response.json"
 	bodyFileFake := "test/testdata/imposters/responses/create_gopher_response_fail.json"
+	body := `{"test":true}`
+
+	validRequest := Request{
+		Method:     "POST",
+		Endpoint:   "/gophers",
+		SchemaFile: &schemaFile,
+		Headers:    &headers,
+	}
+
+	f, _ := os.Open(bodyFile)
+	defer f.Close()
+	expectedBodyFileData, _ := ioutil.ReadAll(f)
 
 	var dataTest = []struct {
-		name            string
-		imposter        Imposter
-		expectedHeaders map[string]string
-		expectedBody    string
-		statusCode      int
+		name         string
+		imposter     Imposter
+		expectedBody string
+		statusCode   int
 	}{
-		{"valid XML imposter with body", Imposter{Response: Response{Status: http.StatusOK, Headers: &headers, Body: xmlBody}}, headers, xmlBody, http.StatusOK},
-		{"valid XML imposter with bodyXMLFile", Imposter{Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyXMLFile}}, headers, string(expectedXMLBodyFileData), http.StatusOK},
-
-		{"valid JSON imposter with body", Imposter{Response: Response{Status: http.StatusOK, Headers: &headers, Body: jsonBody}}, headers, jsonBody, http.StatusOK},
-		{"valid JSON imposter with bodyJSONFile", Imposter{Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyJSONFile}}, headers, string(expectedJSONBodyFileData), http.StatusOK},
-
-		{"valid imposter with non-existing body file", Imposter{Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFileFake}}, headers, "", http.StatusOK},
+		{"valid imposter with body", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, Body: body}}, body, http.StatusOK},
+		{"valid imposter with bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFile}}, string(expectedBodyFileData), http.StatusOK},
+		{"valid imposter with not exists bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFileFake}}, "", http.StatusOK},
 	}
 
 	for _, tt := range dataTest {
 		t.Run(tt.name, func(t *testing.T) {
-			bodyRequest := []byte(`{
-	"data": {
-		"type": "gophers",
-		"attributes": {
-			"name": "Zebediah",
-			"color": "Purple",
-			"age": 55
-		}
-	}
-}`)
-
 			req, err := http.NewRequest("POST", "/gophers", bytes.NewBuffer(bodyRequest))
 			if err != nil {
 				t.Fatalf("could not created request: %v", err)
 			}
 
 			rec := httptest.NewRecorder()
-			handler := ImposterHandler(tt.imposter)
+			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
 
 			handler.ServeHTTP(rec, req)
 			if status := rec.Code; status != tt.statusCode {
@@ -75,6 +69,44 @@ func TestImposterHandler(t *testing.T) {
 				t.Errorf("handler expected %s body and got: %s body", tt.expectedBody, rec.Body.String())
 			}
 
+		})
+	}
+}
+
+func TestInvalidRequestWithSchema(t *testing.T) {
+	validRequest := []byte(`{
+		"data": {
+			"type": "gophers",
+		  "attributes": {
+			"name": "Zebediah",
+			"color": "Purple"
+		  }
+		}
+	  }`)
+
+	var dataTest = []struct {
+		name       string
+		imposter   Imposter
+		statusCode int
+		request    []byte
+	}{
+		{"valid request no schema", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers"}, Response: Response{Status: http.StatusOK, Body: "test ok"}}, http.StatusOK, validRequest},
+	}
+
+	for _, tt := range dataTest {
+
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest("POST", "/gophers", bytes.NewBuffer(tt.request))
+			if err != nil {
+				t.Fatalf("could not created request: %v", err)
+			}
+			rec := httptest.NewRecorder()
+			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
+
+			handler.ServeHTTP(rec, req)
+			if status := rec.Code; status != tt.statusCode {
+				t.Fatalf("handler expected %d code and got: %d code", tt.statusCode, status)
+			}
 		})
 	}
 }
