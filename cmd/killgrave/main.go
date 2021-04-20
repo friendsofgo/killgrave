@@ -43,6 +43,7 @@ func main() {
 		proxyModeFlag  = flag.String("proxy-mode", _defaultProxyMode.String(), "proxy mode you can choose between (all, missing or none)")
 		proxyURLFlag   = flag.String("proxy-url", "", "proxy url, you need to choose a proxy-mode")
 	)
+
 	flag.Parse()
 
 	if *showVersion {
