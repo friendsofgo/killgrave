@@ -7,3 +7,4 @@ cors:
   exposed_headers: ["Cache-Control"]
   origins: ["*"]
   allow_credentials: true
+watcher: true

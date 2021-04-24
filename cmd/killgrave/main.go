@@ -25,6 +25,7 @@ var (
 const (
 	_defaultHost          = "localhost"
 	_defaultPort          = 3000
+	_defaultSecure        = false
 	_defaultImpostersPath = "imposters"
 	_defaultConfigFile    = ""
 	_defaultProxyMode     = killgrave.ProxyNone
@@ -34,6 +35,7 @@ func main() {
 	var (
 		host           = flag.String("host", _defaultHost, "if you run your server on a different host")
 		port           = flag.Int("port", _defaultPort, "port to run the server")
+		secure         = flag.Bool("secure", _defaultSecure, "if you run your server using TLS (https)")
 		imposters      = flag.String("imposters", _defaultImpostersPath, "directory where your imposters are saved")
 		showVersion    = flag.Bool("version", false, "show the _version of the application")
 		configFilePath = flag.String("config", _defaultConfigFile, "path with configuration file")
@@ -41,6 +43,7 @@ func main() {
 		proxyModeFlag  = flag.String("proxy-mode", _defaultProxyMode.String(), "proxy mode you can choose between (all, missing or none)")
 		proxyURLFlag   = flag.String("proxy-url", "", "proxy url, you need to choose a proxy-mode")
 	)
+
 	flag.Parse()
 
 	if *showVersion {
@@ -53,7 +56,9 @@ func main() {
 		*imposters,
 		*host,
 		*port,
+		*secure,
 		killgrave.WithProxyConfiguration(*proxyModeFlag, *proxyURLFlag),
+		killgrave.WithWatcherConfiguration(*watcherFlag),
 		killgrave.WithConfigFile(*configFilePath),
 	)
 	if err != nil {
@@ -69,7 +74,7 @@ func main() {
 	srv.Run()
 
 	// Initialize and start the file watcher if the watcher option is true
-	w := runWatcher(*watcherFlag, cfg.ImpostersPath, &srv, cfg.Host, cfg.Port, cfg)
+	w := runWatcher(cfg.Watcher, cfg.ImpostersPath, &srv, cfg.Host, cfg.Port, cfg)
 
 	<-done
 	close(done)
@@ -104,12 +109,12 @@ func runServer(host string, port int, cfg killgrave.Config) server.Server {
 	router := mux.NewRouter()
 	httpAddr := fmt.Sprintf("%s:%d", host, port)
 
-	httpServer := http.Server{
+	httpServer := &http.Server{
 		Addr:    httpAddr,
 		Handler: handlers.CORS(server.PrepareAccessControl(cfg.CORS)...)(router),
 	}
 
-	proxyServer, err := server.NewProxy(cfg.Proxy.Url, cfg.Proxy.Mode)
+	proxyServer, err := server.NewProxy(cfg.Proxy.URL, cfg.Proxy.Mode)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -119,6 +124,7 @@ func runServer(host string, port int, cfg killgrave.Config) server.Server {
 		router,
 		httpServer,
 		proxyServer,
+		cfg.Secure,
 	)
 	if err := s.Build(); err != nil {
 		log.Fatal(err)

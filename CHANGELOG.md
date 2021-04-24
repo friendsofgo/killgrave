@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.1(2021/04/24)
+* Migration to Github actions and remove the use of Circle CI
+* Deprecation go versions before to v1.16
+* Run the mock server using TLS
+* Support YAML for a configuration and imposters definition
+* Put watcher options on the config file
+* Not support codecov anymore
+
 ## v0.4.0 (2020/01/30)
 * The config file option load the imposters path relative on where the config file is
 * Upgrade Killgrave to go1.13

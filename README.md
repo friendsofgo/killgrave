@@ -1,6 +1,3 @@
-
-
-
 <p align="center">
   <img src="https://res.cloudinary.com/fogo/image/upload/c_scale,w_350/v1555701634/fogo/projects/gopher-killgrave.png" alt="Golang Killgrave"/>
 </p>
@@ -11,7 +8,6 @@ Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**,
 
 [![CircleCI](https://circleci.com/gh/friendsofgo/killgrave/tree/master.svg?style=svg)](https://circleci.com/gh/friendsofgo/killgrave/tree/master)
 [![Version](https://img.shields.io/github/release/friendsofgo/killgrave.svg?style=flat-square)](https://github.com/friendsofgo/killgrave/releases/latest)
-[![codecov](https://codecov.io/gh/friendsofgo/killgrave/branch/master/graph/badge.svg)](https://codecov.io/gh/friendsofgo/killgrave)
 [![Go Report Card](https://goreportcard.com/badge/github.com/friendsofgo/killgrave)](https://goreportcard.com/report/github.com/friendsofgo/killgrave)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/friendsofgo/killgrave.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/friendsofgo/killgrave/alerts/)
 [![FriendsOfGo](https://img.shields.io/badge/powered%20by-Friends%20of%20Go-73D7E2.svg)](https://friendsofgo.tech)
@@ -152,6 +148,8 @@ $ killgrave -h
         directory where your imposters are saved (default "imposters")
   -port int
         port to run the server (default 3000)
+  -secure bool
+        if you run your server using TLS (https)
   -proxy-mode string
         proxy mode you can choose between (all, missing or none) (default "none")
   -proxy-url string
@@ -184,6 +182,8 @@ cors:
   exposed_headers: ["Cache-Control"]
   origins: ["*"]
   allow_credentials: true
+watcher: true
+secure: true
 ```
 
 As you can see, you could configure all the options on a very easy way. Keep in mind that the routes are based on the config file are.
@@ -211,8 +211,14 @@ Furthermore, the `imposters_path` option in previous version towards reference t
 The option `cors` still being optional and its options can be an empty array.
 If you want more information about the CORS options, visit the [CORS section](#configure-cors).
 
+The `watcher` configuration field is optional, with this setting you can enable hot-reloads on imposter changes. Disabled by default.
+
+The `secure` configuration field is optional, with this setting you can run your server using TLS options with a dummy certificate, so to make it work with the `HTTPS` protocol. Disabled by default.
+
 The option `proxy` allow to configure the mock on a proxy mode, that means that you could configure an fallback urls, for all
 your calls or only the missing ones or none. More information: [Proxy Section](#prepare-killgrave-for-proxy-mode)
+
+## How to use
 
 ### Configure CORS
 

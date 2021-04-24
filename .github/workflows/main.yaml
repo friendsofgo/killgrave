@@ -1,0 +1,23 @@
+name: Test & Build
+
+on:
+  push:
+    paths:
+      - 'cmd/**'
+      - 'internal/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ['1.16']
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Run Tests...
+        run: go test -v -vet=off -race ./...
+      - name: Build...
+        run: go build -race cmd/killgrave/main.go
