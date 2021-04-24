@@ -127,7 +127,11 @@ loop:
 // application will be crashed
 func (s *Server) Run() {
 	go func() {
-		log.Printf("The fake server is on tap now: %s\n", s.httpServer.Addr)
+		var tlsString string
+		if s.secure {
+			tlsString = "(TLS mode)"
+		}
+		log.Printf("The fake server is on tap now: %s%s\n", s.httpServer.Addr, tlsString)
 		err := s.run(s.secure)
 		if err != http.ErrServerClosed {
 			log.Fatal(err)
