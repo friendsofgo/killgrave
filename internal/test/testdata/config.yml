@@ -8,3 +8,4 @@ cors:
   origins: ["*"]
   allow_credentials: true
 watcher: true
+secure: true

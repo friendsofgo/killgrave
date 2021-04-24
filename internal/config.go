@@ -17,6 +17,8 @@ type Config struct {
 	Host          string      `yaml:"host"`
 	CORS          ConfigCORS  `yaml:"cors"`
 	Proxy         ConfigProxy `yaml:"proxy"`
+	Secure        bool        `yaml:"secure"`
+	Watcher       bool        `yaml:"watcher"`
 }
 
 // ConfigCORS representation of section CORS of the yaml
@@ -109,7 +111,7 @@ func (cfg *Config) ConfigureProxy(proxyMode ProxyMode, proxyURL string) {
 type ConfigOpt func(cfg *Config) error
 
 // NewConfig initialize the config
-func NewConfig(impostersPath, host string, port int) (Config, error) {
+func NewConfig(impostersPath, host string, port int, secure bool) (Config, error) {
 	if impostersPath == "" {
 		return Config{}, errEmptyImpostersPath
 	}
@@ -126,6 +128,7 @@ func NewConfig(impostersPath, host string, port int) (Config, error) {
 		ImpostersPath: impostersPath,
 		Host:          host,
 		Port:          port,
+		Secure:        secure,
 	}
 
 	return cfg, nil

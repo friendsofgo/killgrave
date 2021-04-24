@@ -114,6 +114,8 @@ func validConfig() Config {
 			ExposedHeaders:   []string{"Cache-Control"},
 			AllowCredentials: true,
 		},
+		Watcher: true,
+		Secure:  true,
 	}
 }
 
@@ -212,7 +214,7 @@ func TestNewConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewConfig(tt.args.impostersPath, tt.args.host, tt.args.port)
+			got, err := NewConfig(tt.args.impostersPath, tt.args.host, tt.args.port, false)
 			if tt.err != nil && !errors.Is(err, tt.err) {
 				t.Errorf("NewConfig() error got = %v, err want %v", err, tt.err)
 				return
@@ -235,7 +237,7 @@ func TestConfig_ConfigureProxy(t *testing.T) {
 		},
 	}
 
-	got, err := NewConfig("imposters", "localhost", 80)
+	got, err := NewConfig("imposters", "localhost", 80, false)
 	if err != nil {
 		t.Fatalf("error not expected: %v", err)
 	}

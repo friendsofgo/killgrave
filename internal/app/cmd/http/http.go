@@ -27,6 +27,7 @@ var (
 	errGetDataFromImpostersFlag = errors.New("error trying to get data from imposters flag")
 	errGetDataFromHostFlag      = errors.New("error trying to get data from host flag")
 	errGetDataFromPortFlag      = errors.New("error trying to get data from port flag")
+	errGetDataFromSecureFlag    = errors.New("error trying to get data from secure flag")
 	errMandatoryURL             = errors.New("the field url is mandatory if you selected a proxy mode")
 )
 
@@ -55,6 +56,7 @@ func NewHTTPCmd() *cobra.Command {
 	cmd.PersistentFlags().StringP("host", "H", _defaultHost, "Set a different host than localhost")
 	cmd.PersistentFlags().IntP("port", "P", _defaultPort, "Port to run the server")
 	cmd.PersistentFlags().BoolP("watcher", "w", false, "File watcher will reload the server on each file change")
+	cmd.PersistentFlags().BoolP("secure", "s", false, "Run mock server using TLS (https)")
 	cmd.Flags().StringP("proxy", "p", _defaultProxyMode.String(), "Proxy mode, the options are all, missing or none")
 	cmd.Flags().StringP("url", "u", "", "The url where the proxy will redirect to")
 
@@ -70,7 +72,7 @@ func runHTTP(cmd *cobra.Command, cfg killgrave.Config) error {
 	srv := runServer(cfg)
 
 	watcherFlag, _ := cmd.Flags().GetBool("watcher")
-	if watcherFlag {
+	if watcherFlag || cfg.Watcher {
 		w, err := runWatcher(cfg, &srv)
 		if err != nil {
 			return err
@@ -107,6 +109,7 @@ func runServer(cfg killgrave.Config) server.Server {
 		router,
 		&httpServer,
 		proxyServer,
+		cfg.Secure,
 	)
 	if err := s.Build(); err != nil {
 		log.Fatal(err)
@@ -126,8 +129,7 @@ func runWatcher(cfg killgrave.Config, currentSrv *server.Server) (*watcher.Watch
 		if err := currentSrv.Shutdown(); err != nil {
 			log.Fatal(err)
 		}
-		*currentSrv = runServer(cfg)
-		currentSrv.Run()
+		runServer(cfg)
 	})
 	return w, nil
 }
@@ -153,7 +155,12 @@ func prepareConfig(cmd *cobra.Command) (killgrave.Config, error) {
 		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromPortFlag)
 	}
 
-	cfg, err := killgrave.NewConfig(impostersPath, host, port)
+	secure, err := cmd.Flags().GetBool("secure")
+	if err != nil {
+		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromSecureFlag)
+	}
+
+	cfg, err := killgrave.NewConfig(impostersPath, host, port, secure)
 	if err != nil {
 		return killgrave.Config{}, err
 	}
