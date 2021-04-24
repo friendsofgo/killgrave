@@ -1,6 +1,7 @@
 package http
 
 import (
+	"crypto/tls"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -9,10 +10,11 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
-
-	"github.com/gorilla/mux"
+	"time"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
@@ -26,9 +28,9 @@ func TestServer_Build(t *testing.T) {
 		server Server
 		err    error
 	}{
-		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}), errors.New("hello")},
-		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}), nil},
-		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}), nil},
+		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false), errors.New("hello")},
+		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false), nil},
+		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false), nil},
 	}
 
 	for _, tt := range serverData {
@@ -57,12 +59,12 @@ func TestBuildProxyMode(t *testing.T) {
 	defer proxyServer.Close()
 	makeServer := func(mode killgrave.ProxyMode) (*Server, func()) {
 		router := mux.NewRouter()
-		httpServer := http.Server{Handler: router}
+		httpServer := &http.Server{Handler: router}
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
 		}
-		server := NewServer("test/testdata/imposters", router, &httpServer, proxyServer)
+		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false)
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -127,23 +129,82 @@ func TestBuildProxyMode(t *testing.T) {
 	}
 }
 
-func TestServer_AccessControl(t *testing.T) {
-	config := killgrave.Config{
-		ImpostersPath: "imposters",
-		Port:          3000,
-		Host:          "localhost",
-		CORS: killgrave.ConfigCORS{
-			Methods:          []string{"GET"},
-			Origins:          []string{"*"},
-			Headers:          []string{"Content-Type"},
-			ExposedHeaders:   []string{"Cache-Control"},
-			AllowCredentials: true,
+func TestBuildSecureMode(t *testing.T) {
+	proxyServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, "Proxied")
+	}))
+	defer proxyServer.Close()
+
+	makeServer := func(mode killgrave.ProxyMode) (*Server, func()) {
+		router := mux.NewRouter()
+		cert, _ := tls.X509KeyPair(serverCert, serverKey)
+		httpServer := &http.Server{Handler: router, Addr: ":4430", TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{cert},
+		}}
+		proxyServer, err := NewProxy(proxyServer.URL, mode)
+		if err != nil {
+			t.Fatal("NewProxy failed: ", err)
+		}
+		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true)
+		return &server, func() {
+			httpServer.Close()
+		}
+	}
+	testCases := map[string]struct {
+		mode   killgrave.ProxyMode
+		url    string
+		body   string
+		status int
+		server *httptest.Server
+	}{
+		"ProxyNone_Hit": {
+			mode:   killgrave.ProxyNone,
+			url:    "https://localhost:4430/testHTTPSRequest",
+			body:   "Handled",
+			status: http.StatusOK,
+			server: proxyServer,
+		},
+		"ProxyAlways_Hit": {
+			mode:   killgrave.ProxyAll,
+			url:    proxyServer.URL,
+			body:   "Proxied",
+			status: http.StatusOK,
+			server: proxyServer,
 		},
 	}
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s, cleanUp := makeServer(tc.mode)
+			defer cleanUp()
 
-	h := PrepareAccessControl(config.CORS)
+			err := s.Build()
+			if err != nil {
+				t.Fatalf("Non expected error trying to build server: %v", err)
+			}
+			s.Run()
 
-	if len(h) <= 0 {
-		t.Fatal("Expected any CORS options and got empty")
+			client := tc.server.Client()
+			client.Transport = &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+			}
+
+			assert.Eventually(t, func() bool {
+				response, err := client.Get(tc.url)
+				if err != nil {
+					return false
+				}
+
+				defer response.Body.Close()
+
+				body, err := ioutil.ReadAll(response.Body)
+				if err != nil {
+					return false
+				}
+
+				return string(body) == tc.body && response.StatusCode == tc.status
+			}, 1*time.Second, 50*time.Millisecond)
+		})
 	}
 }

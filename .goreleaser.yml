@@ -41,7 +41,7 @@ archives:
 brews:
   -
     name: killgrave
-    github:
+    tap:
       owner: friendsofgo
       name: homebrew-tap
     folder: Formula

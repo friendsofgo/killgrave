@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/gorilla/mux"
 	"github.com/xeipuuv/gojsonschema"
@@ -32,11 +33,11 @@ func validateSchema(imposter Imposter, req *http.Request) error {
 		return nil
 	}
 
-	var b []byte
+	var requestBodyBytes []byte
 
 	defer func() {
 		req.Body.Close()
-		req.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+		req.Body = ioutil.NopCloser(bytes.NewBuffer(requestBodyBytes))
 	}()
 
 	schemaFile := imposter.CalculateFilePath(*imposter.Request.SchemaFile)
@@ -44,20 +45,28 @@ func validateSchema(imposter Imposter, req *http.Request) error {
 		return fmt.Errorf("%w: the schema file %s not found", err, schemaFile)
 	}
 
-	b, err := ioutil.ReadAll(req.Body)
+	requestBodyBytes, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return fmt.Errorf("%w: impossible read the request body", err)
 	}
 
-	contentBody := string(b)
+	contentBody := string(requestBodyBytes)
 	if contentBody == "" {
 		return fmt.Errorf("unexpected empty body request")
 	}
 
-	dir, _ := os.Getwd()
-	schemaFilePath := "file://" + dir + "/" + schemaFile
-	schema := gojsonschema.NewReferenceLoader(schemaFilePath)
-	document := gojsonschema.NewStringLoader(string(b))
+	schemaFilePath, _ := filepath.Abs(schemaFile)
+	if err != nil {
+		return fmt.Errorf("%w: impossible find the schema", err)
+	}
+
+	schemaBytes, err := ioutil.ReadFile(schemaFilePath)
+	if err != nil {
+		return fmt.Errorf("%w: impossible read the schema", err)
+	}
+
+	schema := gojsonschema.NewStringLoader(string(schemaBytes))
+	document := gojsonschema.NewStringLoader(string(requestBodyBytes))
 
 	res, err := gojsonschema.Validate(schema, document)
 	if err != nil {

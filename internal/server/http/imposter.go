@@ -9,7 +9,27 @@ import (
 	"time"
 )
 
-const imposterExtension = ".imp.json"
+// ImposterType allows to know the imposter type we're dealing with
+type ImposterType int
+
+const (
+	jsonImposterExtension = ".imp.json"
+	ymlImposterExtension  = ".imp.yml"
+	yamlImposterExtension = ".imp.yaml"
+)
+
+const (
+	// JSONImposter allows to know when we're dealing with a JSON imposter
+	JSONImposter ImposterType = iota
+	// YAMLImposter allows to know when we're dealing with a YAML imposter
+	YAMLImposter
+)
+
+// ImposterConfig is used to load imposters based on which type they are
+type ImposterConfig struct {
+	Type     ImposterType
+	FilePath string
+}
 
 // Imposter define an imposter structure
 type Imposter struct {
@@ -41,18 +61,24 @@ type Request struct {
 type Response struct {
 	Status   int                `json:"status"`
 	Body     string             `json:"body"`
-	BodyFile *string            `json:"bodyFile"`
+	BodyFile *string            `json:"bodyFile" yaml:"bodyFile"`
 	Headers  *map[string]string `json:"headers"`
-	Delay    ResponseDelay      `json:"delay"`
+	Delay    ResponseDelay      `json:"delay" yaml:"delay"`
 }
 
-func findImposters(impostersDirectory string, imposterFileCh chan string) error {
+func findImposters(impostersDirectory string, imposterConfigCh chan ImposterConfig) error {
 	err := filepath.Walk(impostersDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("%w: error finding imposters", err)
 		}
-		if !info.IsDir() && strings.HasSuffix(info.Name(), imposterExtension) {
-			imposterFileCh <- path
+
+		filename := info.Name()
+		if !info.IsDir() {
+			if strings.HasSuffix(filename, jsonImposterExtension) {
+				imposterConfigCh <- ImposterConfig{JSONImposter, path}
+			} else if strings.HasSuffix(filename, yamlImposterExtension) || strings.HasSuffix(filename, ymlImposterExtension) {
+				imposterConfigCh <- ImposterConfig{YAMLImposter, path}
+			}
 		}
 		return nil
 	})
