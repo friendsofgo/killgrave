@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.4.1(2021/04/21)
+## v0.4.1(2021/04/24)
 * Migration to Github actions and remove the use of Circle CI
 * Deprecation go versions before to v1.16
 * Run the mock server using TLS
