@@ -6,7 +6,7 @@
 
 Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**, very easy to use, made in **Go**.
 
-[![CircleCI](https://circleci.com/gh/friendsofgo/killgrave/tree/master.svg?style=svg)](https://circleci.com/gh/friendsofgo/killgrave/tree/master)
+![Github actions](https://github.com/friendsofgo/killgrave/actions/workflows/main.yaml/badge.svg?branch=main)
 [![Version](https://img.shields.io/github/release/friendsofgo/killgrave.svg?style=flat-square)](https://github.com/friendsofgo/killgrave/releases/latest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/friendsofgo/killgrave)](https://goreportcard.com/report/github.com/friendsofgo/killgrave)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/friendsofgo/killgrave.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/friendsofgo/killgrave/alerts/)
@@ -85,7 +85,7 @@ One of them is of course using `go get`, Killgrave is a Go project so could be c
 $ go get -u github.com/friendsofgo/killgrave/cmd/killgrave@{version}
 ```
 
-`version` must be substituted by the `version` that you want to install, otherwise master would be installed.
+`version` must be substituted by the `version` that you want to install, otherwise `main` would be installed.
 
 ### Homebrew 
 
@@ -595,4 +595,4 @@ our last `imposter` is a simple `imposter` that it will match with any call via 
 [Contributions](CONTRIBUTING.md) are more than welcome, if you are interested please follow our guidelines to help you get started.
 
 ## License
-MIT License, see [LICENSE](https://github.com/friendsofgo/killgrave/blob/master/LICENSE)
+MIT License, see [LICENSE](https://github.com/friendsofgo/killgrave/blob/main/LICENSE)
