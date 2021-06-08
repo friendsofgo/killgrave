@@ -55,6 +55,7 @@ type Request struct {
 	SchemaFile *string            `json:"schemaFile"`
 	Params     *map[string]string `json:"params"`
 	Headers    *map[string]string `json:"headers"`
+	Dump       bool               `json:"dump"`
 }
 
 // Response represent the structure of real response

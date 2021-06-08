@@ -27,7 +27,8 @@ func TestNewConfig(t *testing.T) {
 				false,
 				WithProxyConfiguration(ProxyNone.String(), ""),
 				WithConfigFile(tc.input),
-				WithWatcherConfiguration(tc.expected.Watcher))
+				WithWatcherConfiguration(tc.expected.Watcher),
+				WithDumpRequestsConfiguration(tc.expected.DumpRequests))
 
 			if err != nil && tc.err == nil {
 				t.Fatalf("not expected any erros and got %v", err)
@@ -121,7 +122,8 @@ func validConfig() Config {
 			ExposedHeaders:   []string{"Cache-Control"},
 			AllowCredentials: true,
 		},
-		Watcher: true,
+		Watcher:      true,
+		DumpRequests: true,
 	}
 }
 
