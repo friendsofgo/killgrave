@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"crypto/tls"
 	"errors"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -28,9 +30,9 @@ func TestServer_Build(t *testing.T) {
 		server Server
 		err    error
 	}{
-		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false), errors.New("hello")},
-		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false), nil},
-		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false), nil},
+		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false, false), errors.New("hello")},
+		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false, false), nil},
+		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, false), nil},
 	}
 
 	for _, tt := range serverData {
@@ -64,7 +66,7 @@ func TestBuildProxyMode(t *testing.T) {
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
 		}
-		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false)
+		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false, false)
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -145,7 +147,7 @@ func TestBuildSecureMode(t *testing.T) {
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
 		}
-		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true)
+		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true, false)
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -206,5 +208,59 @@ func TestBuildSecureMode(t *testing.T) {
 				return string(body) == tc.body && response.StatusCode == tc.status
 			}, 1*time.Second, 50*time.Millisecond)
 		})
+	}
+}
+
+func TestBuildDumpRequests(t *testing.T) {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() {
+		log.SetOutput(os.Stderr)
+	}()
+
+	server := NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, false)
+	if err := server.Build(); err != nil {
+		t.Fatalf("not expected any erros and got %+v", err)
+	}
+
+	expectedBody := "Dumped"
+	req := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader(expectedBody))
+	w := httptest.NewRecorder()
+
+	server.router.ServeHTTP(w, req)
+	response := w.Result()
+	if response.StatusCode != http.StatusOK {
+		t.Errorf("Expected status code: %v, got: %v", http.StatusOK, response.StatusCode)
+	}
+
+	if !strings.Contains(buf.String(), expectedBody) {
+		t.Errorf("Expect request dumped on logs failed")
+	}
+}
+
+func TestBuildDumpRequestsOverride(t *testing.T) {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() {
+		log.SetOutput(os.Stderr)
+	}()
+
+	server := NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, true)
+	if err := server.Build(); err != nil {
+		t.Fatalf("not expected any erros and got %+v", err)
+	}
+
+	expectedBody := "Dumped"
+	req := httptest.NewRequest("GET", "/yamlTestRequest", strings.NewReader(expectedBody))
+	w := httptest.NewRecorder()
+
+	server.router.ServeHTTP(w, req)
+	response := w.Result()
+	if response.StatusCode != http.StatusOK {
+		t.Errorf("Expected status code: %v, got: %v", http.StatusOK, response.StatusCode)
+	}
+
+	if !strings.Contains(buf.String(), expectedBody) {
+		t.Errorf("Expect request dumped on logs failed")
 	}
 }

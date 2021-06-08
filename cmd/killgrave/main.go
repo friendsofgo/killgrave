@@ -33,15 +33,16 @@ const (
 
 func main() {
 	var (
-		host           = flag.String("host", _defaultHost, "if you run your server on a different host")
-		port           = flag.Int("port", _defaultPort, "port to run the server")
-		secure         = flag.Bool("secure", _defaultSecure, "if you run your server using TLS (https)")
-		imposters      = flag.String("imposters", _defaultImpostersPath, "directory where your imposters are saved")
-		showVersion    = flag.Bool("version", false, "show the _version of the application")
-		configFilePath = flag.String("config", _defaultConfigFile, "path with configuration file")
-		watcherFlag    = flag.Bool("watcher", false, "file watcher, reload the server with each file change")
-		proxyModeFlag  = flag.String("proxy-mode", _defaultProxyMode.String(), "proxy mode you can choose between (all, missing or none)")
-		proxyURLFlag   = flag.String("proxy-url", "", "proxy url, you need to choose a proxy-mode")
+		host             = flag.String("host", _defaultHost, "if you run your server on a different host")
+		port             = flag.Int("port", _defaultPort, "port to run the server")
+		secure           = flag.Bool("secure", _defaultSecure, "if you run your server using TLS (https)")
+		imposters        = flag.String("imposters", _defaultImpostersPath, "directory where your imposters are saved")
+		showVersion      = flag.Bool("version", false, "show the _version of the application")
+		configFilePath   = flag.String("config", _defaultConfigFile, "path with configuration file")
+		watcherFlag      = flag.Bool("watcher", false, "file watcher, reload the server with each file change")
+		proxyModeFlag    = flag.String("proxy-mode", _defaultProxyMode.String(), "proxy mode you can choose between (all, missing or none)")
+		proxyURLFlag     = flag.String("proxy-url", "", "proxy url, you need to choose a proxy-mode")
+		dumpRequestsFlag = flag.Bool("dump-requests", false, "dumps the request performed against the the server")
 	)
 
 	flag.Parse()
@@ -60,6 +61,7 @@ func main() {
 		killgrave.WithProxyConfiguration(*proxyModeFlag, *proxyURLFlag),
 		killgrave.WithWatcherConfiguration(*watcherFlag),
 		killgrave.WithConfigFile(*configFilePath),
+		killgrave.WithDumpRequestsConfiguration(*dumpRequestsFlag),
 	)
 	if err != nil {
 		log.Println(err)
@@ -69,8 +71,7 @@ func main() {
 
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
-	var srv server.Server
-	srv = runServer(cfg.Host, cfg.Port, cfg)
+	srv := runServer(cfg.Host, cfg.Port, cfg)
 	srv.Run()
 
 	// Initialize and start the file watcher if the watcher option is true
@@ -125,6 +126,7 @@ func runServer(host string, port int, cfg killgrave.Config) server.Server {
 		httpServer,
 		proxyServer,
 		cfg.Secure,
+		cfg.DumpRequests,
 	)
 	if err := s.Build(); err != nil {
 		log.Fatal(err)

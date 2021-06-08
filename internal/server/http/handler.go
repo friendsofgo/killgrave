@@ -4,13 +4,20 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"time"
 )
 
 // ImposterHandler create specific handler for the received imposter
 func ImposterHandler(imposter Imposter) http.HandlerFunc {
+	shouldDumpRequest := imposter.Request.Dump
 	return func(w http.ResponseWriter, r *http.Request) {
+		if shouldDumpRequest {
+			if dumped, err := httputil.DumpRequest(r, true); err == nil {
+				log.Print(string(dumped))
+			}
+		}
 		if imposter.Delay() > 0 {
 			time.Sleep(imposter.Delay())
 		}

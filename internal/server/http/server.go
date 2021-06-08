@@ -41,16 +41,18 @@ type Server struct {
 	httpServer    *http.Server
 	proxy         *Proxy
 	secure        bool
+	dumpRequests  bool
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool) Server {
+func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, dumpRequests bool) Server {
 	return Server{
 		impostersPath: p,
 		router:        r,
 		httpServer:    httpServer,
 		proxy:         proxyServer,
 		secure:        secure,
+		dumpRequests:  dumpRequests,
 	}
 }
 
@@ -165,6 +167,9 @@ func (s *Server) Shutdown() error {
 func (s *Server) addImposterHandler(imposters []Imposter, imposterConfig ImposterConfig) {
 	for _, imposter := range imposters {
 		imposter.BasePath = filepath.Dir(imposterConfig.FilePath)
+		if s.dumpRequests {
+			imposter.Request.Dump = true // Override imposter configuration
+		}
 		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
 			Methods(imposter.Request.Method).
 			MatcherFunc(MatcherBySchema(imposter))
