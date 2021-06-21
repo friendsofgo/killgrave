@@ -33,19 +33,69 @@ type ImposterConfig struct {
 
 // Imposter define an imposter structure
 type Imposter struct {
-	BasePath string
-	Request  Request  `json:"request"`
-	Response Response `json:"response"`
-}
+	BasePath  string
+	Request   Request    `json:"request"`
+	Responses []Response `json:"responses"`
 
-// Delay returns delay for response that user can specify in imposter config
-func (i *Imposter) Delay() time.Duration {
-	return i.Response.Delay.Delay()
+	// Fields for handling burst response
+	count        int
+	currentIndex int
+	scheduleMap  map[int]int
 }
 
 // CalculateFilePath calculate file path based on basePath of imposter directory
 func (i *Imposter) CalculateFilePath(filePath string) string {
 	return path.Join(i.BasePath, filePath)
+}
+
+// GetResponse method is used to get response. (Implemented/Changed in burst mode)
+func (i *Imposter) GetResponse() Response {
+	// Checking if imposter has at least one response available
+	if len(i.Responses) == 0 {
+		return Response{}
+	}
+
+	// Filling default values in the struct if not done already.
+	if i.scheduleMap == nil {
+		i.fillDefaults()
+	}
+
+	var ind = i.currentIndex
+	i.updateCounter() // Updating counters for burst mode.
+	return i.Responses[ind]
+}
+
+// updateCounter method updates neccesary counters/indexes to be used in burst mode.
+func (i *Imposter) updateCounter() {
+
+	// Calculating next index
+	i.count += 1
+	if i.scheduleMap[i.currentIndex] < i.count {
+		i.currentIndex += 1
+	}
+
+	// Wrapping logic for counter and index
+	if i.currentIndex > len(i.Responses)-1 {
+		i.currentIndex = 0
+		i.count = 1
+	}
+}
+
+// fillDefaults method is used to populate default values for imposters fields.
+func (i *Imposter) fillDefaults() {
+	var scheduleMap = make(map[int]int, len(i.Responses))
+	for ind, resp := range i.Responses {
+		resp.fillDefaults()
+
+		if ind != 0 {
+			scheduleMap[ind] = scheduleMap[ind-1] + resp.Burst
+		} else {
+			scheduleMap[ind] = resp.Burst
+		}
+	}
+	i.scheduleMap = scheduleMap
+	i.count = 1
+	i.currentIndex = 0
 }
 
 // Request represent the structure of real request
@@ -63,7 +113,20 @@ type Response struct {
 	Body     string             `json:"body"`
 	BodyFile *string            `json:"bodyFile" yaml:"bodyFile"`
 	Headers  *map[string]string `json:"headers"`
-	Delay    ResponseDelay      `json:"delay" yaml:"delay"`
+	RDelay   ResponseDelay      `json:"delay" yaml:"delay"`
+	Burst    int                `json:"burst" yaml:"burst"`
+}
+
+// Delay returns delay for response that user can specify in imposter config
+func (r *Response) Delay() time.Duration {
+	return r.RDelay.Delay()
+}
+
+// fillDefaults method is used to populate default values for response fields.
+func (r *Response) fillDefaults() {
+	if r.Burst <= 0 {
+		r.Burst = 1
+	}
 }
 
 func findImposters(impostersDirectory string, imposterConfigCh chan ImposterConfig) error {

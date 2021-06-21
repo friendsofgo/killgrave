@@ -4,9 +4,9 @@
             "method": "GET",
             "endpoint": "/testHTTPSRequest"
         },
-        "response": {
+        "responses": [{
             "status": 200,
             "body": "Handled"
-        }
+        }]
     }
 ]
