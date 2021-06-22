@@ -2,47 +2,57 @@ package http
 
 import "math/rand"
 
+type ResponseMode int
+
 type ResponseHandler struct {
-	random    bool // flag for random mode
-	totalResp int  // total Responses available in imposters
+	Mode      ResponseMode // flag for random mode
+	totalResp int          // total Responses available in imposters
 
 	counter     int   // to keep count of served requests (wrapping after totalResp)
 	currentInd  int   // index/key of current response in scheduleMap
 	scheduleMap []int // prefix array of repeating request
 }
 
+const (
+	// JSONImposter allows to know when we're dealing with a JSON imposter
+	RandomMode ResponseMode = iota
+	// YAMLImposter allows to know when we're dealing with a YAML imposter
+	BurstMode
+)
+
 // fillDefaults populates values based on imposter configuration
 func (tr *ResponseHandler) fillDefaults(imposter *Imposter) {
-	var scheduleMap = make([]int, len(imposter.Responses))
-	burstAvailable := false
-
-	for ind, resp := range imposter.Responses {
-		if resp.Burst != 0 {
-			burstAvailable = true
-		} else {
-			resp.Burst = 1
-		}
-
-		if ind != 0 {
-			scheduleMap[ind] = scheduleMap[ind-1] + resp.Burst
-		} else {
-			scheduleMap[ind] = resp.Burst
-		}
-	}
-
-	tr.scheduleMap = scheduleMap
-	tr.counter = 1
-	tr.currentInd = 0
+	// Updating totalResponse length
 	tr.totalResp = len(imposter.Responses)
 
-	if !burstAvailable {
-		tr.random = true
+	// Updating Response Mode
+	switch imposter.Request.ResponseMode {
+	case "BURST":
+		tr.Mode = BurstMode
+	default:
+		tr.Mode = RandomMode
+	}
+
+	// Populating state for BURST mode
+	if tr.Mode == BurstMode {
+		var scheduleMap = make([]int, len(imposter.Responses))
+		for ind, resp := range imposter.Responses {
+			if ind != 0 {
+				scheduleMap[ind] = scheduleMap[ind-1] + resp.Burst
+			} else {
+				scheduleMap[ind] = resp.Burst
+			}
+		}
+
+		tr.scheduleMap = scheduleMap
+		tr.counter = 1
+		tr.currentInd = 0
 	}
 }
 
 // GetIndex is responsible for getting index for current request
 func (dr *ResponseHandler) GetIndex() int {
-	if dr.random {
+	if dr.Mode == RandomMode {
 		return dr.getRandomIndex()
 	}
 	return dr.getDynaimcIndex()
