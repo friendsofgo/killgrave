@@ -37,10 +37,14 @@ func (tr *ResponseHandler) fillDefaults(imposter *Imposter) {
 	if tr.Mode == BurstMode {
 		var scheduleMap = make([]int, len(imposter.Responses))
 		for ind, resp := range imposter.Responses {
+			value := resp.Burst
+			if value <= 0 {
+				value = 1
+			}
 			if ind != 0 {
-				scheduleMap[ind] = scheduleMap[ind-1] + resp.Burst
+				scheduleMap[ind] = scheduleMap[ind-1] + value
 			} else {
-				scheduleMap[ind] = resp.Burst
+				scheduleMap[ind] = value
 			}
 		}
 
