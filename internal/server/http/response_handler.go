@@ -21,20 +21,20 @@ const (
 )
 
 // fillDefaults populates values based on imposter configuration
-func (tr *ResponseHandler) fillDefaults(imposter *Imposter) {
+func (rh *ResponseHandler) fillDefaults(imposter *Imposter) {
 	// Updating totalResponse length
-	tr.totalResp = len(imposter.Responses)
+	rh.totalResp = len(imposter.Responses)
 
 	// Updating Response Mode
 	switch imposter.Request.ResponseMode {
 	case "BURST":
-		tr.Mode = BurstMode
+		rh.Mode = BurstMode
 	default:
-		tr.Mode = RandomMode
+		rh.Mode = RandomMode
 	}
 
 	// Populating state for BURST mode
-	if tr.Mode == BurstMode {
+	if rh.Mode == BurstMode {
 		var scheduleMap = make([]int, len(imposter.Responses))
 		for ind, resp := range imposter.Responses {
 			value := resp.Burst
@@ -48,40 +48,40 @@ func (tr *ResponseHandler) fillDefaults(imposter *Imposter) {
 			}
 		}
 
-		tr.scheduleMap = scheduleMap
-		tr.counter = 1
-		tr.currentInd = 0
+		rh.scheduleMap = scheduleMap
+		rh.counter = 1
+		rh.currentInd = 0
 	}
 }
 
 // GetIndex is responsible for getting index for current request
-func (dr *ResponseHandler) GetIndex() int {
-	if dr.Mode == RandomMode {
-		return dr.getRandomIndex()
+func (rh *ResponseHandler) GetIndex() int {
+	if rh.Mode == RandomMode {
+		return rh.getRandomIndex()
 	}
-	return dr.getDynaimcIndex()
+	return rh.getDynaimcIndex()
 }
 
 // getRandomIndex generates random indexes in random mode
-func (dr *ResponseHandler) getRandomIndex() int {
-	return rand.Intn(dr.totalResp)
+func (rh *ResponseHandler) getRandomIndex() int {
+	return rand.Intn(rh.totalResp)
 }
 
 // getDynamicIndex generates dynamic index based on the config provided
-func (dr *ResponseHandler) getDynaimcIndex() int {
-	var index = dr.currentInd
+func (rh *ResponseHandler) getDynaimcIndex() int {
+	var index = rh.currentInd
 
-	dr.counter += 1 // incrementing counter for current request
+	rh.counter += 1 // incrementing counter for current request
 
 	// checking if it has to move to next response or not
-	if dr.scheduleMap[dr.currentInd] < dr.counter {
-		dr.currentInd += 1
+	if rh.scheduleMap[rh.currentInd] < rh.counter {
+		rh.currentInd += 1
 	}
 
 	// Wrapping logic for counter and index
-	if dr.currentInd > dr.totalResp-1 {
-		dr.currentInd = 0
-		dr.counter = 1
+	if rh.currentInd > rh.totalResp-1 {
+		rh.currentInd = 0
+		rh.counter = 1
 	}
 
 	return index // returning current request
