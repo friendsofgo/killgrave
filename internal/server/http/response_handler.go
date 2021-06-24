@@ -14,9 +14,9 @@ type ResponseHandler struct {
 }
 
 const (
-	// Random mode generate random responses
+	// Random mode will generate random responses
 	RandomMode ResponseMode = iota
-	// Burst mode will generate repeatable response
+	// Burst mode will generate repeatable responses
 	BurstMode
 )
 
