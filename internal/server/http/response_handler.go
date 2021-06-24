@@ -59,7 +59,7 @@ func (rh *ResponseHandler) GetIndex() int {
 	if rh.Mode == RandomMode {
 		return rh.getRandomIndex()
 	}
-	return rh.getDynaimcIndex()
+	return rh.getBurstIndex()
 }
 
 // getRandomIndex generates random indexes in random mode
@@ -67,8 +67,8 @@ func (rh *ResponseHandler) getRandomIndex() int {
 	return rand.Intn(rh.totalResp)
 }
 
-// getDynamicIndex generates dynamic index based on the config provided
-func (rh *ResponseHandler) getDynaimcIndex() int {
+// getBurstIndex generates repeated index based on the config provided
+func (rh *ResponseHandler) getBurstIndex() int {
 	var index = rh.currentInd
 
 	rh.counter += 1 // incrementing counter for current request
