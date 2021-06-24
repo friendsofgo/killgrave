@@ -14,9 +14,9 @@ type ResponseHandler struct {
 }
 
 const (
-	// JSONImposter allows to know when we're dealing with a JSON imposter
+	// Random mode generate random responses
 	RandomMode ResponseMode = iota
-	// YAMLImposter allows to know when we're dealing with a YAML imposter
+	// Burst mode will generate repeatable response
 	BurstMode
 )
 
