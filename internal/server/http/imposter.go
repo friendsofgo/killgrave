@@ -48,6 +48,10 @@ func (i *Imposter) CalculateFilePath(filePath string) string {
 
 // GetResponse is used to get dynamic/random response.
 func (i *Imposter) GetResponse() Response {
+	// If no response provided then returning 404 response
+	if len(i.Responses) == 0 {
+		return Response{Status: 404}
+	}
 	if i.responseHandler.scheduleMap == nil {
 		i.fillDefaults()
 	}

@@ -2,8 +2,10 @@ package http
 
 import "math/rand"
 
+// ResponseMode represents random/burst mode for the response
 type ResponseMode int
 
+// ResponseHandler handles incoming request for random/burst response
 type ResponseHandler struct {
 	Mode      ResponseMode // flag for random mode
 	totalResp int          // total Responses available in imposters
@@ -14,9 +16,9 @@ type ResponseHandler struct {
 }
 
 const (
-	// Random mode will generate random responses
+	// RandomMode will generate random responses
 	RandomMode ResponseMode = iota
-	// Burst mode will generate repeatable responses
+	// BurstMode will generate repeatable responses
 	BurstMode
 )
 
@@ -71,11 +73,11 @@ func (rh *ResponseHandler) getRandomIndex() int {
 func (rh *ResponseHandler) getBurstIndex() int {
 	var index = rh.currentInd
 
-	rh.counter += 1 // incrementing counter for current request
+	rh.counter++ // incrementing counter for current request
 
 	// checking if it has to move to next response or not
 	if rh.scheduleMap[rh.currentInd] < rh.counter {
-		rh.currentInd += 1
+		rh.currentInd++
 	}
 
 	// Wrapping logic for counter and index
