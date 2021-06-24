@@ -62,28 +62,28 @@ func TestRandomResponse(t *testing.T) {
 		{
 			"random responses",
 			Imposter{
-				Request:   Request{Method: "GET", Endpoint: "/burst", ResponseMode: "RANDOM"},
+				Request:   Request{Method: "GET", Endpoint: "/random", ResponseMode: "RANDOM"},
 				Responses: []Response{{Status: 201, Body: "Response 1"}, {Status: 201, Body: "Response 2"}},
 			},
 		},
 		{
 			"random responses with burst",
 			Imposter{
-				Request:   Request{Method: "GET", Endpoint: "/repeat", ResponseMode: "RANDOM"},
+				Request:   Request{Method: "GET", Endpoint: "/random", ResponseMode: "RANDOM"},
 				Responses: []Response{{Status: 201, Body: "Response 1", Burst: 1}, {Status: 201, Body: "Response 2", Burst: 2}},
 			},
 		},
 		{
 			"random responses without response mode", // Default value checking
 			Imposter{
-				Request:   Request{Method: "GET", Endpoint: "/repeat"},
+				Request:   Request{Method: "GET", Endpoint: "/random"},
 				Responses: []Response{{Status: 201, Body: "Response 1"}, {Status: 201, Body: "Response 2"}},
 			},
 		},
 		{
 			"random responses with more than 2 responses",
 			Imposter{
-				Request:   Request{Method: "GET", Endpoint: "/repeat", ResponseMode: "BURST"},
+				Request:   Request{Method: "GET", Endpoint: "/random", ResponseMode: "BURST"},
 				Responses: []Response{{Status: 201, Body: "Response 1"}, {Status: 201, Body: "Response 2"}, {Status: 201, Body: "Response 3"}, {Status: 201, Body: "Response 4"}},
 			},
 		},
@@ -111,6 +111,45 @@ func TestRandomResponse(t *testing.T) {
 				}
 
 				rec.Body.Reset()
+			}
+		})
+	}
+}
+
+func Test404Response(t *testing.T) {
+	var serverData = []struct {
+		name       string
+		imposter   Imposter
+		statusCode int
+	}{
+		{
+			"no response available burst mode",
+			Imposter{
+				Request: Request{Method: "GET", Endpoint: "/burst", ResponseMode: "BURST"},
+			},
+			http.StatusNotFound,
+		},
+		{
+			"no response available random mode",
+			Imposter{
+				Request: Request{Method: "GET", Endpoint: "/random", ResponseMode: "RANDOM"},
+			},
+			http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range serverData {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(tt.imposter.Request.Method, tt.imposter.Request.Endpoint, bytes.NewBuffer(nil))
+			if err != nil {
+				t.Fatalf("could not created request: %v", err)
+			}
+			rec := httptest.NewRecorder()
+			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
+
+			handler.ServeHTTP(rec, req)
+			if rec.Code != tt.statusCode {
+				t.Fatalf("test-%s expected status code is '%d' and got '%d'", tt.name, tt.statusCode, rec.Code)
 			}
 		})
 	}
