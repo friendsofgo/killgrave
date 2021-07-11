@@ -53,13 +53,13 @@ func TestMatcherBySchema(t *testing.T) {
 		req *http.Request
 		res bool
 	}{
-		"correct request schema":               {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestA, true},
-		"imposter without request schema":      {MatcherBySchema(Imposter{Request: requestWithoutSchema, Response: okResponse}), httpRequestA, true},
-		"malformatted schema file":             {MatcherBySchema(Imposter{Request: requestWithWrongSchema, Response: okResponse}), httpRequestA, false},
-		"incorrect request schema":             {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestB, false},
-		"non-existing schema file":             {MatcherBySchema(Imposter{Request: requestWithNonExistingSchema, Response: okResponse}), httpRequestB, false},
-		"empty body with required schema file": {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: emptyBody}, false},
-		"invalid request body":                 {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: wrongBody}, false},
+		"correct request schema":               {MatcherBySchema(Imposter{Request: requestWithSchema, Responses: []Response{okResponse}}), httpRequestA, true},
+		"imposter without request schema":      {MatcherBySchema(Imposter{Request: requestWithoutSchema, Responses: []Response{okResponse}}), httpRequestA, true},
+		"malformatted schema file":             {MatcherBySchema(Imposter{Request: requestWithWrongSchema, Responses: []Response{okResponse}}), httpRequestA, false},
+		"incorrect request schema":             {MatcherBySchema(Imposter{Request: requestWithSchema, Responses: []Response{okResponse}}), httpRequestB, false},
+		"non-existing schema file":             {MatcherBySchema(Imposter{Request: requestWithNonExistingSchema, Responses: []Response{okResponse}}), httpRequestB, false},
+		"empty body with required schema file": {MatcherBySchema(Imposter{Request: requestWithSchema, Responses: []Response{okResponse}}), &http.Request{Body: emptyBody}, false},
+		"invalid request body":                 {MatcherBySchema(Imposter{Request: requestWithSchema, Responses: []Response{okResponse}}), &http.Request{Body: wrongBody}, false},
 	}
 
 	for name, tt := range matcherData {

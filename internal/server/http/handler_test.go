@@ -45,9 +45,9 @@ func TestImposterHandler(t *testing.T) {
 		expectedBody string
 		statusCode   int
 	}{
-		{"valid imposter with body", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, Body: body}}, body, http.StatusOK},
-		{"valid imposter with bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFile}}, string(expectedBodyFileData), http.StatusOK},
-		{"valid imposter with not exists bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFileFake}}, "", http.StatusOK},
+		{"valid imposter with body", Imposter{Request: validRequest, Responses: []Response{{Status: http.StatusOK, Headers: &headers, Body: body}}}, body, http.StatusOK},
+		{"valid imposter with bodyFile", Imposter{Request: validRequest, Responses: []Response{{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFile}}}, string(expectedBodyFileData), http.StatusOK},
+		{"valid imposter with not exists bodyFile", Imposter{Request: validRequest, Responses: []Response{{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFileFake}}}, "", http.StatusOK},
 	}
 
 	for _, tt := range dataTest {
@@ -90,7 +90,7 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 		statusCode int
 		request    []byte
 	}{
-		{"valid request no schema", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers"}, Response: Response{Status: http.StatusOK, Body: "test ok"}}, http.StatusOK, validRequest},
+		{"valid request no schema", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers"}, Responses: []Response{{Status: http.StatusOK, Body: "test ok"}}}, http.StatusOK, validRequest},
 	}
 
 	for _, tt := range dataTest {

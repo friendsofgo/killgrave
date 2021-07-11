@@ -11,13 +11,13 @@
                 "gopherColor": "{v:[a-z]+}"
             }
         },
-        "response": {
+        "responses": [{
             "status": 200,
             "headers": {
                 "Content-Type": "application/json"
             },
             "bodyFile": "responses/create_gopher_response.json"
-        }
+        }]
     },
     {
         "t": "random_text"
