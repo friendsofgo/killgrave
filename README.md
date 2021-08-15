@@ -310,7 +310,7 @@ you could configure whatever verb on the [http protocol](https://developer.mozil
 dynamic params.
 * `schemaFile`: if you want that the request could be validated using a json schema, you will need to indicate the path where your
 json schema are.
-* `params: if you want to specify a restrictive query param, you can add a list of them, more information: 
+* `params`: if you want to specify a restrictive query param, you can add a list of them, more information: 
 [Create an imposter with query params](#create-an-imposter-with-query-params), this option admit regex.
 * `headers`: if you want to specify a restrictive headers, like authorization or any other, you can define a list
 of headers that you request will need to match, more info: [Create an imposter with headers](#create-an-imposter-with-headers).
@@ -326,7 +326,7 @@ The response, allow the next properties:
 * `body` or `bodyFile`: if you want that your response return any kind result, you need to define `body` or `bodyFile` param,
 the difference between them, is that `body` allow writing directly the output, and `bodyFile`, is a route to the file with
 the output, this is very useful in case of a large output. You can also remove, this property if you want not return any content.
-* `headers`: sometime we need a specific header on our `response`, for example if you want to specify a special `content-type``
+* `headers`: sometime we need a specific header on our `response`, for example if you want to specify a special `content-type`
 so with this property you can define which headers the response will return.
 * `delay`: is the time the server waits before responding. This can help simulate network issues, or server high load. You must write `delay` as a string with postfix indicating time unit (see [this](https://golang.org/pkg/time/#ParseDuration) 
 for more info about an actual format). Also, you can specify minimum and maximum delays using separator ':', the server respond delay will be chosen at random between these values, default value is no delay at all.
