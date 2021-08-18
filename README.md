@@ -41,7 +41,7 @@ Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**,
 
 ## Overview
 
-**Killgrave** is a tool providing a simple way to create a powerful simulator for HTTP-based APIs.
+**Killgrave** is a tool that provides a simple way to create a powerful simulator for HTTP-based APIs.
 
 The Killgrave's philosophy is to provide an easy way to configure your *mock server*, ensuring that you don't need to learn
 another tooling language. For that reason we use `json` and `yaml` to generate all necessary configurations.
