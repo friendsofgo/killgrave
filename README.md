@@ -50,7 +50,7 @@ Killgrave provides:
 
 * An easy way to create imposters files, using `json`
 * The possibility to validate requests against [json schemas](https://json-schema.org/).
-* Validation of requests headers.
+* Validation of request headers.
 * Using regex to allow different parameters in headers and urls.
 * Custom body and dynamic body responses.
 * Using all content-types bodies, (`application/json`, `text/html`, `text/plain`, `image/jpeg`, etc. )
@@ -67,7 +67,7 @@ Killgrave provides:
 
 Imposters are the most important concept of the Killgrave tool. They define the rules that determine how the server should respond to a request.
 
-You can identify a Killgrave imposter file by their extension: `.imp.json`.
+You can identify a Killgrave imposter file by its extension: `.imp.json`.
 
 You can learn more about how to configure imposters in the [Imposter Configuration Section](#imposter).
 
@@ -122,7 +122,7 @@ To start Killgrave, you simply run the following.
 $ killgrave
 ```
 
-While you are welcome to provide your own configuration, Killgrave will default to the followin configuration:
+While you are welcome to provide your own configuration, Killgrave will default to the following configuration:
 
 * **imposters path**: `imposters`
 * **host**: `localhost`
@@ -131,7 +131,7 @@ While you are welcome to provide your own configuration, Killgrave will default 
 * **proxy**: `none`
 * **watcher**: `false`
 
-### Using Killgrave in the command line
+### Using Killgrave from the command line
 
 Killgrave takes the following command line options. Killgrave is almost fully configurable through the command line, except for `CORS`, which can only be configured using the [config file](#using-killgrave-by-config-file).
 

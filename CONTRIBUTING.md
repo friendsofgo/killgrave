@@ -14,7 +14,7 @@ Also, we share announcements related with the tool on this channel.
 
 ## Getting Started
 
-### Filing a bug or feature 
+### Filing a bug report or feature request
 
 Before filing an issue, please check the existing [issues](https://github.com/friendsofgo/killgrave/issues) to see if a similar one was already opened. If there is one already opened, feel free to comment on it.
 
