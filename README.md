@@ -48,31 +48,31 @@ another tooling language. For that reason we use `json` and `yaml` to generate a
 
 Killgrave provides:
 
-* Easy way to create imposters files, using `json`
-* The possibility to validate your own [json schemas](https://json-schema.org/) for requests.
+* An easy way to create imposters files, using `json`
+* The possibility to validate requests against [json schemas](https://json-schema.org/).
 * Validation of requests headers.
-* Using regex to allow different parameters on headers and urls.
-* Custom body and dynamic body responses
+* Using regex to allow different parameters in headers and urls.
+* Custom body and dynamic body responses.
 * Using all content-types bodies, (`application/json`, `text/html`, `text/plain`, `image/jpeg`, etc. )
-* Configure the headers on body responses.
-* Configure your CORS server options.
+* Configure response headers.
+* Configure CORS.
 * Simulate network issues and server high loads with imposter responses delay.
 * Using configurable proxy server to call to the original server.
 * Run the tool using flags or using a config file.
-* Run your mock server using a watcher to not reload on each change.
+* Run your mock server using a watcher to reload on configuration changes.
 
 ## Concepts
 
 ### Imposters
-Maybe the most common concept inside of Killgrave tool are `imposters`. Imposters are the files that we use to configure
-how we want our server to respond.
 
-You can identify an `imposter` file on Killgrave because they must have the extension `.imp.json`.
+Imposters are the most important concept of the Killgrave tool. They define the rules that determine how the server should respond to a request.
 
-You can learn more about how to configure imposters on the [Imposter Configuration Section](#imposter).
+You can identify a Killgrave imposter file by their extension: `.imp.json`.
+
+You can learn more about how to configure imposters in the [Imposter Configuration Section](#imposter).
 
 ## Installing
-> :warning:  Even though Killgrave is a very robust tool and is being used by some companies on production environments, it's still in initial development. Therefore, 'minor' version numbers are used to signify breaking changes and 'patch' version numbers are used for non-breaking changes or bugfixing. As soon as v1.0.0 is released, Killgrave will start to use [`SemVer`](https://semver.org/) as usual.
+> :warning:  Even though Killgrave is a very robust tool and is being used by some companies in production environments, it's still in initial development. Therefore, 'minor' version numbers are used to signify breaking changes and 'patch' version numbers are used for non-breaking changes or bugfixing. As soon as v1.0.0 is released, Killgrave will start to use [`SemVer`](https://semver.org/) as usual.
 
 You can install Killgrave in different ways, but all of them are very simple:
 
@@ -184,7 +184,7 @@ watcher: true
 secure: true
 ```
 
-As you can see, you can configure all the options on a very easy way. For the above example, the file tree looks as follows, with the current working directory being `mymock`.
+As you can see, you can configure all the options in a very easy way. For the above example, the file tree looks as follows, with the current working directory being `mymock`.
 
 ```
 mymock/
@@ -249,7 +249,7 @@ In the CORS section of the file you can find the following options:
 You can use Killgrave in proxy mode using the flags `proxy-mode` and `proxy-url` or their equivalent fields in the configuration file. The following three proxy modes are available:
 * `none`: Default. Killgrave will not behave as a proxy and the mock server will only use the configured imposters.
 * `missing`: With this mode the mock server will try to match the request with a configured imposter, but if no matching endpoint was found, the mock server will call to the real server, declared in the `proxy-url` configuration variable.
-* `all`: The mock server will always call to the real server, declared on the `proxy-url` configuration variable.
+* `all`: The mock server will always call to the real server, declared in the `proxy-url` configuration variable.
 
 The `proxy-url` must be the root path of the proxied server. For example, if we have an API running on `http://example.com/things`, the `proxy-url` will be `http://example.com`.
 
@@ -283,7 +283,7 @@ This a very simple example. Killgrave has more possibilities for configuring imp
 
 ### Imposters Structure
 
-The imposter object can be divided on two parts:
+The imposter object can be divided in two parts:
 
 * [Request](#request)
 * [Response](#response)
@@ -365,11 +365,11 @@ In this example, we have configured an imposter that only matches if we receive 
 ]
 ```
 
-#### Regex on the headers:
+#### Regex in the headers:
 
 In this case we will not need the `gorilla mux nomenclature` to write our regex.
 
-In the next example, we have configured an `imposter` that uses regex to match an Authorization header.
+In the next example, we have configured an imposter that uses regex to match an Authorization header.
 
 ```json
 [
@@ -395,7 +395,7 @@ In the next example, we have configured an `imposter` that uses regex to match a
 ### Create an imposter using JSON Schema
 
 Sometimes, we need to validate our request more thoroughly. In cases like this we can
-create an `imposter` that only matches with a valid [json schema](https://json-schema.org/).
+create an imposter that only matches with a valid [json schema](https://json-schema.org/).
 
 To do that we will need to define our `json schema` first:
 
@@ -461,7 +461,7 @@ With this `json schema`, we expect a `request` like this:
 }
 ```
 
-Then our `imposter` will be configure as follows:
+Then our imposter will be configure as follows:
 
 ````json
 [
