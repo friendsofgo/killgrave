@@ -88,13 +88,13 @@ $ go get -u github.com/friendsofgo/killgrave/cmd/killgrave@{version}
 
 ### Homebrew 
 
-If you are a Mac user, you can install Killgrave using, [Homebrew](https://brew.sh/):
+If you are a Mac user, you can install Killgrave using [Homebrew](https://brew.sh/):
 
 ```sh
 $ brew install friendsofgo/tap/killgrave
 ```
 
-:warning:  If you are installing via homebrew, you always get the [latest Killgrave version](https://github.com/friendsofgo/killgrave/releases), we hope fix this soon.
+:warning:  If you are installing via Homebrew, you always get the [latest Killgrave version](https://github.com/friendsofgo/killgrave/releases), we hope to fix this soon.
 
 ### Docker
 
@@ -105,7 +105,7 @@ docker run -it --rm -p 3000:3000 -v $PWD/:/home -w /home friendsofgo/killgrave -
 ```
 
 `-p 3000:3000` [publishes](https://docs.docker.com/engine/reference/run/#expose-incoming-ports) port 3000 (Killgrave's default port) inside the
-container  to port 3000 on the host machine.
+container to port 3000 on the host machine.
 
 `-h 0.0.0.0` is necessary to allow Killgrave to listen and respond to requests from outside the container (the default,
 `localhost`, will not capture requests from the host network).
@@ -214,7 +214,7 @@ The option `proxy` allows you to configure the mock in proxy mode. When this mod
 
 ### Configure CORS
 
-If you want to use `killgrave` in a client application you should consider configuring CORS.
+If you want to use `killgrave` from a client application you should consider configuring CORS.
 
 In the CORS section of the file you can find the following options:
 
@@ -255,7 +255,7 @@ The `proxy-url` must be the root path of the proxied server. For example, if we 
 
 ### Creating an Imposter
 
-At least one imposter must to be configured in order to run Killgrave. Files with the `.imp.json` extension in the `imposters` folder (default "imposters") will be interpreted as imposter files.
+At least one imposter must be configured in order to run Killgrave. Files with the `.imp.json` extension in the `imposters` folder (default "imposters") will be interpreted as imposter files.
 
 We use a rule-based system to match requests to imposters. Therefore, you have to organize your imposters from most restrictive to least. Here's an example of an imposter.
 
@@ -300,7 +300,7 @@ This part defines how Killgrave should determine whether an incoming request mat
 
 #### Response
 
-This part defines how Killgrave should respond to the incoming request. The `response` object hsa the following properties:
+This part defines how Killgrave should respond to the incoming request. The `response` object has the following properties:
 
 * `status` (<span style="color:red">mandatory</span>): Integer defining the HTTP status to return.
 * `body` or `bodyFile`: The response body. Either a literal string (`body`) or a path to a file (`bodyFile`). `bodyFile` is especially useful in the case of large outputs.
@@ -461,7 +461,7 @@ With this `json schema`, we expect a `request` like this:
 }
 ```
 
-Then our imposter will be configure as follows:
+Then our imposter will be configured as follows:
 
 ````json
 [
