@@ -78,10 +78,10 @@ You can install Killgrave in different ways, but all of them are very simple:
 
 ### Go Toolchain
 
-One of them is of course using `go get`, Killgrave is a Go project and can therefore be compiled using the `go toolchain`:
+One of them is of course using `go install`, Killgrave is a Go project and can therefore be compiled using the `go toolchain`:
 
 ```sh
-$ go get -u github.com/friendsofgo/killgrave/cmd/killgrave@{version}
+$ go install github.com/friendsofgo/killgrave/cmd/killgrave@{version}
 ```
 
 `version` must be substituted by the `version` that you want to install. If left unspecified, the `main` branch will be installed.
