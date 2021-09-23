@@ -8,7 +8,7 @@ require (
 	github.com/radovskyb/watcher v1.0.7
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.7.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
