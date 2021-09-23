@@ -101,13 +101,13 @@ $ brew install friendsofgo/tap/killgrave
 The application is also available through [Docker](https://hub.docker.com/r/friendsofgo/killgrave).
 
 ```bash
-docker run -it --rm -p 3000:3000 -v $PWD/:/home -w /home friendsofgo/killgrave -h 0.0.0.0
+docker run -it --rm -p 3000:3000 -v $PWD/:/home -w /home friendsofgo/killgrave -host 0.0.0.0
 ```
 
 `-p 3000:3000` [publishes](https://docs.docker.com/engine/reference/run/#expose-incoming-ports) port 3000 (Killgrave's default port) inside the
 container to port 3000 on the host machine.
 
-`-h 0.0.0.0` is necessary to allow Killgrave to listen and respond to requests from outside the container (the default,
+`-host 0.0.0.0` is necessary to allow Killgrave to listen and respond to requests from outside the container (the default,
 `localhost`, will not capture requests from the host network).
 
 ### Other
