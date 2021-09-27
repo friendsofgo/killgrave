@@ -18,6 +18,7 @@ type Config struct {
 	Proxy         ConfigProxy `yaml:"proxy"`
 	Secure        bool        `yaml:"secure"`
 	Watcher       bool        `yaml:"watcher"`
+	DumpRequests  bool        `yaml:"dump_requests"`
 }
 
 // ConfigCORS representation of section CORS of the yaml
@@ -154,6 +155,15 @@ func WithWatcherConfiguration(watcher bool) ConfigOpt {
 	return func(cfg *Config) error {
 
 		cfg.Watcher = watcher
+		return nil
+	}
+}
+
+// WithDumpRequestConfiguration preparing server to dump the received requests
+func WithDumpRequestsConfiguration(dumpRequests bool) ConfigOpt {
+	return func(cfg *Config) error {
+
+		cfg.DumpRequests = dumpRequests
 		return nil
 	}
 }
