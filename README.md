@@ -24,6 +24,7 @@ Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**,
     * [Go Toolchain](#go-toolchain)
     * [Homebrew](#homebrew)
     * [Docker](#docker)
+    * [Compile by yourself](#compile-by-yourself)
     * [Other](#other)
 - [Getting Started](#getting-started)
     * [Using Killgrave by command line](#using-killgrave-by-command-line)
@@ -109,6 +110,23 @@ container to port 3000 on the host machine.
 
 `-host 0.0.0.0` is necessary to allow Killgrave to listen and respond to requests from outside the container (the default,
 `localhost`, will not capture requests from the host network).
+
+### Compile by yourself
+
+If you want to use `Killgrave` from the source code, first you will need clone the repository
+
+```sh
+git clone git@github.com:friendsofgo/killgrave.git
+```
+
+Then select the branch to use, if is not `main`, and then compile `killgrave`
+
+```sh
+make build
+```
+
+This command will create an executable into the path `bin/killgrave`, is highly recommended use this command
+to compile the software because parameters such as `version` are added to the compilation, which are necessary when reporting a bug.
 
 ### Other
 
