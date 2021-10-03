@@ -44,6 +44,8 @@ const (
 	ProxyNone ProxyMode = iota
 	// ProxyMissing handle only missing requests are proxied
 	ProxyMissing
+	// ProxyRecord proxy the missing requests and record them into imposter
+	ProxyRecord
 	// ProxyAll all requests are proxied
 	ProxyAll
 )
@@ -59,6 +61,7 @@ func (p ProxyMode) String() string {
 	m := map[ProxyMode]string{
 		ProxyNone:    "none",
 		ProxyMissing: "missing",
+		ProxyRecord:  "record",
 		ProxyAll:     "all",
 	}
 
@@ -74,6 +77,7 @@ func StringToProxyMode(t string) (ProxyMode, error) {
 	m := map[string]ProxyMode{
 		"none":    ProxyNone,
 		"missing": ProxyMissing,
+		"record": ProxyRecord,
 		"all":     ProxyAll,
 	}
 

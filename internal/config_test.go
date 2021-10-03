@@ -71,6 +71,7 @@ func TestProxyModeUnmarshal(t *testing.T) {
 	}{
 		"valid mode all":     {"all", ProxyAll, nil},
 		"valid mode missing": {"missing", ProxyMissing, nil},
+		"valid mode record":  {"record", ProxyRecord, nil},
 		"valid mode none":    {"none", ProxyNone, nil},
 		"empty mode":         {"", ProxyNone, errors.New("error")},
 		"invalid mode":       {"nonsens23e", ProxyNone, errors.New("error")},
@@ -131,9 +132,14 @@ func TestProxyMode_String(t *testing.T) {
 			"none",
 		},
 		{
-			"ProxyNone must be return missing string",
+			"ProxyMissing must be return missing string",
 			ProxyMissing,
 			"missing",
+		},
+		{
+			"ProxyRecord must be return record string",
+			ProxyRecord,
+			"record",
 		},
 		{
 			"ProxyNone must be return all string",
