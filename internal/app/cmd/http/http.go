@@ -100,7 +100,7 @@ func runServer(cfg killgrave.Config) server.Server {
 		Handler: handlers.CORS(server.PrepareAccessControl(cfg.CORS)...)(router),
 	}
 
-	proxyServer, err := server.NewProxy(cfg.Proxy.Url, cfg.Proxy.Mode)
+	proxyServer, err := server.NewProxy(cfg.Proxy.Url, cfg.ImpostersPath, cfg.Proxy.Mode)
 	if err != nil {
 		log.Fatal(err)
 	}

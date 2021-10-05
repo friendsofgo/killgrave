@@ -57,6 +57,10 @@ var (
 	errInvalidPort        = errors.New("invalid port")
 )
 
+func (p ProxyMode) Is(mode ProxyMode) bool {
+	return p == mode
+}
+
 func (p ProxyMode) String() string {
 	m := map[ProxyMode]string{
 		ProxyNone:    "none",

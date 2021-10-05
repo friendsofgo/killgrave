@@ -1,0 +1,1 @@
+[{"request":{"method":"GET","endpoint":"/pokemon","params":{"limit":"100","offset":"200"},"headers":{"Trainer":"Ash Ketchum","Trainer-Key":"25"}},"response":{"status":200,"body":"{\"id\": 25, name\": \"Pikachu\"}","headers":{}}}]

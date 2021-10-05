@@ -86,18 +86,18 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 // Build read all the files on the impostersPath and add different
 // handlers for each imposter
 func (s *Server) Build() error {
-	if s.proxy.mode == killgrave.ProxyAll {
+	if s.proxy.mode.Is(killgrave.ProxyAll) {
 		s.handleAll(s.proxy.Handler())
 	}
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
 		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
 	}
 	var imposterConfigCh = make(chan ImposterConfig)
-	var done = make(chan bool)
+	var done = make(chan struct{})
 
 	go func() {
 		findImposters(s.impostersPath, imposterConfigCh)
-		done <- true
+		done <- struct{}{}
 	}()
 loop:
 	for {
@@ -117,7 +117,7 @@ loop:
 			break loop
 		}
 	}
-	if s.proxy.mode == killgrave.ProxyMissing {
+	if s.proxy.mode.Is(killgrave.ProxyMissing) || s.proxy.mode.Is(killgrave.ProxyRecord){
 		s.handleAll(s.proxy.Handler())
 	}
 	return nil

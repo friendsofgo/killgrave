@@ -22,7 +22,7 @@ func TestNewProxy(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			proxy, err := NewProxy(tc.rawURL, tc.mode)
+			proxy, err := NewProxy(tc.rawURL, "", tc.mode)
 			if err != nil && tc.err == nil {
 				t.Fatalf("not expected any erros and got %v", err)
 			}
@@ -47,7 +47,7 @@ func TestProxyHandler(t *testing.T) {
 	}))
 	defer backend.Close()
 
-	proxy, err := NewProxy(backend.URL, killgrave.ProxyAll)
+	proxy, err := NewProxy(backend.URL, "", killgrave.ProxyAll)
 	if err != nil {
 		t.Fatal("NewProxy failed: ", err)
 	}
