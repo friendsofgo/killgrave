@@ -2,8 +2,9 @@ package killgrave
 
 import (
 	"errors"
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewConfigFromFile(t *testing.T) {
@@ -14,25 +15,19 @@ func TestNewConfigFromFile(t *testing.T) {
 	}{
 		"valid config file": {"test/testdata/config.yml", validConfig(), nil},
 		"file not found":    {"test/testdata/file.yml", Config{}, errors.New("error")},
-		"wrong yaml file":   {"test/testdata/wrong_config.yml", Config{}, errors.New("error")},
+		"wrong yaml file":   {"test/testdata/wrong_config.yml", Config{}, errors.New("invalid config file")},
 		"empty config file": {"", Config{}, errors.New("error")},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			got, err := NewConfigFromFile(tc.input)
-
-			if err != nil && tc.err == nil {
-				t.Fatalf("not expected any errors and got %v", err)
+			if tc.err != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
-
-			if err == nil && tc.err != nil {
-				t.Fatalf("expected an error and got nil")
-			}
-
-			if !reflect.DeepEqual(tc.expected, got) {
-				t.Fatalf("expected: %v, got: %v", tc.expected, got)
-			}
+			assert.Equal(t, tc.expected, got)
 		})
 	}
 }
@@ -50,15 +45,13 @@ func TestProxyModeParseString(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			mode, err := StringToProxyMode(tc.input)
 
-			if err != nil && tc.err == nil {
-				t.Fatalf("not expected any erros and got %v", err)
+			if tc.err != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
-			if err == nil && tc.err != nil {
-				t.Fatalf("expected an error and got nil")
-			}
-			if tc.expected != mode {
-				t.Fatalf("expected: %v, got: %v", tc.expected, mode)
-			}
+			assert.Equal(t, tc.expected, mode)
+
 		})
 	}
 }
@@ -88,16 +81,14 @@ func TestProxyModeUnmarshal(t *testing.T) {
 				*s = input
 				return nil
 			})
-			if err != nil && tc.err == nil {
-				t.Fatalf("not expected any erros and got %v", err)
+
+			if tc.err != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
 
-			if err == nil && tc.err != nil {
-				t.Fatalf("expected an error and got nil")
-			}
-			if tc.expected != mode {
-				t.Fatalf("expected: %v, got: %v", tc.expected, mode)
-			}
+			assert.Equal(t, tc.expected, mode)
 		})
 	}
 }
@@ -148,9 +139,7 @@ func TestProxyMode_String(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.p.String(); got != tt.want {
-				t.Errorf("String() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, tt.p.String())
 		})
 	}
 }
@@ -215,13 +204,8 @@ func TestNewConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := NewConfig(tt.args.impostersPath, tt.args.host, tt.args.port, false)
-			if tt.err != nil && !errors.Is(err, tt.err) {
-				t.Errorf("NewConfig() error got = %v, err want %v", err, tt.err)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewConfig() got = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.err, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -238,12 +222,8 @@ func TestConfig_ConfigureProxy(t *testing.T) {
 	}
 
 	got, err := NewConfig("imposters", "localhost", 80, false)
-	if err != nil {
-		t.Fatalf("error not expected: %v", err)
-	}
-	got.ConfigureProxy(ProxyAll, "https://friendsofgo.tech")
+	assert.Nil(t, err)
 
-	if !reflect.DeepEqual(expected, got) {
-		t.Fatalf("got = %v, want %v", expected, got)
-	}
+	got.ConfigureProxy(ProxyAll, "https://friendsofgo.tech")
+	assert.Equal(t, expected, got)
 }
