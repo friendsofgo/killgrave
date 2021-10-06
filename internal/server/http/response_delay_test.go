@@ -3,9 +3,10 @@ package http
 import (
 	"encoding/json"
 	"errors"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestResponseDelayUnmarshal(t *testing.T) {
@@ -55,16 +56,14 @@ func TestResponseDelayUnmarshal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			var delay ResponseDelay
 			err := json.Unmarshal([]byte(tc.input), &delay)
-			if err != nil && tc.err == nil {
-				t.Fatalf("not expected any error and got: %v", err)
+			if tc.err == nil {
+				assert.Nil(t, err)
 			}
 
-			if err == nil && tc.err != nil {
-				t.Fatalf("expected an error and got nil")
+			if tc.err != nil {
+				assert.NotNil(t, err)
 			}
-			if !reflect.DeepEqual(tc.delay, delay) {
-				t.Fatalf("expected: %v, got: %v", tc.delay, delay)
-			}
+			assert.Equal(t, tc.delay, delay)
 
 		})
 	}
@@ -90,9 +89,8 @@ func TestResponseDelay(t *testing.T) {
 			max := min + tc.delay.offset
 			for i := 0; i < 10; i++ {
 				delay := int64(tc.delay.Delay())
-				if delay < min || delay > max {
-					t.Errorf("delay should be in interval [%d, %d] but actual value is: %d", min, max, delay)
-				}
+				assert.GreaterOrEqual(t, max, delay)
+				assert.GreaterOrEqual(t, delay, min)
 			}
 
 		})
@@ -101,12 +99,8 @@ func TestResponseDelay(t *testing.T) {
 
 func getDelay(t *testing.T, min string, offset string) ResponseDelay {
 	minDuration, err := time.ParseDuration(min)
-	if err != nil {
-		t.Fatal("ParseDuration min fail: ", err)
-	}
+	assert.Nil(t, err)
 	offsetDuration, err := time.ParseDuration(offset)
-	if err != nil {
-		t.Fatal("ParseDuration max fail: ", err)
-	}
+	assert.Nil(t, err)
 	return ResponseDelay{int64(minDuration), int64(offsetDuration)}
 }
