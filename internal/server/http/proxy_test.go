@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewProxy(t *testing.T) {
@@ -23,19 +24,14 @@ func TestNewProxy(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			proxy, err := NewProxy(tc.rawURL, tc.mode)
-			if err != nil && tc.err == nil {
-				t.Fatalf("not expected any erros and got %v", err)
+			if tc.err != nil {
+				assert.NotNil(t, err)
+				return
+			} else {
+				assert.Nil(t, err)
 			}
 
-			if err == nil && tc.err != nil {
-				t.Fatalf("expected an error and got nil")
-			}
-			if err != nil {
-				return
-			}
-			if tc.mode != proxy.mode {
-				t.Fatalf("expected: %v, got: %v", tc.mode, proxy.mode)
-			}
+			assert.Equal(t, tc.mode, proxy.mode)
 		})
 	}
 }
@@ -48,19 +44,13 @@ func TestProxyHandler(t *testing.T) {
 	defer backend.Close()
 
 	proxy, err := NewProxy(backend.URL, killgrave.ProxyAll)
-	if err != nil {
-		t.Fatal("NewProxy failed: ", err)
-	}
+	assert.Nil(t, err)
 
 	frontend := httptest.NewServer(proxy.Handler())
 	defer frontend.Close()
 
 	_, err = http.Get(frontend.URL)
-	if err != nil {
-		t.Fatal("Frontend GET method failed: ", err)
-	}
-	if isRequestHandled != true {
-		t.Fatal("Request was not proxied to backend server")
-	}
+	assert.Nil(t, err)
+	assert.True(t, isRequestHandled)
 
 }
