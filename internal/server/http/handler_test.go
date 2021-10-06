@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestImposterHandler(t *testing.T) {
@@ -53,21 +55,14 @@ func TestImposterHandler(t *testing.T) {
 	for _, tt := range dataTest {
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest("POST", "/gophers", bytes.NewBuffer(bodyRequest))
-			if err != nil {
-				t.Fatalf("could not created request: %v", err)
-			}
+			assert.Nil(t, err)
 
 			rec := httptest.NewRecorder()
 			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
 
 			handler.ServeHTTP(rec, req)
-			if status := rec.Code; status != tt.statusCode {
-				t.Errorf("handler expected %d code and got: %d code", tt.statusCode, status)
-			}
-
-			if rec.Body.String() != tt.expectedBody {
-				t.Errorf("handler expected %s body and got: %s body", tt.expectedBody, rec.Body.String())
-			}
+			assert.Equal(t, rec.Code, tt.statusCode)
+			assert.Equal(t, tt.expectedBody, rec.Body.String())
 
 		})
 	}
@@ -97,16 +92,13 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest("POST", "/gophers", bytes.NewBuffer(tt.request))
-			if err != nil {
-				t.Fatalf("could not created request: %v", err)
-			}
+			assert.Nil(t, err)
 			rec := httptest.NewRecorder()
 			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
 
 			handler.ServeHTTP(rec, req)
-			if status := rec.Code; status != tt.statusCode {
-				t.Fatalf("handler expected %d code and got: %d code", tt.statusCode, status)
-			}
+
+			assert.Equal(t, tt.statusCode, rec.Code)
 		})
 	}
 }
