@@ -13,9 +13,9 @@ import (
 
 // Proxy represent reverse proxy server.
 type Proxy struct {
-	server *httputil.ReverseProxy
-	mode   killgrave.ProxyMode
-	url    *url.URL
+	server        *httputil.ReverseProxy
+	mode          killgrave.ProxyMode
+	url           *url.URL
 	impostersPath string
 
 	recorder RecorderHTTP
@@ -28,15 +28,11 @@ func NewProxy(rawurl, impostersPath string, mode killgrave.ProxyMode, recorder R
 		return nil, err
 	}
 	reverseProxy := httputil.NewSingleHostReverseProxy(u)
-
-	proxy := &Proxy{
-		server: reverseProxy,
-		mode: mode,
-		url: u,
-		recorder: recorder,
-	}
-
-	return proxy, nil
+	return &Proxy{
+		server:   reverseProxy,
+		mode:     mode,
+		url:      u,
+		recorder: recorder}, nil
 }
 
 // Handler returns handler that sends request to another server.
