@@ -12,7 +12,6 @@ import (
 
 var (
 	ErrCreatingRecordDir       = errors.New("impossible create record directory")
-	ErrCreatingRecordFile      = errors.New("impossible create record file")
 	ErrOpenRecordFile          = errors.New("impossible open record file")
 	ErrTryingToReadBody        = errors.New("impossible read the body response")
 	ErrReadingOutputRecordFile = errors.New("error trying to parse the record file")
@@ -20,10 +19,18 @@ var (
 	ErrWritingRecordFile       = errors.New("error trying to write on the record file")
 )
 
+// RecorderHTTP service to Record the return output of the request
+type RecorderHTTP interface {
+	// Record save the return output from the missing request on the imposters
+	Record(req *http.Request, resp *http.Response) error
+}
+
+// Recorder implementation of the RecorderHTTP
 type Recorder struct {
 	outputPathFile string
 }
 
+// NewRecorder initialise the Recorder
 func NewRecorder(outputPathFile string) Recorder {
 	return Recorder{
 		outputPathFile: outputPathFile,
@@ -61,10 +68,20 @@ func (r Recorder) Record(req *http.Request, resp *http.Response) error {
 		return fmt.Errorf("%v: %w", err, ErrMarshallingRecordFile)
 	}
 
+	_ = f.Truncate(0)
+	_, _ = f.Seek(0,0)
+
 	if _, err := f.Write(b); err != nil {
 		return fmt.Errorf("%v: %w", err, ErrWritingRecordFile)
 	}
 
+	return nil
+}
+
+// RecorderNoop an implementation of the RecorderHTTP without any functionality
+type RecorderNoop struct {}
+
+func (r RecorderNoop) Record(req *http.Request, resp *http.Response) error {
 	return nil
 }
 
@@ -77,17 +94,9 @@ func (r Recorder) prepareOutputFile() (*os.File, error) {
 		}
 	}
 
-	var f *os.File
-	if _, err := os.Stat(r.outputPathFile); os.IsNotExist(err) {
-		f, err = os.Create(r.outputPathFile)
-		if err != nil {
-			return nil, fmt.Errorf("%v: %w", err, ErrCreatingRecordFile)
-		}
-	} else {
-		f, err = os.OpenFile(r.outputPathFile, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-		if err != nil {
-			return nil, fmt.Errorf("%v: %w", err, ErrOpenRecordFile)
-		}
+	f, err := os.OpenFile(r.outputPathFile, os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", err, ErrOpenRecordFile)
 	}
 
 	return f, nil

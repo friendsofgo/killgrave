@@ -2,7 +2,6 @@ package http
 
 import (
 	"bytes"
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -18,24 +17,26 @@ type Proxy struct {
 	mode   killgrave.ProxyMode
 	url    *url.URL
 	impostersPath string
+
+	recorder RecorderHTTP
 }
 
-var ErrImpostersPathEmpty = errors.New("if you want to record the missing request you will need to indicate an imposters path")
-
 // NewProxy creates new proxy server.
-func NewProxy(rawurl, impostersPath string, mode killgrave.ProxyMode) (*Proxy, error) {
+func NewProxy(rawurl, impostersPath string, mode killgrave.ProxyMode, recorder RecorderHTTP) (*Proxy, error) {
 	u, err := url.Parse(rawurl)
 	if err != nil {
 		return nil, err
 	}
 	reverseProxy := httputil.NewSingleHostReverseProxy(u)
-	if mode == killgrave.ProxyRecord {
-		if impostersPath == "" {
-			return nil, ErrImpostersPathEmpty
-		}
-		reverseProxy.ModifyResponse = recordProxy
+
+	proxy := &Proxy{
+		server: reverseProxy,
+		mode: mode,
+		url: u,
+		recorder: recorder,
 	}
-	return &Proxy{server: reverseProxy, mode: mode, url: u}, nil
+
+	return proxy, nil
 }
 
 // Handler returns handler that sends request to another server.
@@ -45,12 +46,15 @@ func (p Proxy) Handler() http.HandlerFunc {
 		r.URL.Scheme = p.url.Scheme
 		r.Header.Set("X-Forwarded-Host", r.Header.Get("Host"))
 		r.Host = p.url.Host
+		if p.mode == killgrave.ProxyRecord {
+			p.server.ModifyResponse = p.recordProxy
+		}
 
 		p.server.ServeHTTP(w, r)
 	}
 }
 
-func recordProxy(resp *http.Response) error {
+func (p Proxy) recordProxy(resp *http.Response) error {
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -61,5 +65,6 @@ func recordProxy(resp *http.Response) error {
 	resp.Body = body
 	resp.ContentLength = int64(len(b))
 	resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
-	return nil
+
+	return p.recorder.Record(resp.Request, resp)
 }

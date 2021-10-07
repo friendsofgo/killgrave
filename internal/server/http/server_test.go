@@ -61,7 +61,7 @@ func TestBuildProxyMode(t *testing.T) {
 		impostersPath := "test/testdata/imposters"
 		router := mux.NewRouter()
 		httpServer := &http.Server{Handler: router}
-		proxyServer, err := NewProxy(proxyServer.URL, impostersPath, mode)
+		proxyServer, err := NewProxy(proxyServer.URL, impostersPath, mode, RecorderNoop{})
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
 		}
@@ -143,7 +143,7 @@ func TestBuildSecureMode(t *testing.T) {
 		httpServer := &http.Server{Handler: router, Addr: ":4430", TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{cert},
 		}}
-		proxyServer, err := NewProxy(proxyServer.URL, impostersPath, mode)
+		proxyServer, err := NewProxy(proxyServer.URL, impostersPath, mode, RecorderNoop{})
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
 		}

@@ -87,8 +87,11 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 // handlers for each imposter
 func (s *Server) Build() error {
 	if s.proxy.mode.Is(killgrave.ProxyAll) {
+		// not necessary load the imposters if you will use the tool as a proxy
 		s.handleAll(s.proxy.Handler())
+		return nil
 	}
+
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
 		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
 	}
@@ -104,13 +107,13 @@ loop:
 		select {
 		case imposterConfig := <-imposterConfigCh:
 			var imposters []Imposter
-			err := s.unmarshalImposters(imposterConfig, &imposters)
-			if err != nil {
+			if err := s.unmarshalImposters(imposterConfig, &imposters); err != nil {
 				log.Printf("error trying to load %s imposter: %v", imposterConfig.FilePath, err)
-			} else {
-				s.addImposterHandler(imposters, imposterConfig)
-				log.Printf("imposter %s loaded\n", imposterConfig.FilePath)
+				continue
 			}
+
+			s.addImposterHandler(imposters, imposterConfig)
+			log.Printf("imposter %s loaded\n", imposterConfig.FilePath)
 		case <-done:
 			close(imposterConfigCh)
 			close(done)
@@ -118,7 +121,7 @@ loop:
 		}
 	}
 	if s.proxy.mode.Is(killgrave.ProxyMissing) || s.proxy.mode.Is(killgrave.ProxyRecord){
-		s.handleAll(s.proxy.Handler())
+		s.router.NotFoundHandler = s.proxy.Handler()
 	}
 	return nil
 }
