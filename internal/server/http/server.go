@@ -84,8 +84,11 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 // handlers for each imposter
 func (s *Server) Build() error {
 	if s.proxy.mode == killgrave.ProxyAll {
-		s.handleAll(s.proxy.Handler())
+		// not necessary load the imposters if you will use the tool as a proxy
+		s.router.PathPrefix("/").HandlerFunc(s.proxy.Handler())
+		return nil
 	}
+
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
 		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
 	}
@@ -109,7 +112,7 @@ loop:
 		}
 	}
 	if s.proxy.mode == killgrave.ProxyMissing {
-		s.handleAll(s.proxy.Handler())
+		s.router.NotFoundHandler = s.proxy.Handler()
 	}
 	return nil
 }
