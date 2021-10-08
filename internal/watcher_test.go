@@ -53,8 +53,11 @@ func TestInitializeWatcher(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := InitializeWatcher(tt.pathToWatch)
 			if tt.wantErr {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
+
 			if tt.wantWatcher {
 				assert.NotNil(t, got)
 			}

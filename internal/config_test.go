@@ -9,23 +9,23 @@ import (
 
 func TestNewConfigFromFile(t *testing.T) {
 	tests := map[string]struct {
-		input    string
-		expected Config
-		err      error
+		input     string
+		expected  Config
+		wantError bool
 	}{
-		"valid config file": {"test/testdata/config.yml", validConfig(), nil},
-		"file not found":    {"test/testdata/file.yml", Config{}, errors.New("error")},
-		"wrong yaml file":   {"test/testdata/wrong_config.yml", Config{}, errors.New("invalid config file")},
-		"empty config file": {"", Config{}, errors.New("error")},
+		"valid config file": {"test/testdata/config.yml", validConfig(), false},
+		"file not found":    {"test/testdata/file.yml", Config{}, true},
+		"wrong yaml file":   {"test/testdata/wrong_config.yml", Config{}, true},
+		"empty config file": {"", Config{}, true},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			got, err := NewConfigFromFile(tc.input)
-			if tc.err != nil {
-				assert.NotNil(t, err)
+			if tc.wantError {
+				assert.Error(t, err)
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 			}
 			assert.Equal(t, tc.expected, got)
 		})
@@ -34,21 +34,21 @@ func TestNewConfigFromFile(t *testing.T) {
 
 func TestProxyModeParseString(t *testing.T) {
 	testCases := map[string]struct {
-		input    string
-		expected ProxyMode
-		err      error
+		input     string
+		expected  ProxyMode
+		wantError bool
 	}{
-		"valid mode":   {"all", ProxyAll, nil},
-		"unknown mode": {"UnKnOwn1", ProxyNone, errors.New("error")},
+		"valid mode":   {"all", ProxyAll, false},
+		"unknown mode": {"UnKnOwn1", ProxyNone, true},
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			mode, err := StringToProxyMode(tc.input)
 
-			if tc.err != nil {
-				assert.NotNil(t, err)
+			if tc.wantError {
+				assert.Error(t, err)
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 			}
 			assert.Equal(t, tc.expected, mode)
 
@@ -58,16 +58,16 @@ func TestProxyModeParseString(t *testing.T) {
 
 func TestProxyModeUnmarshal(t *testing.T) {
 	testCases := map[string]struct {
-		input    interface{}
-		expected ProxyMode
-		err      error
+		input     interface{}
+		expected  ProxyMode
+		wantError bool
 	}{
-		"valid mode all":     {"all", ProxyAll, nil},
-		"valid mode missing": {"missing", ProxyMissing, nil},
-		"valid mode none":    {"none", ProxyNone, nil},
-		"empty mode":         {"", ProxyNone, errors.New("error")},
-		"invalid mode":       {"nonsens23e", ProxyNone, errors.New("error")},
-		"error input":        {123, ProxyNone, errors.New("error")},
+		"valid mode all":     {"all", ProxyAll, false},
+		"valid mode missing": {"missing", ProxyMissing, false},
+		"valid mode none":    {"none", ProxyNone, false},
+		"empty mode":         {"", ProxyNone, true},
+		"invalid mode":       {"nonsens23e", ProxyNone, true},
+		"error input":        {123, ProxyNone, true},
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
@@ -82,10 +82,10 @@ func TestProxyModeUnmarshal(t *testing.T) {
 				return nil
 			})
 
-			if tc.err != nil {
-				assert.NotNil(t, err)
+			if tc.wantError {
+				assert.Error(t, err)
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 			}
 
 			assert.Equal(t, tc.expected, mode)
@@ -222,7 +222,7 @@ func TestConfig_ConfigureProxy(t *testing.T) {
 	}
 
 	got, err := NewConfig("imposters", "localhost", 80, false)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	got.ConfigureProxy(ProxyAll, "https://friendsofgo.tech")
 	assert.Equal(t, expected, got)
