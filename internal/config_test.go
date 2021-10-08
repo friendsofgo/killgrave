@@ -2,7 +2,6 @@ package killgrave
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,14 +9,14 @@ import (
 
 func TestNewConfig(t *testing.T) {
 	tests := map[string]struct {
-		input    string
-		expected Config
-		err      error
+		input     string
+		expected  Config
+		wantError bool
 	}{
-		"valid config file": {"test/testdata/config.yml", validConfig(), nil},
-		"file not found":    {"test/testdata/file.yml", Config{}, errors.New("error")},
-		"wrong yaml file":   {"test/testdata/wrong_config.yml", Config{}, errors.New("invalid config file")},
-		"empty config file": {"", Config{}, nil},
+		"valid config file": {"test/testdata/config.yml", validConfig(), false},
+		"file not found":    {"test/testdata/file.yml", Config{}, true},
+		"wrong yaml file":   {"test/testdata/wrong_config.yml", Config{}, true},
+		"empty config file": {"", Config{}, false},
 	}
 
 	for name, tc := range tests {
@@ -31,17 +30,12 @@ func TestNewConfig(t *testing.T) {
 				WithConfigFile(tc.input),
 				WithWatcherConfiguration(tc.expected.Watcher))
 
-			if err != nil && tc.err == nil {
-				t.Fatalf("not expected any erros and got %v", err)
+			if tc.wantError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
 
-			if err == nil && tc.err != nil {
-				t.Fatalf("expected an error and got nil")
-			}
-
-			if !reflect.DeepEqual(tc.expected, got) {
-				t.Fatalf("expected: %v, got: %v", tc.expected, got)
-			}
 			assert.Equal(t, tc.expected, got)
 		})
 	}
@@ -49,21 +43,21 @@ func TestNewConfig(t *testing.T) {
 
 func TestProxyModeParseString(t *testing.T) {
 	testCases := map[string]struct {
-		input    string
-		expected ProxyMode
-		err      error
+		input     string
+		expected  ProxyMode
+		wantError bool
 	}{
-		"valid mode":   {"all", ProxyAll, nil},
-		"unknown mode": {"UnKnOwn1", ProxyNone, errors.New("error")},
+		"valid mode":   {"all", ProxyAll, false},
+		"unknown mode": {"UnKnOwn1", ProxyNone, true},
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			mode, err := StringToProxyMode(tc.input)
 
-			if tc.err != nil {
-				assert.NotNil(t, err)
+			if tc.wantError {
+				assert.Error(t, err)
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 			}
 			assert.Equal(t, tc.expected, mode)
 
@@ -73,16 +67,16 @@ func TestProxyModeParseString(t *testing.T) {
 
 func TestProxyModeUnmarshal(t *testing.T) {
 	testCases := map[string]struct {
-		input    interface{}
-		expected ProxyMode
-		err      error
+		input     interface{}
+		expected  ProxyMode
+		wantError bool
 	}{
-		"valid mode all":     {"all", ProxyAll, nil},
-		"valid mode missing": {"missing", ProxyMissing, nil},
-		"valid mode none":    {"none", ProxyNone, nil},
-		"empty mode":         {"", ProxyNone, errors.New("error")},
-		"invalid mode":       {"nonsens23e", ProxyNone, errors.New("error")},
-		"error input":        {123, ProxyNone, errors.New("error")},
+		"valid mode all":     {"all", ProxyAll, false},
+		"valid mode missing": {"missing", ProxyMissing, false},
+		"valid mode none":    {"none", ProxyNone, false},
+		"empty mode":         {"", ProxyNone, true},
+		"invalid mode":       {"nonsens23e", ProxyNone, true},
+		"error input":        {123, ProxyNone, true},
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
@@ -97,10 +91,10 @@ func TestProxyModeUnmarshal(t *testing.T) {
 				return nil
 			})
 
-			if tc.err != nil {
-				assert.NotNil(t, err)
+			if tc.wantError {
+				assert.Error(t, err)
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 			}
 
 			assert.Equal(t, tc.expected, mode)
