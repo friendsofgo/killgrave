@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,25 +11,24 @@ import (
 
 func TestNewProxy(t *testing.T) {
 	testCases := map[string]struct {
-		rawURL string
-		mode   killgrave.ProxyMode
-		err    error
+		rawURL  string
+		mode    killgrave.ProxyMode
+		wantErr bool
 	}{
-		"valid all":       {"all", killgrave.ProxyAll, nil},
-		"valid mode none": {"none", killgrave.ProxyNone, nil},
-		"error rawURL":    {":http!/gogle.com", killgrave.ProxyNone, errors.New("error")},
+		"valid all":       {"all", killgrave.ProxyAll, false},
+		"valid mode none": {"none", killgrave.ProxyNone, false},
+		"error rawURL":    {":http!/gogle.com", killgrave.ProxyNone, true},
 	}
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			proxy, err := NewProxy(tc.rawURL, tc.mode)
-			if tc.err != nil {
-				assert.NotNil(t, err)
+			if tc.wantErr {
+				assert.Error(t, err)
 				return
-			} else {
-				assert.Nil(t, err)
 			}
 
+			assert.NoError(t, err)
 			assert.Equal(t, tc.mode, proxy.mode)
 		})
 	}
@@ -44,13 +42,13 @@ func TestProxyHandler(t *testing.T) {
 	defer backend.Close()
 
 	proxy, err := NewProxy(backend.URL, killgrave.ProxyAll)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	frontend := httptest.NewServer(proxy.Handler())
 	defer frontend.Close()
 
 	_, err = http.Get(frontend.URL)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.True(t, isRequestHandled)
 
 }

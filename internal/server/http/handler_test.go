@@ -55,7 +55,7 @@ func TestImposterHandler(t *testing.T) {
 	for _, tt := range dataTest {
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest("POST", "/gophers", bytes.NewBuffer(bodyRequest))
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 
 			rec := httptest.NewRecorder()
 			handler := http.HandlerFunc(ImposterHandler(tt.imposter))

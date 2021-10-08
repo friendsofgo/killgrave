@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
 	"testing"
 	"time"
 
@@ -11,57 +10,58 @@ import (
 
 func TestResponseDelayUnmarshal(t *testing.T) {
 	testCases := map[string]struct {
-		input string
-		delay ResponseDelay
-		err   error
+		input   string
+		delay   ResponseDelay
+		wantErr bool
 	}{
 		"Invalid type": {
-			input: `23`,
-			err:   errors.New("error"),
+			input:   `23`,
+			wantErr: true,
 		},
 		"Valid empty delay": {
-			input: `""`,
-			delay: ResponseDelay{0, 0},
+			input:   `""`,
+			delay:   ResponseDelay{0, 0},
+			wantErr: false,
 		},
 		"Valid fixed delay": {
-			input: `"1s"`,
-			delay: getDelay(t, "1s", "0s"),
+			input:   `"1s"`,
+			delay:   getDelay(t, "1s", "0s"),
+			wantErr: false,
 		},
 		"Fixed delay without unit suffix": {
-			input: `"13"`,
-			err:   errors.New("error"),
+			input:   `"13"`,
+			wantErr: true,
 		},
 		"Valid range delay": {
-			input: `"2s:7s"`,
-			delay: getDelay(t, "2s", "5s"),
+			input:   `"2s:7s"`,
+			delay:   getDelay(t, "2s", "5s"),
+			wantErr: false,
 		},
 		"Range delay with incorrect delimiter": {
-			input: `"1m-3s"`,
-			err:   errors.New("error"),
+			input:   `"1m-3s"`,
+			wantErr: true,
 		},
 		"Range delay with extra field": {
-			input: `"1m:3s:5s"`,
-			err:   errors.New("error"),
+			input:   `"1m:3s:5s"`,
+			wantErr: true,
 		},
 		"Range delay where second point is before first": {
-			input: `"5s:1s"`,
-			err:   errors.New("error"),
+			input:   `"5s:1s"`,
+			wantErr: true,
 		},
 		"Range delay where second point invalid": {
-			input: `"5s:1"`,
-			err:   errors.New("error"),
+			input:   `"5s:1"`,
+			wantErr: true,
 		},
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			var delay ResponseDelay
 			err := json.Unmarshal([]byte(tc.input), &delay)
-			if tc.err == nil {
-				assert.Nil(t, err)
-			}
-
-			if tc.err != nil {
-				assert.NotNil(t, err)
+			if tc.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
 			assert.Equal(t, tc.delay, delay)
 
