@@ -10,6 +10,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var (
+	errMandatoryURL            = errors.New("the field url is mandatory if you selected a proxy mode")
+	errMandatoryRecordFilePath = errors.New("the field outputRecordFile is mandatory if you selected a proxy record")
+)
+
 // Config representation of config file yaml
 type Config struct {
 	ImpostersPath string      `yaml:"imposters_path"`
@@ -32,8 +37,9 @@ type ConfigCORS struct {
 
 // ConfigProxy is a representation of section proxy of the yaml
 type ConfigProxy struct {
-	Url  string    `yaml:"url"`
-	Mode ProxyMode `yaml:"mode"`
+	Url            string    `yaml:"url"`
+	Mode           ProxyMode `yaml:"mode"`
+	RecordFilePath string    `yaml:"record_file_path"`
 }
 
 // ProxyMode is enumeration of proxy server modes
@@ -81,7 +87,7 @@ func StringToProxyMode(t string) (ProxyMode, error) {
 	m := map[string]ProxyMode{
 		"none":    ProxyNone,
 		"missing": ProxyMissing,
-		"record": ProxyRecord,
+		"record":  ProxyRecord,
 		"all":     ProxyAll,
 	}
 
@@ -110,9 +116,24 @@ func (p *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // ConfigureProxy preparing the server with the proxy configuration that the user has indicated
-func (cfg *Config) ConfigureProxy(proxyMode ProxyMode, proxyURL string) {
+func (cfg *Config) ConfigureProxy(proxyMode ProxyMode, proxyURL, recordFilePath string) error {
+	if proxyMode.Is(ProxyNone) {
+		return nil
+	}
+
+	if proxyURL == "" {
+		return errMandatoryURL
+	}
+
+	if proxyMode.Is(ProxyRecord) && recordFilePath == "" {
+		return errMandatoryRecordFilePath
+	}
+
 	cfg.Proxy.Mode = proxyMode
 	cfg.Proxy.Url = proxyURL
+	cfg.Proxy.RecordFilePath = recordFilePath
+
+	return nil
 }
 
 // ConfigOpt function to encapsulate optional parameters
@@ -157,6 +178,11 @@ func NewConfigFromFile(cfgPath string) (Config, error) {
 	bytes, _ := ioutil.ReadAll(configFile)
 	if err := yaml.Unmarshal(bytes, &cfg); err != nil {
 		return Config{}, fmt.Errorf("%w: error while unmarshalling configFile file %s, using default configuration instead", err, cfgPath)
+	}
+
+	recordFilePath := path.Join(path.Dir(cfgPath), cfg.Proxy.RecordFilePath)
+	if err := cfg.ConfigureProxy(cfg.Proxy.Mode, cfg.Proxy.Url, recordFilePath); err != nil {
+		return Config{}, err
 	}
 
 	cfg.ImpostersPath = path.Join(path.Dir(cfgPath), cfg.ImpostersPath)

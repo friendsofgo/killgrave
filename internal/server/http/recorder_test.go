@@ -39,5 +39,7 @@ func TestRecorder_Record(t *testing.T) {
 		t.Fatal(errors.New("empty file"))
 	}
 
-	os.RemoveAll(filepath.Dir(outputPath))
+	dir := filepath.Dir(outputPath)
+	os.Remove(outputPath)
+	os.RemoveAll(dir)
 }

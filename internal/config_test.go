@@ -2,6 +2,7 @@ package killgrave
 
 import (
 	"errors"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 )
@@ -233,23 +234,45 @@ func TestNewConfig(t *testing.T) {
 }
 
 func TestConfig_ConfigureProxy(t *testing.T) {
-	expected := Config{
-		ImpostersPath: "imposters",
-		Port:          80,
-		Host:          "localhost",
-		Proxy: ConfigProxy{
-			Url:  "https://friendsofgo.tech",
-			Mode: ProxyAll,
-		},
+	tests := []struct{
+		name string
+		url string
+		mode ProxyMode
+		err error
+	}{
+		{"valid proxy configuration", "https://friendsofgo.tech", ProxyAll, nil},
+		{"none proxy configuration", "", ProxyNone, nil},
+		{"invalid proxy configuration", "", ProxyAll, errMandatoryURL},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T){
+			cfg, err := NewConfig("imposters", "localhost", 80, false)
+			if err != nil {
+				t.Fatalf("error not expected: %v", err)
+			}
 
-	got, err := NewConfig("imposters", "localhost", 80, false)
-	if err != nil {
-		t.Fatalf("error not expected: %v", err)
+			err = cfg.ConfigureProxy(tt.mode, tt.url, "")
+			assert.Equal(t, tt.err, err)
+		})
 	}
-	got.ConfigureProxy(ProxyAll, "https://friendsofgo.tech")
+}
 
-	if !reflect.DeepEqual(expected, got) {
-		t.Fatalf("got = %v, want %v", expected, got)
+func TestConfig_ConfigureProxyRecord(t *testing.T) {
+	tests := []struct {
+		name           string
+		recordFilePath string
+		err            error
+	}{
+		{"valid configuration for Proxy Record", "some_file.imp.json", nil},
+		{"invalid configuration for Proxy Record", "", errMandatoryRecordFilePath},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, err := NewConfig("imposters", "localhost", 80, false)
+			assert.NoError(t, err)
+
+			err = cfg.ConfigureProxy(ProxyRecord, "https://friendsofgo.tech", tt.recordFilePath)
+			assert.Equal(t, tt.err, err)
+		})
 	}
 }

@@ -18,10 +18,10 @@ import (
 )
 
 const (
-	_defaultHost      = "localhost"
-	_defaultPort      = 3000
-	_defaultProxyMode = killgrave.ProxyNone
-	_defaultStrictSlash   = true
+	_defaultHost        = "localhost"
+	_defaultPort        = 3000
+	_defaultProxyMode   = killgrave.ProxyNone
+	_defaultStrictSlash = true
 )
 
 var (
@@ -29,7 +29,6 @@ var (
 	errGetDataFromHostFlag      = errors.New("error trying to get data from host flag")
 	errGetDataFromPortFlag      = errors.New("error trying to get data from port flag")
 	errGetDataFromSecureFlag    = errors.New("error trying to get data from secure flag")
-	errMandatoryURL             = errors.New("the field url is mandatory if you selected a proxy mode")
 )
 
 // NewHTTPCmd returns cobra.Command to run http sub command, this command will be used to run the mock server
@@ -58,8 +57,9 @@ func NewHTTPCmd() *cobra.Command {
 	cmd.PersistentFlags().IntP("port", "P", _defaultPort, "Port to run the server")
 	cmd.PersistentFlags().BoolP("watcher", "w", false, "File watcher will reload the server on each file change")
 	cmd.PersistentFlags().BoolP("secure", "s", false, "Run mock server using TLS (https)")
-	cmd.Flags().StringP("proxy", "p", _defaultProxyMode.String(), "Proxy mode, the options are all, missing or none")
+	cmd.Flags().StringP("proxy", "p", _defaultProxyMode.String(), "Proxy mode, the options are all, missing, record or none")
 	cmd.Flags().StringP("url", "u", "", "The url where the proxy will redirect to")
+	cmd.Flags().StringP("outputRecordFile", "o", "", "The record file path when the proxy is on record mode")
 
 	return cmd
 }
@@ -100,7 +100,7 @@ func runServer(cfg killgrave.Config) server.Server {
 		Handler: handlers.CORS(server.PrepareAccessControl(cfg.CORS)...)(router),
 	}
 
-	recorder := server.NewRecorder("imposters/out.imp.json")
+	recorder := server.NewRecorder(cfg.Proxy.RecordFilePath)
 	proxyServer, err := server.NewProxy(cfg.Proxy.Url, cfg.ImpostersPath, cfg.Proxy.Mode, recorder)
 	if err != nil {
 		log.Fatal(err)
@@ -181,17 +181,8 @@ func configureProxyMode(cmd *cobra.Command, cfg *killgrave.Config) error {
 		return err
 	}
 
-	var url string
-	if mode != killgrave.ProxyNone.String() {
-		url, err = cmd.Flags().GetString("url")
-		if err != nil {
-			return err
-		}
+	url, _ := cmd.Flags().GetString("url")
+	recordFilePath, _ := cmd.Flags().GetString("outputFileRecord")
 
-		if url == "" {
-			return errMandatoryURL
-		}
-	}
-	cfg.ConfigureProxy(pMode, url)
-	return nil
+	return cfg.ConfigureProxy(pMode, url, recordFilePath)
 }
