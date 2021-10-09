@@ -1,28 +1,43 @@
 package http
 
 import (
+	"errors"
 	"net/http"
-	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
 func TestRecorder_Record(t *testing.T) {
-	recorder := NewRecorder("test/testdata/recorder/output.imp.json")
-	req, err := http.NewRequest(http.MethodGet, "http://localhost/pokemon?limit=100&offset=200", nil)
+	outputPath := "test/testdata/recorder/output.imp.json"
+	recorder := NewRecorder(outputPath)
+	req, err := http.NewRequest(http.MethodGet, "http://localhost/items?limit=100&offset=200", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.Header.Set("Trainer", "Ash Ketchum")
-	req.Header.Set("Trainer-Key", "25")
+	req.Header.Set("ItemUser", "Conan")
+	req.Header.Set("Item-Key", "25")
 
-	bodyStr := `{"id": 25, name": "Pikachu"}`
+	bodyStr := `{"id": 25, name": "Umbrella"}`
 
-	resp := httptest.NewRecorder()
-	resp.Body.Write([]byte(bodyStr))
-	resp.WriteHeader(http.StatusOK)
-	err = recorder.Record(req, resp.Result())
+	resp := ResponseRecorder{
+		Status: http.StatusOK,
+		Body: bodyStr,
+	}
+
+	err = recorder.Record(req, resp)
 
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	f, err := os.Stat(outputPath)
+	if os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	if f.Size() <= 0 {
+		t.Fatal(errors.New("empty file"))
+	}
+
+	os.RemoveAll(filepath.Dir(outputPath))
 }

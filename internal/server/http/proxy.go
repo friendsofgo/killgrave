@@ -56,11 +56,19 @@ func (p Proxy) recordProxy(resp *http.Response) error {
 		return err
 	}
 	defer resp.Body.Close()
+
+	bodyStr := string(b)
 	b = bytes.Replace(b, []byte("server"), []byte("schmerver"), -1)
 	body := ioutil.NopCloser(bytes.NewReader(b))
 	resp.Body = body
 	resp.ContentLength = int64(len(b))
 	resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
 
-	return p.recorder.Record(resp.Request, resp)
+	responseRecorder := ResponseRecorder{
+		Headers: resp.Header,
+		Status:  resp.StatusCode,
+		Body:    bodyStr,
+	}
+
+	return p.recorder.Record(resp.Request, responseRecorder)
 }

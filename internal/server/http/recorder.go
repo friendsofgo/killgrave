@@ -13,7 +13,6 @@ import (
 var (
 	ErrCreatingRecordDir       = errors.New("impossible create record directory")
 	ErrOpenRecordFile          = errors.New("impossible open record file")
-	ErrTryingToReadBody        = errors.New("impossible read the body response")
 	ErrReadingOutputRecordFile = errors.New("error trying to parse the record file")
 	ErrMarshallingRecordFile   = errors.New("error during the marshalling process of the record file")
 	ErrWritingRecordFile       = errors.New("error trying to write on the record file")
@@ -22,12 +21,19 @@ var (
 // RecorderHTTP service to Record the return output of the request
 type RecorderHTTP interface {
 	// Record save the return output from the missing request on the imposters
-	Record(req *http.Request, resp *http.Response) error
+	Record(req *http.Request, resp ResponseRecorder) error
 }
 
 // Recorder implementation of the RecorderHTTP
 type Recorder struct {
 	outputPathFile string
+}
+
+// ResponseRecorder response data transfer object
+type ResponseRecorder struct {
+	Status  int
+	Headers http.Header
+	Body    string
 }
 
 // NewRecorder initialise the Recorder
@@ -37,7 +43,7 @@ func NewRecorder(outputPathFile string) Recorder {
 	}
 }
 
-func (r Recorder) Record(req *http.Request, resp *http.Response) error {
+func (r Recorder) Record(req *http.Request, resp ResponseRecorder) error {
 	f, err := r.prepareOutputFile()
 	if err != nil {
 		return err
@@ -69,7 +75,7 @@ func (r Recorder) Record(req *http.Request, resp *http.Response) error {
 	}
 
 	_ = f.Truncate(0)
-	_, _ = f.Seek(0,0)
+	_, _ = f.Seek(0, 0)
 
 	if _, err := f.Write(b); err != nil {
 		return fmt.Errorf("%v: %w", err, ErrWritingRecordFile)
@@ -79,9 +85,9 @@ func (r Recorder) Record(req *http.Request, resp *http.Response) error {
 }
 
 // RecorderNoop an implementation of the RecorderHTTP without any functionality
-type RecorderNoop struct {}
+type RecorderNoop struct{}
 
-func (r RecorderNoop) Record(req *http.Request, resp *http.Response) error {
+func (r RecorderNoop) Record(req *http.Request, resp ResponseRecorder) error {
 	return nil
 }
 
@@ -106,6 +112,7 @@ func (r Recorder) prepareImposterRequest(req *http.Request) Request {
 	headers := make(map[string]string, len(req.Header))
 	for k, v := range req.Header {
 		for _, val := range v {
+			// TODO: configure which headers don't you want to store or more commons like Postman??
 			headers[k] = val
 		}
 	}
@@ -126,24 +133,18 @@ func (r Recorder) prepareImposterRequest(req *http.Request) Request {
 	return imposterRequest
 }
 
-func (r Recorder) prepareImposterResponse(resp *http.Response) (Response, error) {
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return Response{}, fmt.Errorf("%v: %w", err, ErrTryingToReadBody)
-	}
-	defer resp.Body.Close()
-
-	headers := make(map[string]string, len(resp.Header))
-	for k, v := range resp.Header {
+func (r Recorder) prepareImposterResponse(resp ResponseRecorder) (Response, error) {
+	headers := make(map[string]string, len(resp.Headers))
+	for k, v := range resp.Headers {
 		for _, val := range v {
 			headers[k] = val
 		}
 	}
 
 	response := Response{
-		Status:  resp.StatusCode,
-		Body:    string(b),
+		Status:  resp.Status,
 		Headers: &headers,
+		Body: resp.Body,
 	}
 
 	return response, nil
