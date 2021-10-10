@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var (
@@ -44,18 +46,6 @@ func NewRecorder(outputPathFile string) Recorder {
 }
 
 func (r Recorder) Record(req *http.Request, resp ResponseRecorder) error {
-	f, err := r.prepareOutputFile()
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	var imposters []Imposter
-	bytes, _ := ioutil.ReadAll(f)
-	if err := json.Unmarshal(bytes, &imposters); err != nil && len(bytes) > 0 {
-		return fmt.Errorf("%v: %w", err, ErrReadingOutputRecordFile)
-	}
-
 	imposterRequest := r.prepareImposterRequest(req)
 	imposterResponse, err := r.prepareImposterResponse(resp)
 	if err != nil {
@@ -67,11 +57,26 @@ func (r Recorder) Record(req *http.Request, resp ResponseRecorder) error {
 		Response: imposterResponse,
 	}
 
-	//TODO: create an inMemory to store which imposters are saved during this session to avoid duplicated
-	imposters = append(imposters, imposter)
-	b, err := json.Marshal(imposters)
+	f, err := r.prepareOutputFile()
 	if err != nil {
-		return fmt.Errorf("%v: %w", err, ErrMarshallingRecordFile)
+		return err
+	}
+	defer f.Close()
+
+	var b []byte
+	switch {
+	case strings.HasSuffix(r.outputPathFile, jsonImposterExtension):
+		b, err = r.recordOnJSON(f, imposter)
+		if err != nil {
+			return err
+		}
+	case strings.HasSuffix(r.outputPathFile, yamlImposterExtension) || strings.HasSuffix(r.outputPathFile, ymlImposterExtension) :
+		b, err = r.recordOnYAML(f, imposter)
+		if err != nil {
+			return err
+		}
+	default:
+		return errors.New("file extension not recognized")
 	}
 
 	_ = f.Truncate(0)
@@ -149,3 +154,38 @@ func (r Recorder) prepareImposterResponse(resp ResponseRecorder) (Response, erro
 
 	return response, nil
 }
+
+func (r Recorder) recordOnJSON(file *os.File, imposter Imposter) ([]byte,error) {
+	var imposters []Imposter
+	bytes, _ := ioutil.ReadAll(file)
+	if err := json.Unmarshal(bytes, &imposters); err != nil && len(bytes) > 0 {
+		return nil, fmt.Errorf("%v: %w", err, ErrReadingOutputRecordFile)
+	}
+
+	//TODO: create an inMemory to store which imposters are saved during this session to avoid duplicated
+	imposters = append(imposters, imposter)
+	b, err := json.Marshal(imposters)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", err, ErrMarshallingRecordFile)
+	}
+
+	return b, nil
+}
+
+func (r Recorder) recordOnYAML(file *os.File, imposter Imposter) ([]byte,error) {
+	var imposters []Imposter
+	bytes, _ := ioutil.ReadAll(file)
+	if err := yaml.Unmarshal(bytes, &imposters); err != nil && len(bytes) > 0 {
+		return nil, fmt.Errorf("%v: %w", err, ErrReadingOutputRecordFile)
+	}
+
+	//TODO: create an inMemory to store which imposters are saved during this session to avoid duplicated
+	imposters = append(imposters, imposter)
+	b, err := yaml.Marshal(imposters)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", err, ErrMarshallingRecordFile)
+	}
+
+	return b, nil
+}
+
