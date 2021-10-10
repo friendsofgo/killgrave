@@ -4,20 +4,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 var (
-	ErrCreatingRecordDir       = errors.New("impossible create record directory")
-	ErrOpenRecordFile          = errors.New("impossible open record file")
-	ErrReadingOutputRecordFile = errors.New("error trying to parse the record file")
-	ErrMarshallingRecordFile   = errors.New("error during the marshalling process of the record file")
-	ErrWritingRecordFile       = errors.New("error trying to write on the record file")
+	errCreatingRecordDir       = errors.New("impossible create record directory")
+	errOpenRecordFile          = errors.New("impossible open record file")
+	errReadingOutputRecordFile = errors.New("error trying to parse the record file")
+	errMarshallingRecordFile   = errors.New("error during the marshalling process of the record file")
+	errWritingRecordFile       = errors.New("error trying to write on the record file")
+	errUnrecognizedExtension   = errors.New("file extension not recognized")
 )
 
 // RecorderHTTP service to Record the return output of the request
@@ -47,10 +49,7 @@ func NewRecorder(outputPathFile string) Recorder {
 
 func (r Recorder) Record(req *http.Request, resp ResponseRecorder) error {
 	imposterRequest := r.prepareImposterRequest(req)
-	imposterResponse, err := r.prepareImposterResponse(resp)
-	if err != nil {
-		return err
-	}
+	imposterResponse := r.prepareImposterResponse(resp)
 
 	imposter := Imposter{
 		Request:  imposterRequest,
@@ -70,20 +69,18 @@ func (r Recorder) Record(req *http.Request, resp ResponseRecorder) error {
 		if err != nil {
 			return err
 		}
-	case strings.HasSuffix(r.outputPathFile, yamlImposterExtension) || strings.HasSuffix(r.outputPathFile, ymlImposterExtension) :
+	case strings.HasSuffix(r.outputPathFile, yamlImposterExtension) || strings.HasSuffix(r.outputPathFile, ymlImposterExtension):
 		b, err = r.recordOnYAML(f, imposter)
 		if err != nil {
 			return err
 		}
-	default:
-		return errors.New("file extension not recognized")
 	}
 
 	_ = f.Truncate(0)
 	_, _ = f.Seek(0, 0)
 
 	if _, err := f.Write(b); err != nil {
-		return fmt.Errorf("%v: %w", err, ErrWritingRecordFile)
+		return fmt.Errorf("%v: %w", err, errWritingRecordFile)
 	}
 
 	return nil
@@ -97,17 +94,22 @@ func (r RecorderNoop) Record(req *http.Request, resp ResponseRecorder) error {
 }
 
 func (r Recorder) prepareOutputFile() (*os.File, error) {
+	if !strings.HasSuffix(r.outputPathFile, jsonImposterExtension) &&
+		!strings.HasSuffix(r.outputPathFile, yamlImposterExtension) && !strings.HasSuffix(r.outputPathFile, ymlImposterExtension) {
+		return nil, errUnrecognizedExtension
+	}
+
 	dir := filepath.Dir(r.outputPathFile)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err := os.Mkdir(dir, 0755)
 		if err != nil {
-			return nil, fmt.Errorf("%v: %w", err, ErrCreatingRecordDir)
+			return nil, fmt.Errorf("%v: %w", err, errCreatingRecordDir)
 		}
 	}
 
 	f, err := os.OpenFile(r.outputPathFile, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		return nil, fmt.Errorf("%v: %w", err, ErrOpenRecordFile)
+		return nil, fmt.Errorf("%v: %w", err, errOpenRecordFile)
 	}
 
 	return f, nil
@@ -138,7 +140,7 @@ func (r Recorder) prepareImposterRequest(req *http.Request) Request {
 	return imposterRequest
 }
 
-func (r Recorder) prepareImposterResponse(resp ResponseRecorder) (Response, error) {
+func (r Recorder) prepareImposterResponse(resp ResponseRecorder) Response {
 	headers := make(map[string]string, len(resp.Headers))
 	for k, v := range resp.Headers {
 		for _, val := range v {
@@ -149,43 +151,40 @@ func (r Recorder) prepareImposterResponse(resp ResponseRecorder) (Response, erro
 	response := Response{
 		Status:  resp.Status,
 		Headers: &headers,
-		Body: resp.Body,
+		Body:    resp.Body,
 	}
 
-	return response, nil
+	return response
 }
 
-func (r Recorder) recordOnJSON(file *os.File, imposter Imposter) ([]byte,error) {
+func (r Recorder) recordOnJSON(file *os.File, imposter Imposter) ([]byte, error) {
 	var imposters []Imposter
 	bytes, _ := ioutil.ReadAll(file)
 	if err := json.Unmarshal(bytes, &imposters); err != nil && len(bytes) > 0 {
-		return nil, fmt.Errorf("%v: %w", err, ErrReadingOutputRecordFile)
+		return nil, fmt.Errorf("%v: %w", err, errReadingOutputRecordFile)
 	}
 
-	//TODO: create an inMemory to store which imposters are saved during this session to avoid duplicated
 	imposters = append(imposters, imposter)
 	b, err := json.Marshal(imposters)
 	if err != nil {
-		return nil, fmt.Errorf("%v: %w", err, ErrMarshallingRecordFile)
+		return nil, fmt.Errorf("%v: %w", err, errMarshallingRecordFile)
 	}
 
 	return b, nil
 }
 
-func (r Recorder) recordOnYAML(file *os.File, imposter Imposter) ([]byte,error) {
+func (r Recorder) recordOnYAML(file *os.File, imposter Imposter) ([]byte, error) {
 	var imposters []Imposter
 	bytes, _ := ioutil.ReadAll(file)
 	if err := yaml.Unmarshal(bytes, &imposters); err != nil && len(bytes) > 0 {
-		return nil, fmt.Errorf("%v: %w", err, ErrReadingOutputRecordFile)
+		return nil, fmt.Errorf("%v: %w", err, errReadingOutputRecordFile)
 	}
 
-	//TODO: create an inMemory to store which imposters are saved during this session to avoid duplicated
 	imposters = append(imposters, imposter)
 	b, err := yaml.Marshal(imposters)
 	if err != nil {
-		return nil, fmt.Errorf("%v: %w", err, ErrMarshallingRecordFile)
+		return nil, fmt.Errorf("%v: %w", err, errMarshallingRecordFile)
 	}
 
 	return b, nil
 }
-
