@@ -2,6 +2,7 @@ package http
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -67,6 +68,18 @@ type Response struct {
 }
 
 func findImposters(impostersDirectory string, imposterConfigCh chan ImposterConfig) error {
+	if _, err := url.ParseRequestURI(impostersDirectory); err == nil {
+		return loadExternalImposters(impostersDirectory, imposterConfigCh)
+	}
+
+	return loadFileImposters(impostersDirectory, imposterConfigCh)
+}
+
+func loadExternalImposters(impostersDirectory string, imposterConfigCh chan ImposterConfig) error {
+	return nil
+}
+
+func loadFileImposters(impostersDirectory string, imposterConfigCh chan ImposterConfig) error {
 	err := filepath.Walk(impostersDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("%w: error finding imposters", err)

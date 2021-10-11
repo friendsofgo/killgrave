@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -83,13 +84,22 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 	return
 }
 
+func (s *Server) validateImpostersPath() error {
+	if _, err := url.ParseRequestURI(s.impostersPath); err != nil {
+		if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
+			return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
+		}
+	}
+	return nil
+}
+
 // Build read all the files on the impostersPath and add different
 // handlers for each imposter
 func (s *Server) Build() error {
 	if s.proxy.mode == killgrave.ProxyAll {
 		s.handleAll(s.proxy.Handler())
 	}
-	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
+	if err := s.validateImpostersPath(); err != nil{
 		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
 	}
 	var imposterConfigCh = make(chan ImposterConfig)
