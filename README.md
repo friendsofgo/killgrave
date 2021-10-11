@@ -152,6 +152,8 @@ $ killgrave -h
         proxy mode you can choose between (all, missing or none) (default "none")
   -proxy-url string
         proxy url, you need to choose a proxy-mode
+  - record-file-path string
+      the file path where the imposters will be recorded if you selected proxy-mode record
   -version
         show the _version of the application
   -watcher
@@ -172,8 +174,8 @@ port: 3000
 host: "localhost"
 proxy:
   url: https://example.com
-  mode: missing
-watcher: true
+  record_file_path: "imposters/record.imp.json"
+  mode: record
 cors:
   methods: ["GET"]
   headers: ["Content-Type"]
@@ -249,6 +251,7 @@ In the CORS section of the file you can find the following options:
 You can use Killgrave in proxy mode using the flags `proxy-mode` and `proxy-url` or their equivalent fields in the configuration file. The following three proxy modes are available:
 * `none`: Default. Killgrave will not behave as a proxy and the mock server will only use the configured imposters.
 * `missing`: With this mode the mock server will try to match the request with a configured imposter, but if no matching endpoint was found, the mock server will call to the real server, declared in the `proxy-url` configuration variable.
+* `record`: This mode works as the same of the `missing` mode but with one exception, when `Killgrave` not match with some `URL` will record into a `record imposter`. You will need to declare `record-file-path` to indicate the path where you want to record the imposters (i.e. `imposters/record.imp.json`)
 * `all`: The mock server will always call to the real server, declared in the `proxy-url` configuration variable.
 
 The `proxy-url` must be the root path of the proxied server. For example, if we have an API running on `http://example.com/things`, the `proxy-url` will be `http://example.com`.

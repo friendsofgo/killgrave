@@ -59,7 +59,7 @@ func NewHTTPCmd() *cobra.Command {
 	cmd.PersistentFlags().BoolP("secure", "s", false, "Run mock server using TLS (https)")
 	cmd.Flags().StringP("proxy", "p", _defaultProxyMode.String(), "Proxy mode, the options are all, missing, record or none")
 	cmd.Flags().StringP("url", "u", "", "The url where the proxy will redirect to")
-	cmd.Flags().StringP("outputRecordFile", "o", "", "The record file path when the proxy is on record mode")
+	cmd.Flags().StringP("record-file-path", "o", "", "The record file path when the proxy is on record mode")
 
 	return cmd
 }
@@ -182,7 +182,7 @@ func configureProxyMode(cmd *cobra.Command, cfg *killgrave.Config) error {
 	}
 
 	url, _ := cmd.Flags().GetString("url")
-	recordFilePath, _ := cmd.Flags().GetString("outputFileRecord")
+	recordFilePath, _ := cmd.Flags().GetString("record-file-path")
 
 	return cfg.ConfigureProxy(pMode, url, recordFilePath)
 }
