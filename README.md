@@ -131,7 +131,7 @@ While you are welcome to provide your own configuration, Killgrave will default 
 * **proxy**: `none`
 * **watcher**: `false`
 
-### Using Killgrave from the command line
+### Using Killgrave by command line
 
 Killgrave takes the following command line options. Killgrave is almost fully configurable through the command line, except for `CORS`, which can only be configured using the [config file](#using-killgrave-by-config-file).
 
@@ -365,7 +365,7 @@ In this example, we have configured an imposter that only matches if we receive 
 ]
 ```
 
-#### Regex in the headers:
+#### Create an Imposter using regex
 
 In this case we will not need the `gorilla mux nomenclature` to write our regex.
 
