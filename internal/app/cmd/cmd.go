@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/friendsofgo/killgrave/internal/app/cmd/generate"
 	"github.com/friendsofgo/killgrave/internal/app/cmd/http"
 	"github.com/spf13/cobra"
 )
@@ -31,6 +32,8 @@ func NewKillgraveCmd() *cobra.Command {
 	rootCmd.SetVersionTemplate("Killgrave version: {{.Version}}\n")
 
 	rootCmd.AddCommand(http.NewHTTPCmd())
+	rootCmd.AddCommand(generate.NewGenerate2Cmd())
+	rootCmd.AddCommand(generate.NewGenerate3Cmd())
 
 	return rootCmd
 }

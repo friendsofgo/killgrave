@@ -14,6 +14,14 @@ type ResponseDelay struct {
 	offset int64
 }
 
+// NewResponseDelay produces a ResponseDelay with the specified delay and offset.
+func NewResponseDelay(delay, offset int64) ResponseDelay {
+	return ResponseDelay{
+		delay:  delay,
+		offset: offset,
+	}
+}
+
 // Delay return random time.Duration with respect to specified time range.
 func (d *ResponseDelay) Delay() time.Duration {
 	offset := d.offset

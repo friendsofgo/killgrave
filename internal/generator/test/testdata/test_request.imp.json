@@ -1,0 +1,64 @@
+[
+    {
+        "request": {
+            "method": "GET",
+            "endpoint": "/users"
+        },
+        "response": {
+            "status": 200,
+            "body": "{}"
+        }
+    },
+    {
+        "request": {
+            "method": "GET",
+            "endpoint": "/users/{userId}",
+            "params": {
+                "userId": "The ID of the user to return."
+            }
+        },
+        "response": {
+            "status": 200,
+            "body": "{\"id\":4,\"name\":\"Jessica Smith\"}"
+        }
+    },
+    {
+        "request": {
+            "method": "GET",
+            "endpoint": "/users/{userId}",
+            "params": {
+                "userId": "The ID of the user to return."
+            }
+        },
+        "response": {
+            "status": 400,
+            "body": ""
+        }
+    },
+    {
+        "request": {
+            "method": "GET",
+            "endpoint": "/users/{userId}",
+            "params": {
+                "userId": "The ID of the user to return."
+            }
+        },
+        "response": {
+            "status": 404,
+            "body": ""
+        }
+    },
+    {
+        "request": {
+            "method": "GET",
+            "endpoint": "/users/{userId}",
+            "params": {
+                "userId": "The ID of the user to return."
+            }
+        },
+        "response": {
+            "status": 500,
+            "body": ""
+        }
+    }
+]

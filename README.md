@@ -16,7 +16,7 @@ Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**,
 <a href="https://www.buymeacoffee.com/friendsofgo" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: 100px !important;" ></a>
 </p>
 
-# Table of Content
+# Table of Contents
 - [Overview](#overview)
 - [Concepts](#concepts)
     * [Imposters](#imposters)
@@ -26,16 +26,17 @@ Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**,
     * [Docker](#docker)
     * [Other](#other)
 - [Getting Started](#getting-started)
-    * [Using Killgrave by command line](#using-killgrave-by-command-line)
+    * [Using Killgrave from the command line](#using-killgrave-from-the-command-line)
     * [Using Killgrave by config file](#using-killgrave-by-config-file)
     * [Configure CORS](#configure-cors)
-    * [Prepare Killgrave for Proxy Mode](#prepare-killgrave-for-proxy-mode)
-    * [Create an Imposter](#create-an-imposter)
+    * [Preparing Killgrave for Proxy Mode](#preparing-killgrave-for-proxy-mode)
+    * [Creating an Imposter](#creating-an-imposter)
     * [Imposters structure](#imposters-structure)
-    * [Create an Imposter using regex](#create-an-imposter-using-regex)
+    * [Using regex in imposters](#using-regex-in-imposters)
     * [Create an imposter using JSON Schema](#create-an-imposter-using-json-schema)
     * [Create an imposter with delay](#create-an-imposter-with-delay)
     * [Create an imposter with dynamic responses](#create-an-imposter-with-dynamic-responses)
+    * [Generating imposters from a swagger file](#generating-imposters-from-a-swagger-file)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -559,6 +560,16 @@ In the following example, we have defined multiple imposters for the `POST /goph
   }
 ]
 ````
+
+### Generating imposters from a swagger file
+
+For details on how to do this please see:
+
+```sh
+
+$ killgrave generate -h
+
+```
 
 ## Contributing
 [Contributions](CONTRIBUTING.md) are more than welcome, if you are interested please follow our guidelines to help you get started.
