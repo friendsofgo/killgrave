@@ -21,7 +21,6 @@ Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**,
 - [Concepts](#concepts)
     * [Imposters](#imposters)
 - [Installing](#installing)
-    * [Go Toolchain](#go-toolchain)
     * [Homebrew](#homebrew)
     * [Docker](#docker)
     * [Compile by yourself](#compile-by-yourself)
@@ -76,16 +75,6 @@ You can learn more about how to configure imposters in the [Imposter Configurati
 > :warning:  Even though Killgrave is a very robust tool and is being used by some companies in production environments, it's still in initial development. Therefore, 'minor' version numbers are used to signify breaking changes and 'patch' version numbers are used for non-breaking changes or bugfixing. As soon as v1.0.0 is released, Killgrave will start to use [`SemVer`](https://semver.org/) as usual.
 
 You can install Killgrave in different ways, but all of them are very simple:
-
-### Go Toolchain
-
-One of them is of course using `go install`, Killgrave is a Go project and can therefore be compiled using the `go toolchain`:
-
-```sh
-$ go install github.com/friendsofgo/killgrave/cmd/killgrave@{version}
-```
-
-`version` must be substituted by the `version` that you want to install. If left unspecified, the `main` branch will be installed.
 
 ### Homebrew 
 
