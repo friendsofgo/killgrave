@@ -102,19 +102,19 @@ container to port 3000 on the host machine.
 
 ### Compile by yourself
 
-If you want to use `Killgrave` from the source code, first you will need clone the repository
+If you want to use `Killgrave` from the source code, first you will need to clone the repository:
 
 ```sh
 git clone git@github.com:friendsofgo/killgrave.git
 ```
 
-Then select the branch to use, if is not `main`, and then compile `killgrave`
+Select the branch you want to use (`main` by default), and then compile `Killgrave`:
 
 ```sh
 make build
 ```
 
-This command will create an executable into the path `bin/killgrave`, is highly recommended use this command
+This command will create an executable into the path `bin/killgrave`. We highly recommended the usage of this command
 to compile the software because parameters such as `version` are added to the compilation, which are necessary when reporting a bug.
 
 ### Other
