@@ -125,7 +125,7 @@ Select the branch you want to use (`main` by default), and then compile `Killgra
 make build
 ```
 
-This command will create an executable into the path `bin/killgrave`, is highly recommended use this command
+This command will create an executable into the path `bin/killgrave`. We highly recommended the usage of this command
 to compile the software because parameters such as `version` are added to the compilation, which are necessary when reporting a bug.
 
 ### Other
