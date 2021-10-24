@@ -113,7 +113,7 @@ container to port 3000 on the host machine.
 
 ### Compile by yourself
 
-If you want to use `Killgrave` from the source code, first you will need clone the repository
+If you want to use `Killgrave` from the source code, first you will need to clone the repository:
 
 ```sh
 git clone git@github.com:friendsofgo/killgrave.git
