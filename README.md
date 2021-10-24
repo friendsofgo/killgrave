@@ -119,7 +119,7 @@ If you want to use `Killgrave` from the source code, first you will need clone t
 git clone git@github.com:friendsofgo/killgrave.git
 ```
 
-Then select the branch to use, if is not `main`, and then compile `killgrave`
+Select the branch you want to use (`main` by default), and then compile `Killgrave`:
 
 ```sh
 make build
