@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -33,14 +34,13 @@ type ImposterConfig struct {
 
 // Imposter define an imposter structure
 type Imposter struct {
-	BasePath string
-	Request  Request  `json:"request"`
-	Response Response `json:"response"`
-}
+	BasePath  string
+	Request   Request    `json:"request"`
+	Responses []Response `json:"responses"`
 
-// Delay returns delay for response that user can specify in imposter config
-func (i *Imposter) Delay() time.Duration {
-	return i.Response.Delay.Delay()
+	// Field for handling burst response
+	responseHandler ResponseHandler
+	sync.Mutex
 }
 
 // CalculateFilePath calculate file path based on basePath of imposter directory
@@ -48,13 +48,34 @@ func (i *Imposter) CalculateFilePath(filePath string) string {
 	return path.Join(i.BasePath, filePath)
 }
 
+// GetResponse is used to get dynamic/random response.
+func (i *Imposter) GetResponse() Response {
+	i.Lock()
+	defer i.Unlock()
+	// If no response provided then returning 404 response
+	if len(i.Responses) == 0 {
+		return Response{Status: 404}
+	}
+	if i.responseHandler.scheduleMap == nil {
+		i.fillDefaults()
+	}
+	index := i.responseHandler.GetIndex()
+	return i.Responses[index]
+}
+
+// fillDefaults is used to populate default values for imposters fields.
+func (i *Imposter) fillDefaults() {
+	i.responseHandler.fillDefaults(i)
+}
+
 // Request represent the structure of real request
 type Request struct {
-	Method     string             `json:"method"`
-	Endpoint   string             `json:"endpoint"`
-	SchemaFile *string            `json:"schemaFile"`
-	Params     *map[string]string `json:"params"`
-	Headers    *map[string]string `json:"headers"`
+	Method       string             `json:"method"`
+	Endpoint     string             `json:"endpoint"`
+	SchemaFile   *string            `json:"schemaFile"`
+	Params       *map[string]string `json:"params"`
+	Headers      *map[string]string `json:"headers"`
+	ResponseMode string             `json:"responseMode"`
 }
 
 // Response represent the structure of real response
@@ -63,7 +84,13 @@ type Response struct {
 	Body     string             `json:"body"`
 	BodyFile *string            `json:"bodyFile" yaml:"bodyFile"`
 	Headers  *map[string]string `json:"headers"`
-	Delay    ResponseDelay      `json:"delay" yaml:"delay"`
+	RDelay   ResponseDelay      `json:"delay" yaml:"delay"`
+	Burst    int                `json:"burst" yaml:"burst"`
+}
+
+// Delay returns delay for response that user can specify in imposter config
+func (r *Response) Delay() time.Duration {
+	return r.RDelay.Delay()
 }
 
 func findImposters(impostersDirectory string, imposterConfigCh chan ImposterConfig) error {

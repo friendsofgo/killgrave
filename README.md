@@ -36,6 +36,7 @@ Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**,
     * [Create an imposter using JSON Schema](#create-an-imposter-using-json-schema)
     * [Create an imposter with delay](#create-an-imposter-with-delay)
     * [Create an imposter with dynamic responses](#create-an-imposter-with-dynamic-responses)
+    * [Create an imposter with repeated responses](#create-an-imposter-with-repeated-responses)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -266,13 +267,15 @@ We use a rule-based system to match requests to imposters. Therefore, you have t
             "method": "GET",
             "endpoint": "/gophers/01D8EMQ185CA8PRGE20DKZTGSR"            
         },
-        "response": {
-            "status": 200,
-            "headers": {
-                "Content-Type": "application/json"
-            },
-            "body": "{\"data\":{\"type\":\"gophers\",\"id\":\"01D8EMQ185CA8PRGE20DKZTGSR\",\"attributes\":{\"name\":\"Zebediah\",\"color\":\"Purples\",\"age\":55}}}"
-        }
+        "responses": [
+            {
+              "status": 200,
+              "headers": {
+                  "Content-Type": "application/json"
+              },
+              "body": "{\"data\":{\"type\":\"gophers\",\"id\":\"01D8EMQ185CA8PRGE20DKZTGSR\",\"attributes\":{\"name\":\"Zebediah\",\"color\":\"Purples\",\"age\":55}}}"
+            }
+        ]
     }
 ]
 ```
@@ -286,7 +289,7 @@ This a very simple example. Killgrave has more possibilities for configuring imp
 The imposter object can be divided in two parts:
 
 * [Request](#request)
-* [Response](#response)
+* [Responses](#responses)
 
 #### Request
 
@@ -298,9 +301,10 @@ This part defines how Killgrave should determine whether an incoming request mat
 * `params`: Restrict incoming requests by query parameters. More info can be found [here](#create-an-imposter-with-query-params). Supports regex.
 * `headers`: Restrict incoming requests by HTTP header. More info can be found [here](#create-an-imposter-with-headers).
 
-#### Response
+#### Responses
 
 This part defines how Killgrave should respond to the incoming request. The `response` object has the following properties:
+
 
 * `status` (<span style="color:red">mandatory</span>): Integer defining the HTTP status to return.
 * `body` or `bodyFile`: The response body. Either a literal string (`body`) or a path to a file (`bodyFile`). `bodyFile` is especially useful in the case of large outputs.
@@ -327,13 +331,15 @@ In the next example, we have configured an endpoint to match with any kind of [U
       "method": "GET",
       "endpoint": "/gophers/{_id:[\\w]{26}}"
     },
-    "response": {
-      "status": 200,
-      "headers": {
-        "Content-Type": "application/json"
-      },
-      "body": "{\"data\":{\"type\":\"gophers\",\"id\":\"01D8EMQ185CA8PRGE20DKZTGSR\",\"attributes\":{\"name\":\"Zebediah\",\"color\":\"Purples\",\"age\":55}}}"
-    }
+    "responses": [
+      {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"data\":{\"type\":\"gophers\",\"id\":\"01D8EMQ185CA8PRGE20DKZTGSR\",\"attributes\":{\"name\":\"Zebediah\",\"color\":\"Purples\",\"age\":55}}}"
+      }
+    ]
   }
 ]
 ```
@@ -354,13 +360,15 @@ In this example, we have configured an imposter that only matches if we receive 
         "apiKey": "{_apiKey:[\\w]+}"
       }
     },
-    "response": {
-      "status": 200,
-      "headers": {
-        "Content-Type": "application/json"
-      },
-      "body": "{\"data\":{\"type\":\"gophers\",\"id\":\"01D8EMQ185CA8PRGE20DKZTGSR\",\"attributes\":{\"name\":\"Zebediah\",\"color\":\"Purples\",\"age\":55}}}"
-    }
+    "responses": [
+      {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"data\":{\"type\":\"gophers\",\"id\":\"01D8EMQ185CA8PRGE20DKZTGSR\",\"attributes\":{\"name\":\"Zebediah\",\"color\":\"Purples\",\"age\":55}}}"
+      }
+    ]
   }
 ]
 ```
@@ -381,13 +389,15 @@ In the next example, we have configured an imposter that uses regex to match an 
         "Authorization": "\\w+"
       }
     },
-    "response": {
-      "status": 200,
-      "headers": {
-        "Content-Type": "application/json"
-      },
-      "body": "{\"data\":{\"type\":\"gophers\",\"id\":\"01D8EMQ185CA8PRGE20DKZTGSR\",\"attributes\":{\"name\":\"Zebediah\",\"color\":\"Purples\",\"age\":55}}}"
-    }
+    "responses": [
+      {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"data\":{\"type\":\"gophers\",\"id\":\"01D8EMQ185CA8PRGE20DKZTGSR\",\"attributes\":{\"name\":\"Zebediah\",\"color\":\"Purples\",\"age\":55}}}"
+      }
+    ]
   }
 ]
 ```
@@ -474,12 +484,14 @@ Then our imposter will be configured as follows:
             "Content-Type": "application/json"
         }
     },
-    "response": {
-        "status": 201,
-        "headers": {
-            "Content-Type": "application/json"
+    "responses": [
+        {
+          "status": 201,
+          "headers": {
+              "Content-Type": "application/json"
+          }
         }
-    }
+    ]
   }
 ]
 ````
@@ -507,13 +519,15 @@ For example, we can modify our previous POST call to add a `delay` to determine 
             "Content-Type": "application/json"
         }
     },
-    "response": {
-        "status": 201,
-        "headers": {
-            "Content-Type": "application/json"
-        },
-        "delay": "1s:5s"
-    }
+    "responses": [
+        {
+          "status": 201,
+          "headers": {
+              "Content-Type": "application/json"
+          },
+          "delay": "1s:5s"
+        }
+    ]
   }
 ]
 ````
@@ -537,28 +551,115 @@ In the following example, we have defined multiple imposters for the `POST /goph
             "Content-Type": "application/json"
         }
     },
-    "response": {
-        "status": 201,
-        "headers": {
-            "Content-Type": "application/json"
+    "responses": [
+        {
+          "status": 201,
+          "headers": {
+              "Content-Type": "application/json"
+          }
         }
-    }
+    ]
   },
   {
       "request": {
           "method": "POST",
           "endpoint": "/gophers"
       },
-      "response": {
-          "status": 400,
-          "headers": {
-              "Content-Type": "application/json"
-          },
-          "body": "{\"errors\":\"bad request\"}"
-      }
+      "responses": [
+          {
+            "status": 400,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": "{\"errors\":\"bad request\"}"
+          }
+      ]
   }
 ]
 ````
+So as you can see, we have first of all the imposters with the restrictive, `headers` and `json schema`, but
+our last `imposter` is a simple `imposter` that it will match with any call via POST to `/gophers`.
+
+### Create an Imposter with repeated responses
+
+Killgrave allow repeatable/random responses, with this feature we can use one endpoint and obtain repeatable responses based on the settings provided by the user in imposter config.
+
+There are totally two new fields which needs to be configured for this feature.
+1. `request` -> `responseMode`
+    - `RANDOM` and `BURST` are valid values 
+    - `RANDOM` is default if field is not provided or any other value is provided.
+2. `response` -> `burst` (applicable only in `BURST` mode, ignored in)
+    - +ve integer are valid values.
+    - applicable  only in `BURST` mode, ignored in `RANDOM` mode.
+    - default value in `BURST` mode is 1, if the field is missing.
+    - 0 or -ve values will be converted to 1 
+
+For example let's consider an imposter config that will give us random response.
+````json
+[
+  {
+    "request": {
+        "method": "GET",
+        "endpoint": "/gophers",
+        "responseMode": "RANDOM"
+    },
+    "responses": [
+        {
+          "status": 201,
+          "headers": {
+              "Content-Type": "application/json"
+          },
+          "body": "Response 1"
+        },
+        {
+          "status": 201,
+          "headers": {
+              "Content-Type": "application/json"
+          },
+          "body": "Response 2"
+        }
+    ]
+  }
+]
+````
+As you can see in the above request `responseMode` is `RANDOM` and a call to /gophers will generate random responses from array of responses. So for some requests you'll get `Response 1` and for others you'll get `Response 2` randomly. In the request if `responseMode` is missing or have any other value than what is expected, then it'll act same as before (randomly).
+
+
+Now, let's consider an imposter example which will give us repeated responses.
+````json
+[
+  {
+    "request": {
+        "method": "GET",
+        "endpoint": "/gophers",
+        "responseMode": "BURST"
+    },
+    "responses": [
+        {
+          "status": 201,
+          "headers": {
+              "Content-Type": "application/json"
+          },
+          "body": "Response 1",
+          "burst": 1
+        },
+        {
+          "status": 201,
+          "headers": {
+              "Content-Type": "application/json"
+          },
+          "body": "Response 2",
+          "burst": 2
+        }
+    ]
+  }
+]
+````
+As you can see in the above request `responseMode` is `BURST` and a call to /gophers will generate repeated responses from array of responses. So for first request you'll get `Response 1` and for next 2 requests you'll get `Response 2`. It'll repeate responses from response 1 afterwards.
+
+For e.g. a call to /gophers above will give responses in the following order: <br>
+`Response 1` -> `Response 2` -> `Response 2` -> `Response 1` -> `Response 2` -> `Response 2` ...
+
 
 ## Contributing
 [Contributions](CONTRIBUTING.md) are more than welcome, if you are interested please follow our guidelines to help you get started.

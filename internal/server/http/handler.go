@@ -11,30 +11,32 @@ import (
 // ImposterHandler create specific handler for the received imposter
 func ImposterHandler(imposter Imposter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if imposter.Delay() > 0 {
-			time.Sleep(imposter.Delay())
+		response := imposter.GetResponse()
+
+		if response.Delay() > 0 {
+			time.Sleep(response.Delay())
 		}
-		writeHeaders(imposter, w)
-		w.WriteHeader(imposter.Response.Status)
-		writeBody(imposter, w)
+		writeHeaders(response, w)
+		w.WriteHeader(response.Status)
+		writeBody(imposter, &response, w)
 	}
 }
 
-func writeHeaders(imposter Imposter, w http.ResponseWriter) {
-	if imposter.Response.Headers == nil {
+func writeHeaders(response Response, w http.ResponseWriter) {
+	if response.Headers == nil {
 		return
 	}
 
-	for key, val := range *imposter.Response.Headers {
+	for key, val := range *response.Headers {
 		w.Header().Set(key, val)
 	}
 }
 
-func writeBody(imposter Imposter, w http.ResponseWriter) {
-	wb := []byte(imposter.Response.Body)
+func writeBody(imposter Imposter, response *Response, w http.ResponseWriter) {
+	wb := []byte(response.Body)
 
-	if imposter.Response.BodyFile != nil {
-		bodyFile := imposter.CalculateFilePath(*imposter.Response.BodyFile)
+	if response.BodyFile != nil {
+		bodyFile := imposter.CalculateFilePath(*response.BodyFile)
 		wb = fetchBodyFromFile(bodyFile)
 	}
 	w.Write(wb)
