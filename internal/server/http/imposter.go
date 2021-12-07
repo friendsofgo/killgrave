@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -39,6 +40,7 @@ type Imposter struct {
 
 	// Field for handling burst response
 	responseHandler ResponseHandler
+	sync.Mutex
 }
 
 // CalculateFilePath calculate file path based on basePath of imposter directory
@@ -48,6 +50,8 @@ func (i *Imposter) CalculateFilePath(filePath string) string {
 
 // GetResponse is used to get dynamic/random response.
 func (i *Imposter) GetResponse() Response {
+	i.Lock()
+	defer i.Unlock()
 	// If no response provided then returning 404 response
 	if len(i.Responses) == 0 {
 		return Response{Status: 404}

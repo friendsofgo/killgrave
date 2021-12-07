@@ -2,7 +2,6 @@ package http
 
 import (
 	"math/rand"
-	"sync"
 )
 
 // ResponseMode represents random/burst mode for the response
@@ -16,8 +15,6 @@ type ResponseHandler struct {
 	counter     int   // to keep count of served requests (wrapping after totalResp)
 	currentInd  int   // index/key of current response in scheduleMap
 	scheduleMap []int // prefix array of repeating request
-
-	mutex *sync.Mutex
 }
 
 const (
@@ -59,8 +56,6 @@ func (rh *ResponseHandler) fillDefaults(imposter *Imposter) {
 		rh.counter = 1
 		rh.currentInd = 0
 	}
-
-	rh.mutex = new(sync.Mutex)
 }
 
 // GetIndex is responsible for getting index for current request
@@ -68,9 +63,7 @@ func (rh *ResponseHandler) GetIndex() int {
 	if rh.Mode == RandomMode {
 		return rh.getRandomIndex()
 	}
-	rh.mutex.Lock()
 	ind := rh.getBurstIndex()
-	rh.mutex.Unlock()
 
 	return ind
 }
