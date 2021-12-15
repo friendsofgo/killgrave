@@ -28,9 +28,9 @@ func TestServer_Build(t *testing.T) {
 		server Server
 		err    error
 	}{
-		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false), errors.New("hello")},
-		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false), nil},
-		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false), nil},
+		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false, nil, nil), errors.New("hello")},
+		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false, nil, nil), nil},
+		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, nil, nil), nil},
 	}
 
 	for _, tt := range serverData {
@@ -64,7 +64,7 @@ func TestBuildProxyMode(t *testing.T) {
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
 		}
-		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false)
+		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false, nil, nil)
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -145,7 +145,7 @@ func TestBuildSecureMode(t *testing.T) {
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
 		}
-		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true)
+		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true, nil, nil)
 		return &server, func() {
 			httpServer.Close()
 		}

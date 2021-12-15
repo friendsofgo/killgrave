@@ -41,16 +41,20 @@ type Server struct {
 	httpServer    *http.Server
 	proxy         *Proxy
 	secure        bool
+	certificate   []byte
+	privateKey    []byte
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool) Server {
+func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, certificate []byte, privateKey []byte) Server {
 	return Server{
 		impostersPath: p,
 		router:        r,
 		httpServer:    httpServer,
 		proxy:         proxyServer,
 		secure:        secure,
+		certificate:   certificate,
+		privateKey:    privateKey,
 	}
 }
 
@@ -147,7 +151,16 @@ func (s *Server) run(secure bool) error {
 		return s.httpServer.ListenAndServe()
 	}
 
-	cert, err := tls.X509KeyPair(serverCert, serverKey)
+	c := serverCert
+	if s.certificate != nil {
+		c = s.certificate
+	}
+	k := serverKey
+	if s.privateKey != nil {
+		k = s.privateKey
+	}
+
+	cert, err := tls.X509KeyPair(c, k)
 	if err != nil {
 		log.Fatal(err)
 	}
