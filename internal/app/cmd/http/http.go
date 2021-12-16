@@ -111,7 +111,7 @@ func runServer(cfg killgrave.Config) server.Server {
 	}
 
 	var cert []byte
-	if cfg.PrivateKey != "" {
+	if cfg.Certificate != "" {
 		cert, _ = ioutil.ReadFile(cfg.Certificate)
 	}
 
