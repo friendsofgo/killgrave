@@ -14,6 +14,7 @@ import (
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/mux"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,30 +24,26 @@ func TestMain(m *testing.M) {
 }
 
 func TestServer_Build(t *testing.T) {
+	imposterFs := NewImposterFS(afero.NewOsFs())
+
 	var serverData = []struct {
 		name   string
 		server Server
 		err    error
 	}{
-		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false), errors.New("hello")},
-		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false), nil},
-		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false), nil},
+		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false, imposterFs), errors.New("hello")},
+		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false, imposterFs), nil},
+		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs), nil},
 	}
 
 	for _, tt := range serverData {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.server.Build()
 
-			if err == nil {
-				if tt.err != nil {
-					t.Fatalf("expected an error and got nil")
-				}
-			}
-
-			if err != nil {
-				if tt.err == nil {
-					t.Fatalf("not expected any erros and got %+v", err)
-				}
+			if tt.err != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
 		})
 	}
@@ -62,10 +59,9 @@ func TestBuildProxyMode(t *testing.T) {
 		router := mux.NewRouter()
 		httpServer := &http.Server{Handler: router}
 		proxyServer, err := NewProxy(proxyServer.URL, impostersPath, mode, RecorderNoop{})
-		if err != nil {
-			t.Fatal("NewProxy failed: ", err)
-		}
-		server := NewServer(impostersPath, router, httpServer, proxyServer, false)
+		assert.Nil(t, err)
+		imposterFs := NewImposterFS(afero.NewOsFs())
+		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false, imposterFs)
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -120,12 +116,8 @@ func TestBuildProxyMode(t *testing.T) {
 			response := w.Result()
 			body, _ := ioutil.ReadAll(response.Body)
 
-			if string(body) != tc.body {
-				t.Errorf("Expected body: %v, got: %s", tc.body, body)
-			}
-			if response.StatusCode != tc.status {
-				t.Errorf("Expected status code: %v, got: %v", tc.status, response.StatusCode)
-			}
+			assert.Equal(t, tc.body, string(body))
+			assert.Equal(t, tc.status, response.StatusCode)
 		})
 	}
 }
@@ -144,10 +136,9 @@ func TestBuildSecureMode(t *testing.T) {
 			Certificates: []tls.Certificate{cert},
 		}}
 		proxyServer, err := NewProxy(proxyServer.URL, impostersPath, mode, RecorderNoop{})
-		if err != nil {
-			t.Fatal("NewProxy failed: ", err)
-		}
-		server := NewServer(impostersPath, router, httpServer, proxyServer, true)
+		assert.Nil(t, err)
+		imposterFs := NewImposterFS(afero.NewOsFs())
+		server := NewServer(impostersPath, router, httpServer, proxyServer, true, imposterFs)
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -180,9 +171,7 @@ func TestBuildSecureMode(t *testing.T) {
 			defer cleanUp()
 
 			err := s.Build()
-			if err != nil {
-				t.Fatalf("Non expected error trying to build server: %v", err)
-			}
+			assert.NoError(t, err)
 			s.Run()
 
 			client := tc.server.Client()

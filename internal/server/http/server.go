@@ -4,19 +4,14 @@ import (
 	"context"
 	"crypto/tls"
 	_ "embed"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
-	"gopkg.in/yaml.v2"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
 //go:embed cert/server.key
@@ -41,16 +36,18 @@ type Server struct {
 	httpServer    *http.Server
 	proxy         *Proxy
 	secure        bool
+	imposterFs    ImposterFs
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool) Server {
+func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, fs ImposterFs) Server {
 	return Server{
 		impostersPath: p,
 		router:        r,
 		httpServer:    httpServer,
 		proxy:         proxyServer,
 		secure:        secure,
+		imposterFs:    fs,
 	}
 }
 
@@ -88,34 +85,28 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 func (s *Server) Build() error {
 	if s.proxy.mode.Is(killgrave.ProxyAll) {
 		// not necessary load the imposters if you will use the tool as a proxy
-		s.handleAll(s.proxy.Handler())
+		s.router.PathPrefix("/").HandlerFunc(s.proxy.Handler())
 		return nil
 	}
 
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
 		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
 	}
-	var imposterConfigCh = make(chan ImposterConfig)
+	var impostersCh = make(chan []Imposter)
 	var done = make(chan struct{})
 
 	go func() {
-		findImposters(s.impostersPath, imposterConfigCh)
+		s.imposterFs.FindImposters(s.impostersPath, impostersCh)
 		done <- struct{}{}
 	}()
 loop:
 	for {
 		select {
-		case imposterConfig := <-imposterConfigCh:
-			var imposters []Imposter
-			if err := s.unmarshalImposters(imposterConfig, &imposters); err != nil {
-				log.Printf("error trying to load %s imposter: %v", imposterConfig.FilePath, err)
-				continue
-			}
-
-			s.addImposterHandler(imposters, imposterConfig)
-			log.Printf("imposter %s loaded\n", imposterConfig.FilePath)
+		case imposters := <-impostersCh:
+			s.addImposterHandler(imposters)
+			log.Printf("imposter %s loaded\n", imposters[0].Path)
 		case <-done:
-			close(imposterConfigCh)
+			close(impostersCh)
 			close(done)
 			break loop
 		}
@@ -169,9 +160,8 @@ func (s *Server) Shutdown() error {
 	return nil
 }
 
-func (s *Server) addImposterHandler(imposters []Imposter, imposterConfig ImposterConfig) {
+func (s *Server) addImposterHandler(imposters []Imposter) {
 	for _, imposter := range imposters {
-		imposter.BasePath = filepath.Dir(imposterConfig.FilePath)
 		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
 			Methods(imposter.Request.Method).
 			MatcherFunc(MatcherBySchema(imposter))
@@ -188,30 +178,6 @@ func (s *Server) addImposterHandler(imposters []Imposter, imposterConfig Imposte
 			}
 		}
 	}
-}
-
-func (s *Server) unmarshalImposters(imposterConfig ImposterConfig, imposters *[]Imposter) error {
-	imposterFile, _ := os.Open(imposterConfig.FilePath)
-	defer imposterFile.Close()
-
-	bytes, _ := ioutil.ReadAll(imposterFile)
-
-	var parseError error
-
-	switch imposterConfig.Type {
-	case JSONImposter:
-		parseError = json.Unmarshal(bytes, imposters)
-	case YAMLImposter:
-		parseError = yaml.Unmarshal(bytes, imposters)
-	default:
-		parseError = fmt.Errorf("Unsupported imposter type %v", imposterConfig.Type)
-	}
-
-	if parseError != nil {
-		return fmt.Errorf("%w: error while unmarshalling imposter's file %s", parseError, imposterConfig.FilePath)
-	}
-
-	return nil
 }
 
 func (s *Server) handleAll(h http.HandlerFunc) {
