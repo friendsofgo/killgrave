@@ -55,9 +55,10 @@ func TestBuildProxyMode(t *testing.T) {
 	}))
 	defer proxyServer.Close()
 	makeServer := func(mode killgrave.ProxyMode) (*Server, func()) {
+		impostersPath := "test/testdata/imposters"
 		router := mux.NewRouter()
 		httpServer := &http.Server{Handler: router}
-		proxyServer, err := NewProxy(proxyServer.URL, mode)
+		proxyServer, err := NewProxy(proxyServer.URL, impostersPath, mode, RecorderNoop{})
 		assert.Nil(t, err)
 		imposterFs := NewImposterFS(afero.NewOsFs())
 		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false, imposterFs)
@@ -128,15 +129,16 @@ func TestBuildSecureMode(t *testing.T) {
 	defer proxyServer.Close()
 
 	makeServer := func(mode killgrave.ProxyMode) (*Server, func()) {
+		impostersPath := "test/testdata/imposters_secure"
 		router := mux.NewRouter()
 		cert, _ := tls.X509KeyPair(serverCert, serverKey)
 		httpServer := &http.Server{Handler: router, Addr: ":4430", TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{cert},
 		}}
-		proxyServer, err := NewProxy(proxyServer.URL, mode)
+		proxyServer, err := NewProxy(proxyServer.URL, impostersPath, mode, RecorderNoop{})
 		assert.Nil(t, err)
 		imposterFs := NewImposterFS(afero.NewOsFs())
-		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true, imposterFs)
+		server := NewServer(impostersPath, router, httpServer, proxyServer, true, imposterFs)
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -169,7 +171,7 @@ func TestBuildSecureMode(t *testing.T) {
 			defer cleanUp()
 
 			err := s.Build()
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 			s.Run()
 
 			client := tc.server.Client()

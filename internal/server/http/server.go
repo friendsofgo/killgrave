@@ -83,7 +83,7 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 // Build read all the files on the impostersPath and add different
 // handlers for each imposter
 func (s *Server) Build() error {
-	if s.proxy.mode == killgrave.ProxyAll {
+	if s.proxy.mode.Is(killgrave.ProxyAll) {
 		// not necessary load the imposters if you will use the tool as a proxy
 		s.router.PathPrefix("/").HandlerFunc(s.proxy.Handler())
 		return nil
@@ -111,7 +111,7 @@ loop:
 			break loop
 		}
 	}
-	if s.proxy.mode == killgrave.ProxyMissing {
+	if s.proxy.mode.Is(killgrave.ProxyMissing) || s.proxy.mode.Is(killgrave.ProxyRecord){
 		s.router.NotFoundHandler = s.proxy.Handler()
 	}
 	return nil

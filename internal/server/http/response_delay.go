@@ -16,6 +16,10 @@ type ResponseDelay struct {
 
 // Delay return random time.Duration with respect to specified time range.
 func (d *ResponseDelay) Delay() time.Duration {
+	if d == nil {
+		return 0
+	}
+	
 	offset := d.offset
 	if offset > 0 {
 		offset = rand.Int63n(d.offset)
@@ -46,7 +50,6 @@ func (d *ResponseDelay) UnmarshalJSON(data []byte) error {
 
 	return d.parseDelay(input)
 }
-
 func (d *ResponseDelay) parseDelay(input string) error {
 	const delimiter = ":"
 

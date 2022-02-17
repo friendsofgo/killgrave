@@ -22,7 +22,7 @@ func TestNewProxy(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			proxy, err := NewProxy(tc.rawURL, tc.mode)
+			proxy, err := NewProxy(tc.rawURL, "", tc.mode, RecorderNoop{})
 			if tc.wantErr {
 				assert.Error(t, err)
 				return
@@ -41,7 +41,7 @@ func TestProxyHandler(t *testing.T) {
 	}))
 	defer backend.Close()
 
-	proxy, err := NewProxy(backend.URL, killgrave.ProxyAll)
+	proxy, err := NewProxy(backend.URL, "", killgrave.ProxyAll, RecorderNoop{})
 	assert.NoError(t, err)
 
 	frontend := httptest.NewServer(proxy.Handler())

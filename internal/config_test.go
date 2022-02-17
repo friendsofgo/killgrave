@@ -64,6 +64,7 @@ func TestProxyModeUnmarshal(t *testing.T) {
 	}{
 		"valid mode all":     {"all", ProxyAll, false},
 		"valid mode missing": {"missing", ProxyMissing, false},
+		"valid mode record":  {"record", ProxyRecord, false},
 		"valid mode none":    {"none", ProxyNone, false},
 		"empty mode":         {"", ProxyNone, true},
 		"invalid mode":       {"nonsens23e", ProxyNone, true},
@@ -122,9 +123,14 @@ func TestProxyMode_String(t *testing.T) {
 			"none",
 		},
 		{
-			"ProxyNone must be return missing string",
+			"ProxyMissing must be return missing string",
 			ProxyMissing,
 			"missing",
+		},
+		{
+			"ProxyRecord must be return record string",
+			ProxyRecord,
+			"record",
 		},
 		{
 			"ProxyNone must be return all string",
@@ -211,19 +217,43 @@ func TestNewConfig(t *testing.T) {
 }
 
 func TestConfig_ConfigureProxy(t *testing.T) {
-	expected := Config{
-		ImpostersPath: "imposters",
-		Port:          80,
-		Host:          "localhost",
-		Proxy: ConfigProxy{
-			Url:  "https://friendsofgo.tech",
-			Mode: ProxyAll,
-		},
+	tests := []struct{
+		name string
+		url string
+		mode ProxyMode
+		err error
+	}{
+		{"valid proxy configuration", "https://friendsofgo.tech", ProxyAll, nil},
+		{"none proxy configuration", "", ProxyNone, nil},
+		{"invalid proxy configuration", "", ProxyAll, errMandatoryURL},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T){
+			cfg, err := NewConfig("imposters", "localhost", 80, false)
+			assert.NoError(t, err)
 
-	got, err := NewConfig("imposters", "localhost", 80, false)
-	assert.NoError(t, err)
+			err = cfg.ConfigureProxy(tt.mode, tt.url, "")
+			assert.Equal(t, tt.err, err)
+		})
+	}
+}
 
-	got.ConfigureProxy(ProxyAll, "https://friendsofgo.tech")
-	assert.Equal(t, expected, got)
+func TestConfig_ConfigureProxyRecord(t *testing.T) {
+	tests := []struct {
+		name           string
+		recordFilePath string
+		err            error
+	}{
+		{"valid configuration for Proxy Record", "some_file.imp.json", nil},
+		{"invalid configuration for Proxy Record", "", errMandatoryRecordFilePath},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, err := NewConfig("imposters", "localhost", 80, false)
+			assert.NoError(t, err)
+
+			err = cfg.ConfigureProxy(ProxyRecord, "https://friendsofgo.tech", tt.recordFilePath)
+			assert.Equal(t, tt.err, err)
+		})
+	}
 }

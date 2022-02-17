@@ -58,18 +58,18 @@ func (i *Imposter) CalculateFilePath(filePath string) string {
 type Request struct {
 	Method     string             `json:"method"`
 	Endpoint   string             `json:"endpoint"`
-	SchemaFile *string            `json:"schemaFile"`
-	Params     *map[string]string `json:"params"`
-	Headers    *map[string]string `json:"headers"`
+	SchemaFile *string            `json:"schemaFile,omitempty"`
+	Params     *map[string]string `json:"params,omitempty"`
+	Headers    *map[string]string `json:"headers,omitempty"`
 }
 
 // Response represent the structure of real response
 type Response struct {
 	Status   int                `json:"status"`
 	Body     string             `json:"body"`
-	BodyFile *string            `json:"bodyFile" yaml:"bodyFile"`
-	Headers  *map[string]string `json:"headers"`
-	Delay    ResponseDelay      `json:"delay" yaml:"delay"`
+	BodyFile *string            `json:"bodyFile,omitempty" yaml:"bodyFile,omitempty"`
+	Headers  *map[string]string `json:"headers,omitempty"`
+	Delay    *ResponseDelay     `json:"delay,omitempty" yaml:"delay,omitempty"`
 }
 
 type ImposterFs struct {
