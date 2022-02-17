@@ -2,69 +2,68 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestResponseDelayUnmarshal(t *testing.T) {
 	testCases := map[string]struct {
-		input string
-		delay ResponseDelay
-		err   error
+		input   string
+		delay   ResponseDelay
+		wantErr bool
 	}{
 		"Invalid type": {
-			input: `23`,
-			err:   errors.New("error"),
+			input:   `23`,
+			wantErr: true,
 		},
 		"Valid empty delay": {
-			input: `""`,
-			delay: ResponseDelay{0, 0},
+			input:   `""`,
+			delay:   ResponseDelay{0, 0},
+			wantErr: false,
 		},
 		"Valid fixed delay": {
-			input: `"1s"`,
-			delay: getDelay(t, "1s", "0s"),
+			input:   `"1s"`,
+			delay:   getDelay(t, "1s", "0s"),
+			wantErr: false,
 		},
 		"Fixed delay without unit suffix": {
-			input: `"13"`,
-			err:   errors.New("error"),
+			input:   `"13"`,
+			wantErr: true,
 		},
 		"Valid range delay": {
-			input: `"2s:7s"`,
-			delay: getDelay(t, "2s", "5s"),
+			input:   `"2s:7s"`,
+			delay:   getDelay(t, "2s", "5s"),
+			wantErr: false,
 		},
 		"Range delay with incorrect delimiter": {
-			input: `"1m-3s"`,
-			err:   errors.New("error"),
+			input:   `"1m-3s"`,
+			wantErr: true,
 		},
 		"Range delay with extra field": {
-			input: `"1m:3s:5s"`,
-			err:   errors.New("error"),
+			input:   `"1m:3s:5s"`,
+			wantErr: true,
 		},
 		"Range delay where second point is before first": {
-			input: `"5s:1s"`,
-			err:   errors.New("error"),
+			input:   `"5s:1s"`,
+			wantErr: true,
 		},
 		"Range delay where second point invalid": {
-			input: `"5s:1"`,
-			err:   errors.New("error"),
+			input:   `"5s:1"`,
+			wantErr: true,
 		},
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			var delay ResponseDelay
 			err := json.Unmarshal([]byte(tc.input), &delay)
-			if err != nil && tc.err == nil {
-				t.Fatalf("not expected any error and got: %v", err)
+			if tc.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
-
-			if err == nil && tc.err != nil {
-				t.Fatalf("expected an error and got nil")
-			}
-			if !reflect.DeepEqual(tc.delay, delay) {
-				t.Fatalf("expected: %v, got: %v", tc.delay, delay)
-			}
+			assert.Equal(t, tc.delay, delay)
 
 		})
 	}
@@ -90,9 +89,8 @@ func TestResponseDelay(t *testing.T) {
 			max := min + tc.delay.offset
 			for i := 0; i < 10; i++ {
 				delay := int64(tc.delay.Delay())
-				if delay < min || delay > max {
-					t.Errorf("delay should be in interval [%d, %d] but actual value is: %d", min, max, delay)
-				}
+				assert.GreaterOrEqual(t, max, delay)
+				assert.GreaterOrEqual(t, delay, min)
 			}
 
 		})
@@ -101,12 +99,8 @@ func TestResponseDelay(t *testing.T) {
 
 func getDelay(t *testing.T, min string, offset string) ResponseDelay {
 	minDuration, err := time.ParseDuration(min)
-	if err != nil {
-		t.Fatal("ParseDuration min fail: ", err)
-	}
+	assert.Nil(t, err)
 	offsetDuration, err := time.ParseDuration(offset)
-	if err != nil {
-		t.Fatal("ParseDuration max fail: ", err)
-	}
+	assert.Nil(t, err)
 	return ResponseDelay{int64(minDuration), int64(offsetDuration)}
 }

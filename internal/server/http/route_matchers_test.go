@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMatcherBySchema(t *testing.T) {
@@ -65,9 +66,7 @@ func TestMatcherBySchema(t *testing.T) {
 	for name, tt := range matcherData {
 		t.Run(name, func(t *testing.T) {
 			res := tt.fn(tt.req, nil)
-			if res != tt.res {
-				t.Fatalf("error while matching by request schema - expected: %t, given: %t", tt.res, res)
-			}
+			assert.Equal(t, tt.res, res)
 		})
 
 	}
