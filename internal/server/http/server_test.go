@@ -40,16 +40,10 @@ func TestServer_Build(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.server.Build()
 
-			if err == nil {
-				if tt.err != nil {
-					t.Fatalf("expected an error and got nil")
-				}
-			}
-
-			if err != nil {
-				if tt.err == nil {
-					t.Fatalf("not expected any erros and got %+v", err)
-				}
+			if tt.err != nil {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
 		})
 	}
@@ -64,9 +58,7 @@ func TestBuildProxyMode(t *testing.T) {
 		router := mux.NewRouter()
 		httpServer := &http.Server{Handler: router}
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
-		if err != nil {
-			t.Fatal("NewProxy failed: ", err)
-		}
+		assert.Nil(t, err)
 		imposterFs := NewImposterFS(afero.NewOsFs())
 		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false, imposterFs)
 		return &server, func() {
@@ -123,12 +115,8 @@ func TestBuildProxyMode(t *testing.T) {
 			response := w.Result()
 			body, _ := ioutil.ReadAll(response.Body)
 
-			if string(body) != tc.body {
-				t.Errorf("Expected body: %v, got: %s", tc.body, body)
-			}
-			if response.StatusCode != tc.status {
-				t.Errorf("Expected status code: %v, got: %v", tc.status, response.StatusCode)
-			}
+			assert.Equal(t, tc.body, string(body))
+			assert.Equal(t, tc.status, response.StatusCode)
 		})
 	}
 }
@@ -146,10 +134,7 @@ func TestBuildSecureMode(t *testing.T) {
 			Certificates: []tls.Certificate{cert},
 		}}
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
-		if err != nil {
-			t.Fatal("NewProxy failed: ", err)
-		}
-
+		assert.Nil(t, err)
 		imposterFs := NewImposterFS(afero.NewOsFs())
 		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true, imposterFs)
 		return &server, func() {
@@ -184,9 +169,7 @@ func TestBuildSecureMode(t *testing.T) {
 			defer cleanUp()
 
 			err := s.Build()
-			if err != nil {
-				t.Fatalf("Non expected error trying to build server: %v", err)
-			}
+			assert.Nil(t, err)
 			s.Run()
 
 			client := tc.server.Client()
