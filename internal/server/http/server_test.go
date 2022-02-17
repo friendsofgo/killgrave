@@ -14,6 +14,7 @@ import (
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/mux"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,14 +24,16 @@ func TestMain(m *testing.M) {
 }
 
 func TestServer_Build(t *testing.T) {
+	imposterFs := NewImposterFS(afero.NewOsFs())
+
 	var serverData = []struct {
 		name   string
 		server Server
 		err    error
 	}{
-		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false), errors.New("hello")},
-		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false), nil},
-		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false), nil},
+		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false, imposterFs), errors.New("hello")},
+		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false, imposterFs), nil},
+		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs), nil},
 	}
 
 	for _, tt := range serverData {
@@ -56,7 +59,8 @@ func TestBuildProxyMode(t *testing.T) {
 		httpServer := &http.Server{Handler: router}
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
 		assert.Nil(t, err)
-		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false)
+		imposterFs := NewImposterFS(afero.NewOsFs())
+		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false, imposterFs)
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -131,7 +135,8 @@ func TestBuildSecureMode(t *testing.T) {
 		}}
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
 		assert.Nil(t, err)
-		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true)
+		imposterFs := NewImposterFS(afero.NewOsFs())
+		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true, imposterFs)
 		return &server, func() {
 			httpServer.Close()
 		}

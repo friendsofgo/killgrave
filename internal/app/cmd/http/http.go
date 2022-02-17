@@ -3,6 +3,7 @@ package http
 import (
 	"errors"
 	"fmt"
+	"github.com/spf13/afero"
 	"log"
 	"net/http"
 	"os"
@@ -105,12 +106,14 @@ func runServer(cfg killgrave.Config) server.Server {
 		log.Fatal(err)
 	}
 
+	imposterFs := server.NewImposterFS(afero.NewOsFs())
 	s := server.NewServer(
 		cfg.ImpostersPath,
 		router,
 		&httpServer,
 		proxyServer,
 		cfg.Secure,
+		imposterFs,
 	)
 	if err := s.Build(); err != nil {
 		log.Fatal(err)
