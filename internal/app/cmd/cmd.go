@@ -6,9 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	_version = "dev"
-)
+var _version = "unknown_version"
 
 const (
 	_defaultImpostersPath = "imposters"

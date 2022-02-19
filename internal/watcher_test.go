@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/radovskyb/watcher"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
@@ -32,9 +33,7 @@ func TestAttachWatcher(t *testing.T) {
 		tt.w.Error <- errors.New("some error")
 		tt.w.Close()
 		time.Sleep(1 * time.Millisecond)
-		if !spy {
-			t.Error("can't read any events")
-		}
+		assert.True(t, spy, "can't read any events")
 
 	}
 }
@@ -53,12 +52,14 @@ func TestInitializeWatcher(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := InitializeWatcher(tt.pathToWatch)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("InitializeWatcher() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
-			if tt.wantWatcher && got == nil {
-				t.Errorf("InitializeWatcher() got = %v, want a pointer watcher", got)
+
+			if tt.wantWatcher {
+				assert.NotNil(t, got)
 			}
 		})
 	}
