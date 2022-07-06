@@ -1,6 +1,8 @@
 package http
 
 import (
+	"github.com/open-telemetry/opamp-go/protobufs"
+	"google.golang.org/protobuf/encoding/protojson"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,12 +13,20 @@ import (
 // ImposterHandler create specific handler for the received imposter
 func ImposterHandler(imposter Imposter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("request headers: %v", r.Header)
+
 		if imposter.Delay() > 0 {
 			time.Sleep(imposter.Delay())
 		}
+
 		writeHeaders(imposter, w)
 		w.WriteHeader(imposter.Response.Status)
-		writeBody(imposter, w)
+
+		if w.Header().Get("Content-Type") == "application/protobuf" {
+			writeOpAmpServerToAgentProtoBodyHack(imposter, w)
+		} else {
+			writeBody(imposter, w)
+		}
 	}
 }
 
@@ -30,6 +40,18 @@ func writeHeaders(imposter Imposter, w http.ResponseWriter) {
 	}
 }
 
+func writeOpAmpServerToAgentProtoBodyHack(imposter Imposter, w http.ResponseWriter) {
+	log.Printf("Wring ServerToAgent Protobuf from Payload")
+	wb := []byte(imposter.Response.Body)
+	var msg *protobufs.ServerToAgent
+	err := protojson.Unmarshal(wb, msg)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	w.Write([]byte(msg.String()))
+}
+
 func writeBody(imposter Imposter, w http.ResponseWriter) {
 	wb := []byte(imposter.Response.Body)
 
@@ -37,6 +59,7 @@ func writeBody(imposter Imposter, w http.ResponseWriter) {
 		bodyFile := imposter.CalculateFilePath(*imposter.Response.BodyFile)
 		wb = fetchBodyFromFile(bodyFile)
 	}
+
 	w.Write(wb)
 }
 
