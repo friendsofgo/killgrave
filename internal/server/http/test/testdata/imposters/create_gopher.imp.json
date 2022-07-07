@@ -6,9 +6,6 @@
             "schemaFile": "schemas/create_gopher_request.json",
             "headers": {
                 "Content-Type": "application/json"
-            },
-            "params": {
-                "gopherColor": "{v:[a-z]+}"
             }
         },
         "response": {
