@@ -43,8 +43,8 @@ func writeHeaders(imposter Imposter, w http.ResponseWriter) {
 func writeOpAmpServerToAgentProtoBodyHack(imposter Imposter, w http.ResponseWriter) {
 	log.Printf("Wring ServerToAgent Protobuf from Payload")
 	wb := []byte(imposter.Response.Body)
-	var msg *protobufs.ServerToAgent
-	err := protojson.Unmarshal(wb, msg)
+	var msg protobufs.ServerToAgent
+	err := protojson.Unmarshal(wb, &msg)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
