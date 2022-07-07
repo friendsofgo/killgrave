@@ -3,6 +3,7 @@ package http
 import (
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -22,7 +23,7 @@ func ImposterHandler(imposter Imposter) http.HandlerFunc {
 		writeHeaders(imposter, w)
 		w.WriteHeader(imposter.Response.Status)
 
-		if w.Header().Get("Content-Type") == "application/protobuf" {
+		if w.Header().Get("Content-Type") == "application/x-protobuf" {
 			writeOpAmpServerToAgentProtoBodyHack(imposter, w)
 		} else {
 			writeBody(imposter, w)
@@ -53,7 +54,9 @@ func writeOpAmpServerToAgentProtoBodyHack(imposter Imposter, w http.ResponseWrit
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	w.Write([]byte(msg.String()))
+	data, _ := proto.Marshal(&msg)
+	w.Write(data)
+
 }
 
 func writeBody(imposter Imposter, w http.ResponseWriter) {

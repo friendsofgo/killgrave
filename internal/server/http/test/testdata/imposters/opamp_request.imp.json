@@ -7,7 +7,7 @@
     "response": {
       "status": 200,
       "headers": {
-        "Content-Type": "application/protobuf"
+        "Content-Type": "application/x-protobuf"
       },
       "bodyFile": "responses/server_to_agent_response.json"
     }
