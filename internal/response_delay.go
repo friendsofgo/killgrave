@@ -1,4 +1,4 @@
-package http
+package killgrave
 
 import (
 	"encoding/json"

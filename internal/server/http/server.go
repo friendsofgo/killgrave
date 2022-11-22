@@ -6,7 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -17,6 +17,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
+	"github.com/friendsofgo/killgrave/internal/debugger"
 )
 
 //go:embed cert/server.key
@@ -41,6 +42,8 @@ type Server struct {
 	httpServer    *http.Server
 	proxy         *Proxy
 	secure        bool
+
+	debugger *debugger.Debugger
 }
 
 // NewServer initialize the mock server
@@ -51,6 +54,8 @@ func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Pr
 		httpServer:    httpServer,
 		proxy:         proxyServer,
 		secure:        secure,
+
+		debugger: debugger.New(),
 	}
 }
 
@@ -86,24 +91,32 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 // Build read all the files on the impostersPath and add different
 // handlers for each imposter
 func (s *Server) Build() error {
+	// TODO: Parameterize debugger
+	// TODO: Attach to application lifecycle (context)
+	if s.debugger != nil {
+		go func() {
+			log.Fatal(s.debugger.Run())
+		}()
+	}
+
 	if s.proxy.mode == killgrave.ProxyAll {
 		s.handleAll(s.proxy.Handler())
 	}
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
 		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
 	}
-	var imposterConfigCh = make(chan ImposterConfig)
+	var imposterConfigCh = make(chan killgrave.ImposterConfig)
 	var done = make(chan bool)
 
 	go func() {
-		findImposters(s.impostersPath, imposterConfigCh)
+		killgrave.FindImposters(s.impostersPath, imposterConfigCh)
 		done <- true
 	}()
 loop:
 	for {
 		select {
 		case imposterConfig := <-imposterConfigCh:
-			var imposters []Imposter
+			var imposters []killgrave.Imposter
 			err := s.unmarshalImposters(imposterConfig, &imposters)
 			if err != nil {
 				log.Printf("error trying to load %s imposter: %v", imposterConfig.FilePath, err)
@@ -123,7 +136,7 @@ loop:
 	return nil
 }
 
-// Run run launch a previous configured http server if any error happens while the starting process
+// Run launches a previously configured http server if any error happens while the starting process
 // application will be crashed
 func (s *Server) Run() {
 	go func() {
@@ -153,6 +166,8 @@ func (s *Server) run(secure bool) error {
 }
 
 // Shutdown shutdown the current http server
+// TODO: Handle ErrServerClosed on Serve methods
+// TODO: Set up a maximum time to shut down
 func (s *Server) Shutdown() error {
 	log.Println("stopping server...")
 	if err := s.httpServer.Shutdown(context.TODO()); err != nil {
@@ -162,10 +177,10 @@ func (s *Server) Shutdown() error {
 	return nil
 }
 
-func (s *Server) addImposterHandler(imposters []Imposter, imposterConfig ImposterConfig) {
+func (s *Server) addImposterHandler(imposters []killgrave.Imposter, imposterConfig killgrave.ImposterConfig) {
 	for _, imposter := range imposters {
 		imposter.BasePath = filepath.Dir(imposterConfig.FilePath)
-		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
+		r := s.router.HandleFunc(imposter.Request.Endpoint, s.ImposterHandler(imposter)).
 			Methods(imposter.Request.Method).
 			MatcherFunc(MatcherBySchema(imposter))
 
@@ -183,18 +198,18 @@ func (s *Server) addImposterHandler(imposters []Imposter, imposterConfig Imposte
 	}
 }
 
-func (s *Server) unmarshalImposters(imposterConfig ImposterConfig, imposters *[]Imposter) error {
+func (s *Server) unmarshalImposters(imposterConfig killgrave.ImposterConfig, imposters *[]killgrave.Imposter) error {
 	imposterFile, _ := os.Open(imposterConfig.FilePath)
 	defer imposterFile.Close()
 
-	bytes, _ := ioutil.ReadAll(imposterFile)
+	bytes, _ := io.ReadAll(imposterFile)
 
 	var parseError error
 
 	switch imposterConfig.Type {
-	case JSONImposter:
+	case killgrave.JSONImposter:
 		parseError = json.Unmarshal(bytes, imposters)
-	case YAMLImposter:
+	case killgrave.YAMLImposter:
 		parseError = yaml.Unmarshal(bytes, imposters)
 	default:
 		parseError = fmt.Errorf("Unsupported imposter type %v", imposterConfig.Type)

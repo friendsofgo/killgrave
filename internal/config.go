@@ -2,7 +2,7 @@ package killgrave
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 
@@ -127,7 +127,7 @@ func WithConfigFile(cfgPath string) ConfigOpt {
 		}
 		defer configFile.Close()
 
-		bytes, _ := ioutil.ReadAll(configFile)
+		bytes, _ := io.ReadAll(configFile)
 		if err := yaml.Unmarshal(bytes, cfg); err != nil {
 			return fmt.Errorf("%w: error while unmarshall configFile file %s, using default configuration instead", err, cfgPath)
 		}

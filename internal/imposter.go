@@ -1,4 +1,4 @@
-package http
+package killgrave
 
 import (
 	"fmt"
@@ -66,7 +66,7 @@ type Response struct {
 	Delay    ResponseDelay      `json:"delay" yaml:"delay"`
 }
 
-func findImposters(impostersDirectory string, imposterConfigCh chan ImposterConfig) error {
+func FindImposters(impostersDirectory string, imposterConfigCh chan ImposterConfig) error {
 	err := filepath.Walk(impostersDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("%w: error finding imposters", err)
@@ -82,5 +82,6 @@ func findImposters(impostersDirectory string, imposterConfigCh chan ImposterConf
 		}
 		return nil
 	})
+
 	return err
 }
