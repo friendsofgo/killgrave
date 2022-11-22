@@ -30,7 +30,7 @@ const (
 	_defaultConfigFile    = ""
 	_defaultProxyMode     = killgrave.ProxyNone
 	_defaultDebugger      = false
-	_defaultDebuggerAddr  = "localhost:30000"
+	_defaultDebuggerAddr  = "localhost:3030"
 )
 
 func main() {
