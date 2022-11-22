@@ -76,7 +76,7 @@ func NewServer(
 	}, nil
 }
 
-// PrepareAccessControl Return options to initialize the mock server with default access control
+// PrepareAccessControl returns the options to initialize the mock server with default access control
 func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption) {
 	h = append(h, handlers.AllowedMethods(defaultCORSMethods))
 	h = append(h, handlers.AllowedHeaders(defaultCORSHeaders))
@@ -108,9 +108,16 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 // Build read all the files on the impostersPath and add different
 // handlers for each imposter
 func (s *Server) Build() error {
+	s.httpServer.Handler = &middleware{
+		handler:  s.httpServer.Handler,
+		debugger: s.debugger,
+	}
+
 	if s.proxy.mode == killgrave.ProxyAll {
 		s.handleAll(s.proxy.Handler())
+		return nil
 	}
+
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
 		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
 	}
@@ -139,9 +146,11 @@ loop:
 			break loop
 		}
 	}
+
 	if s.proxy.mode == killgrave.ProxyMissing {
 		s.handleAll(s.proxy.Handler())
 	}
+
 	return nil
 }
 
@@ -189,7 +198,7 @@ func (s *Server) Shutdown() error {
 func (s *Server) addImposterHandler(imposters []killgrave.Imposter, imposterConfig killgrave.ImposterConfig) {
 	for _, imposter := range imposters {
 		imposter.BasePath = filepath.Dir(imposterConfig.FilePath)
-		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(s.debugger, imposter)).
+		r := s.router.HandleFunc(imposter.Request.Endpoint, imposterHandler(s.debugger, imposter)).
 			Methods(imposter.Request.Method).
 			MatcherFunc(MatcherBySchema(imposter))
 

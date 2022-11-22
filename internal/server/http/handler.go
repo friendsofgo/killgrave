@@ -11,18 +11,9 @@ import (
 	"github.com/friendsofgo/killgrave/internal/debugger"
 )
 
-// ImposterHandler creates a specific handler for the given imposter
-func ImposterHandler(debugger debugger.Debugger, imposter killgrave.Imposter) http.HandlerFunc {
+// imposterHandler creates a specific handler for the given imposter
+func imposterHandler(debugger debugger.Debugger, imposter killgrave.Imposter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		waitReq, err := debugger.NotifyRequestReceived(r)
-		if err != nil {
-			// TODO: Handle error
-			log.Println(err)
-		}
-
-		// TODO: Implement
-		r = waitReq.Wait()
-
 		waitImp, err := debugger.NotifyImposterMatched(imposter)
 		if err != nil {
 			// TODO: Handle error

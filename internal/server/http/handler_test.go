@@ -61,7 +61,7 @@ func TestImposterHandler(t *testing.T) {
 			}
 
 			rec := httptest.NewRecorder()
-			handler := ImposterHandler(debugger.NewNoOp(), tt.imposter)
+			handler := imposterHandler(debugger.NewNoOp(), tt.imposter)
 
 			handler.ServeHTTP(rec, req)
 			if status := rec.Code; status != tt.statusCode {
@@ -104,7 +104,7 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 				t.Fatalf("could not created request: %v", err)
 			}
 			rec := httptest.NewRecorder()
-			handler := ImposterHandler(debugger.NewNoOp(), tt.imposter)
+			handler := imposterHandler(debugger.NewNoOp(), tt.imposter)
 
 			handler.ServeHTTP(rec, req)
 			if status := rec.Code; status != tt.statusCode {
