@@ -37,17 +37,15 @@ func (s *Server) ImposterHandler(imposter killgrave.Imposter) http.HandlerFunc {
 		}
 
 		// TODO: Return the whole response
-		wait = s.debugger.WaitForResponseContinue([]byte(imposter.Response.Body))
+		wait = s.debugger.WaitForResponseContinue([]byte(calcBody(imposter)))
 		evt = wait.Wait()
-		// TODO: Be careful because this modifies the response from now on
-		imposter.Response.Body = string(evt.Response)
 
 		if imposter.Delay() > 0 {
 			time.Sleep(imposter.Delay())
 		}
 		writeHeaders(imposter, w)
 		w.WriteHeader(imposter.Response.Status)
-		writeBody(imposter, w)
+		w.Write(evt.Response)
 	}
 }
 
@@ -61,14 +59,15 @@ func writeHeaders(imposter killgrave.Imposter, w http.ResponseWriter) {
 	}
 }
 
-func writeBody(imposter killgrave.Imposter, w http.ResponseWriter) {
+func calcBody(imposter killgrave.Imposter) []byte {
 	wb := []byte(imposter.Response.Body)
 
 	if imposter.Response.BodyFile != nil {
 		bodyFile := imposter.CalculateFilePath(*imposter.Response.BodyFile)
 		wb = fetchBodyFromFile(bodyFile)
 	}
-	w.Write(wb)
+
+	return wb
 }
 
 func fetchBodyFromFile(bodyFile string) (bytes []byte) {
