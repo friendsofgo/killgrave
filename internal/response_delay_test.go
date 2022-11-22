@@ -8,6 +8,27 @@ import (
 	"time"
 )
 
+func TestResponseDelayMarshal(t *testing.T) {
+	for _, tc := range []string{`"1s"`, `"2s:7s"`} {
+		t.Run(tc, func(t *testing.T) {
+			var rd ResponseDelay
+			err := json.Unmarshal([]byte(tc), &rd)
+			if err != nil {
+				t.Fatal("json.Unmarshal fail: ", err)
+			}
+
+			raw, err := json.Marshal(&rd)
+			if err != nil {
+				t.Fatal("json.Marshal fail: ", err)
+			}
+
+			if string(raw) != tc {
+				t.Fatalf("expected: %v, got: %v", tc, string(raw))
+			}
+		})
+	}
+}
+
 func TestResponseDelayUnmarshal(t *testing.T) {
 	testCases := map[string]struct {
 		input string
@@ -20,7 +41,7 @@ func TestResponseDelayUnmarshal(t *testing.T) {
 		},
 		"Valid empty delay": {
 			input: `""`,
-			delay: ResponseDelay{0, 0},
+			delay: ResponseDelay{delay: 0, offset: 0},
 		},
 		"Valid fixed delay": {
 			input: `"1s"`,
@@ -75,7 +96,7 @@ func TestResponseDelay(t *testing.T) {
 		delay ResponseDelay
 	}{
 		"Empty delay": {
-			delay: ResponseDelay{0, 0},
+			delay: ResponseDelay{delay: 0, offset: 0},
 		},
 		"Fixed delay": {
 			delay: getDelay(t, "2s", "0s"),
@@ -108,5 +129,5 @@ func getDelay(t *testing.T, min string, offset string) ResponseDelay {
 	if err != nil {
 		t.Fatal("ParseDuration max fail: ", err)
 	}
-	return ResponseDelay{int64(minDuration), int64(offsetDuration)}
+	return ResponseDelay{delay: int64(minDuration), offset: int64(offsetDuration)}
 }

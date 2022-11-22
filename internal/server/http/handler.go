@@ -1,51 +1,50 @@
 package http
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"time"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
+	"github.com/friendsofgo/killgrave/internal/debugger"
 )
 
-// ImposterHandler create specific handler for the received imposter
-func (s *Server) ImposterHandler(imposter killgrave.Imposter) http.HandlerFunc {
+// ImposterHandler creates a specific handler for the given imposter
+func ImposterHandler(debugger debugger.Debugger, imposter killgrave.Imposter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// TODO: Improve or separate debugging logic
-		request, err := httputil.DumpRequest(r, true)
+		waitReq, err := debugger.NotifyRequestReceived(r)
 		if err != nil {
 			// TODO: Handle error
 			log.Println(err)
 		}
-		wait := s.debugger.WaitForRequestContinue(request, imposter)
-		wait.Wait()
 
-		bytes, err := json.Marshal(imposter)
+		// TODO: Implement
+		r = waitReq.Wait()
+
+		waitImp, err := debugger.NotifyImposterMatched(imposter)
 		if err != nil {
 			// TODO: Handle error
 			log.Println(err)
 		}
-		wait = s.debugger.WaitForImposterContinue(bytes)
-		evt := wait.Wait()
-		if err := json.Unmarshal(evt.Imposter, &imposter); err != nil {
+
+		imp := waitImp.Wait()
+
+		waitRes, err := debugger.NotifyResponsePrepared(prepareResponse(imp))
+		if err != nil {
 			// TODO: Handle error
 			log.Println(err)
 		}
 
-		// TODO: Return the whole response
-		wait = s.debugger.WaitForResponseContinue([]byte(calcBody(imposter)))
-		evt = wait.Wait()
+		resBody := waitRes.Wait()
 
-		if imposter.Delay() > 0 {
-			time.Sleep(imposter.Delay())
+		if imp.Delay() > 0 {
+			time.Sleep(imp.Delay())
 		}
-		writeHeaders(imposter, w)
-		w.WriteHeader(imposter.Response.Status)
-		w.Write(evt.Response)
+		writeHeaders(imp, w)
+		w.WriteHeader(imp.Response.Status)
+		w.Write(resBody)
 	}
 }
 
@@ -59,7 +58,7 @@ func writeHeaders(imposter killgrave.Imposter, w http.ResponseWriter) {
 	}
 }
 
-func calcBody(imposter killgrave.Imposter) []byte {
+func prepareResponse(imposter killgrave.Imposter) []byte {
 	wb := []byte(imposter.Response.Body)
 
 	if imposter.Response.BodyFile != nil {

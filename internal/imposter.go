@@ -33,7 +33,7 @@ type ImposterConfig struct {
 
 // Imposter define an imposter structure
 type Imposter struct {
-	BasePath string
+	BasePath string   `json:"-"`
 	Request  Request  `json:"request"`
 	Response Response `json:"response"`
 }
@@ -63,7 +63,7 @@ type Response struct {
 	Body     string             `json:"body"`
 	BodyFile *string            `json:"bodyFile" yaml:"bodyFile"`
 	Headers  *map[string]string `json:"headers"`
-	Delay    ResponseDelay      `json:"delay" yaml:"delay"`
+	Delay    ResponseDelay      `json:"delay,omitempty" yaml:"delay,omitempty"`
 }
 
 func FindImposters(impostersDirectory string, imposterConfigCh chan ImposterConfig) error {

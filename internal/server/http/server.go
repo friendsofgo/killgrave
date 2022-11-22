@@ -42,7 +42,7 @@ type Server struct {
 	httpServer    *http.Server
 	proxy         *Proxy
 	secure        bool
-	debugger      *debugger.Debugger
+	debugger      debugger.Debugger
 }
 
 // NewServer initialize the mock server
@@ -55,12 +55,12 @@ func NewServer(
 	debuggerCfg killgrave.ConfigDebugger,
 ) (Server, error) {
 	var (
-		dbg *debugger.Debugger
+		dbg debugger.Debugger = debugger.NewNoOp()
 		err error
 	)
 
 	if debuggerCfg.Enabled {
-		dbg, err = debugger.New(debuggerCfg)
+		dbg, err = debugger.NewWs(debuggerCfg)
 		if err != nil {
 			return Server{}, err
 		}
@@ -189,7 +189,7 @@ func (s *Server) Shutdown() error {
 func (s *Server) addImposterHandler(imposters []killgrave.Imposter, imposterConfig killgrave.ImposterConfig) {
 	for _, imposter := range imposters {
 		imposter.BasePath = filepath.Dir(imposterConfig.FilePath)
-		r := s.router.HandleFunc(imposter.Request.Endpoint, s.ImposterHandler(imposter)).
+		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(s.debugger, imposter)).
 			Methods(imposter.Request.Method).
 			MatcherFunc(MatcherBySchema(imposter))
 

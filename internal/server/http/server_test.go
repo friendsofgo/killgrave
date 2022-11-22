@@ -12,9 +12,10 @@ import (
 	"testing"
 	"time"
 
-	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+
+	killgrave "github.com/friendsofgo/killgrave/internal"
 )
 
 func TestMain(m *testing.M) {
@@ -24,18 +25,23 @@ func TestMain(m *testing.M) {
 
 func TestServer_Build(t *testing.T) {
 	var serverData = []struct {
-		name   string
-		server Server
-		err    error
+		name string
+		path string
+		err  error
 	}{
-		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false), errors.New("hello")},
-		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false), nil},
-		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false), nil},
+		{"imposter directory not found", "failImposterPath", errors.New("hello")},
+		{"malformatted json", "test/testdata/malformatted_imposters", nil},
+		{"valid imposter", "test/testdata/imposters", nil},
 	}
 
 	for _, tt := range serverData {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.server.Build()
+			server, err := NewServer(tt.path, mux.NewRouter(), &http.Server{}, &Proxy{}, false, killgrave.ConfigDebugger{})
+			if err != nil {
+				t.Fatalf("could not init server: %v", err)
+			}
+
+			err = server.Build()
 
 			if err == nil {
 				if tt.err != nil {
@@ -64,7 +70,12 @@ func TestBuildProxyMode(t *testing.T) {
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
 		}
-		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false)
+
+		server, err := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false, killgrave.ConfigDebugger{})
+		if err != nil {
+			t.Fatal("NewServer failed: ", err)
+		}
+
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -138,14 +149,21 @@ func TestBuildSecureMode(t *testing.T) {
 	makeServer := func(mode killgrave.ProxyMode) (*Server, func()) {
 		router := mux.NewRouter()
 		cert, _ := tls.X509KeyPair(serverCert, serverKey)
+
 		httpServer := &http.Server{Handler: router, Addr: ":4430", TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{cert},
 		}}
+
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
 		if err != nil {
 			t.Fatal("NewProxy failed: ", err)
 		}
-		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true)
+
+		server, err := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true, killgrave.ConfigDebugger{})
+		if err != nil {
+			t.Fatal("NewServer failed: ", err)
+		}
+
 		return &server, func() {
 			httpServer.Close()
 		}

@@ -94,7 +94,7 @@ function App() {
   );
 
   debuggerState.current.register(
-    DebuggerTransition.ImposterReceived,
+    DebuggerTransition.ImposterMatched,
     () => {
       setRunning(false);
       displayReceivedImposter(editorRef, debuggerInfo);
@@ -102,7 +102,7 @@ function App() {
   )
 
   debuggerState.current.register(
-    DebuggerTransition.ResponseReceived,
+    DebuggerTransition.ResponsePrepared,
     () => {
       setRunning(false);
       displayReceivedResponse(editorRef, debuggerInfo);
@@ -375,49 +375,23 @@ function buildOnMessage(
   debuggerState: MutableRefObject<null | DebuggerStateMachine>,
 ): (evt: MessageEvent) => void {
   return function (evt: MessageEvent) {
-    const msg: WsMessage = parseAndDecode(evt);
+    const msg: WsMessage = JSON.parse(evt.data);
 
     switch (msg.payload.type) {
       case DebuggerMessageType.RequestReceived:
-        debuggerInfo.current = {...msg.payload};
+        debuggerInfo.current = {request: msg.payload.request};
         debuggerState.current?.transition(DebuggerState.WaitingForRequestConfirmation);
         break;
-      case DebuggerMessageType.ImposterReceived:
-        debuggerInfo.current = {...msg.payload};
+      case DebuggerMessageType.ImposterMatched:
+        debuggerInfo.current = {imposter: msg.payload.imposter};
         debuggerState.current?.transition(DebuggerState.WaitingForImposterConfirmation);
         break;
-      case DebuggerMessageType.ResponseReceived:
-        debuggerInfo.current = {...msg.payload};
+      case DebuggerMessageType.ResponsePrepared:
+        debuggerInfo.current = {response: msg.payload.response};
         debuggerState.current?.transition(DebuggerState.WaitingForResponseConfirmation);
         break;
     }
   }
-}
-
-const parseAndDecode = (evt: MessageEvent): WsMessage => {
-  // Parse message from event
-  const msg: WsMessage = JSON.parse(evt.data);
-  console.log(msg);
-
-  // Decode
-  msg.payload.imposter = decode(msg.payload.imposter);
-  msg.payload.request = decode(msg.payload.request);
-  msg.payload.response = decode(msg.payload.response);
-  console.log(msg.payload);
-
-  return msg;
-}
-
-const decode = (s?: string): string => {
-  const enc: string = s || "";
-  const buff: Buffer = Buffer.from(enc, 'base64');
-  return buff.toString();
-}
-
-const encode = (s?: string): string => {
-  const dec: string = s || "";
-  const buff: Buffer = Buffer.from(dec);
-  return buff.toString('base64');
 }
 
 function displayReceivedRequest(
@@ -454,8 +428,8 @@ function sendConfirmedRequest(
   wsRef.current?.send(JSON.stringify({
     type: WsMessageType.Debugger,
     payload: {
-      type: DebuggerMessageType.RequestContinued,
-      request: encode(editorRef.current?.getValue())
+      type: DebuggerMessageType.RequestConfirmed,
+      request: editorRef.current?.getValue()
     },
   }));
 }
@@ -467,8 +441,8 @@ function sendConfirmedImposter(
   wsRef.current?.send(JSON.stringify({
     type: WsMessageType.Debugger,
     payload: {
-      type: DebuggerMessageType.ImposterContinued,
-      imposter: encode(editorRef.current?.getValue())
+      type: DebuggerMessageType.ImposterConfirmed,
+      imposter: editorRef.current?.getValue()
     },
   }));
 }
@@ -480,8 +454,8 @@ function sendConfirmedResponse(
   wsRef.current?.send(JSON.stringify({
     type: WsMessageType.Debugger,
     payload: {
-      type: DebuggerMessageType.ResponseContinued,
-      response: encode(editorRef.current?.getValue())
+      type: DebuggerMessageType.ResponseConfirmed,
+      response: editorRef.current?.getValue()
     },
   }));
 }

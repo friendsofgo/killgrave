@@ -10,6 +10,7 @@ import (
 
 // ResponseDelay represent time delay before server responds.
 type ResponseDelay struct {
+	input  string
 	delay  int64
 	offset int64
 }
@@ -47,6 +48,10 @@ func (d *ResponseDelay) UnmarshalJSON(data []byte) error {
 	return d.parseDelay(input)
 }
 
+func (d *ResponseDelay) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.input)
+}
+
 func (d *ResponseDelay) parseDelay(input string) error {
 	const delimiter = ":"
 
@@ -74,5 +79,6 @@ func (d *ResponseDelay) parseDelay(input string) error {
 	}
 	d.delay = int64(minDelay)
 	d.offset = offset
+	d.input = input
 	return nil
 }

@@ -7,6 +7,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	killgrave "github.com/friendsofgo/killgrave/internal"
+	"github.com/friendsofgo/killgrave/internal/debugger"
 )
 
 func TestImposterHandler(t *testing.T) {
@@ -28,7 +31,7 @@ func TestImposterHandler(t *testing.T) {
 	bodyFileFake := "test/testdata/imposters/responses/create_gopher_response_fail.json"
 	body := `{"test":true}`
 
-	validRequest := Request{
+	validRequest := killgrave.Request{
 		Method:     "POST",
 		Endpoint:   "/gophers",
 		SchemaFile: &schemaFile,
@@ -41,13 +44,13 @@ func TestImposterHandler(t *testing.T) {
 
 	var dataTest = []struct {
 		name         string
-		imposter     Imposter
+		imposter     killgrave.Imposter
 		expectedBody string
 		statusCode   int
 	}{
-		{"valid imposter with body", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, Body: body}}, body, http.StatusOK},
-		{"valid imposter with bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFile}}, string(expectedBodyFileData), http.StatusOK},
-		{"valid imposter with not exists bodyFile", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFileFake}}, "", http.StatusOK},
+		{"valid imposter with body", killgrave.Imposter{Request: validRequest, Response: killgrave.Response{Status: http.StatusOK, Headers: &headers, Body: body}}, body, http.StatusOK},
+		{"valid imposter with bodyFile", killgrave.Imposter{Request: validRequest, Response: killgrave.Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFile}}, string(expectedBodyFileData), http.StatusOK},
+		{"valid imposter with not exists bodyFile", killgrave.Imposter{Request: validRequest, Response: killgrave.Response{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFileFake}}, "", http.StatusOK},
 	}
 
 	for _, tt := range dataTest {
@@ -58,7 +61,7 @@ func TestImposterHandler(t *testing.T) {
 			}
 
 			rec := httptest.NewRecorder()
-			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
+			handler := ImposterHandler(debugger.NewNoOp(), tt.imposter)
 
 			handler.ServeHTTP(rec, req)
 			if status := rec.Code; status != tt.statusCode {
@@ -86,11 +89,11 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 
 	var dataTest = []struct {
 		name       string
-		imposter   Imposter
+		imposter   killgrave.Imposter
 		statusCode int
 		request    []byte
 	}{
-		{"valid request no schema", Imposter{Request: Request{Method: "POST", Endpoint: "/gophers"}, Response: Response{Status: http.StatusOK, Body: "test ok"}}, http.StatusOK, validRequest},
+		{"valid request no schema", killgrave.Imposter{Request: killgrave.Request{Method: "POST", Endpoint: "/gophers"}, Response: killgrave.Response{Status: http.StatusOK, Body: "test ok"}}, http.StatusOK, validRequest},
 	}
 
 	for _, tt := range dataTest {
@@ -101,7 +104,7 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 				t.Fatalf("could not created request: %v", err)
 			}
 			rec := httptest.NewRecorder()
-			handler := http.HandlerFunc(ImposterHandler(tt.imposter))
+			handler := ImposterHandler(debugger.NewNoOp(), tt.imposter)
 
 			handler.ServeHTTP(rec, req)
 			if status := rec.Code; status != tt.statusCode {

@@ -9,11 +9,11 @@ export interface WsMessage {
 
 export enum DebuggerMessageType {
   RequestReceived = 1,
-  RequestContinued,
-  ImposterReceived,
-  ImposterContinued,
-  ResponseReceived,
-  ResponseContinued,
+  RequestConfirmed,
+  ImposterMatched,
+  ImposterConfirmed,
+  ResponsePrepared,
+  ResponseConfirmed,
 }
 
 export interface DebuggerInfo {
@@ -41,8 +41,8 @@ export enum DebuggerTransition {
   ConnectionEstablished = 'ConnectionEstablished',
   ConnectionClosed = 'ConnectionClosed',
   RequestReceived = 'RequestReceived',
-  ImposterReceived = 'ImposterReceived',
-  ResponseReceived = 'ResponseReceived',
+  ImposterMatched = 'ImposterMatched',
+  ResponsePrepared = 'ResponsePrepared',
 }
 
 export type TransitionCallback = () => void;
@@ -107,7 +107,7 @@ const getTransition = (from: DebuggerState, to: DebuggerState): DebuggerTransiti
       [DebuggerState.WaitingForConnection]: DebuggerTransition.Unknown,
       [DebuggerState.Connected]: DebuggerTransition.Unknown,
       [DebuggerState.WaitingForRequestConfirmation]: DebuggerTransition.RequestReceived,
-      [DebuggerState.WaitingForImposterConfirmation]: DebuggerTransition.ImposterReceived,
+      [DebuggerState.WaitingForImposterConfirmation]: DebuggerTransition.ImposterMatched,
       [DebuggerState.WaitingForResponseConfirmation]: DebuggerTransition.Unknown,
     },
     [DebuggerState.WaitingForImposterConfirmation]: {
@@ -115,8 +115,8 @@ const getTransition = (from: DebuggerState, to: DebuggerState): DebuggerTransiti
       [DebuggerState.WaitingForConnection]: DebuggerTransition.Unknown,
       [DebuggerState.Connected]: DebuggerTransition.Unknown,
       [DebuggerState.WaitingForRequestConfirmation]: DebuggerTransition.Unknown,
-      [DebuggerState.WaitingForImposterConfirmation]: DebuggerTransition.ImposterReceived,
-      [DebuggerState.WaitingForResponseConfirmation]: DebuggerTransition.ResponseReceived,
+      [DebuggerState.WaitingForImposterConfirmation]: DebuggerTransition.ImposterMatched,
+      [DebuggerState.WaitingForResponseConfirmation]: DebuggerTransition.ResponsePrepared,
     },
     [DebuggerState.WaitingForResponseConfirmation]: {
       [DebuggerState.Unknown]: DebuggerTransition.ConnectionClosed,
@@ -124,7 +124,7 @@ const getTransition = (from: DebuggerState, to: DebuggerState): DebuggerTransiti
       [DebuggerState.Connected]: DebuggerTransition.Unknown,
       [DebuggerState.WaitingForRequestConfirmation]: DebuggerTransition.Unknown,
       [DebuggerState.WaitingForImposterConfirmation]: DebuggerTransition.Unknown,
-      [DebuggerState.WaitingForResponseConfirmation]: DebuggerTransition.ResponseReceived,
+      [DebuggerState.WaitingForResponseConfirmation]: DebuggerTransition.ResponsePrepared,
     }
   }
 
