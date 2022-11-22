@@ -1,5 +1,5 @@
 {
-  "name": "killgrave",
+  "name": "killgrave-debugger",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -27,7 +27,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "BUILD_PATH='../internal/debugger/app' react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

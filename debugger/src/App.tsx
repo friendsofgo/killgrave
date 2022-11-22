@@ -354,7 +354,10 @@ function establishConnection(
   debuggerInfo: MutableRefObject<Partial<DebuggerInfo>>,
   debuggerState: MutableRefObject<null | DebuggerStateMachine>,
 ) {
-  wsRef.current = new WebSocket('ws://localhost:8080/ws'); // TODO: Parameterize and use ref
+  const href = window.location.href;
+  const root = href.split("://")[1]
+
+  wsRef.current = new WebSocket(`ws://${root}ws`);
 
   wsRef.current.onopen = () => {
     debuggerState.current?.transition(DebuggerState.Connected);

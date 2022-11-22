@@ -29,19 +29,23 @@ const (
 	_defaultImpostersPath = "imposters"
 	_defaultConfigFile    = ""
 	_defaultProxyMode     = killgrave.ProxyNone
+	_defaultDebugger      = false
+	_defaultDebuggerAddr  = "localhost:30000"
 )
 
 func main() {
 	var (
-		host           = flag.String("host", _defaultHost, "if you run your server on a different host")
-		port           = flag.Int("port", _defaultPort, "port to run the server")
-		secure         = flag.Bool("secure", _defaultSecure, "if you run your server using TLS (https)")
-		imposters      = flag.String("imposters", _defaultImpostersPath, "directory where your imposters are saved")
+		host           = flag.String("host", _defaultHost, "run your server on a different host")
+		port           = flag.Int("port", _defaultPort, "run your server on a different port")
+		secure         = flag.Bool("secure", _defaultSecure, "run your server using TLS (https)")
+		imposters      = flag.String("imposters", _defaultImpostersPath, "directory where imposters are read from")
 		showVersion    = flag.Bool("version", false, "show the _version of the application")
-		configFilePath = flag.String("config", _defaultConfigFile, "path with configuration file")
-		watcherFlag    = flag.Bool("watcher", false, "file watcher, reload the server with each file change")
-		proxyModeFlag  = flag.String("proxy-mode", _defaultProxyMode.String(), "proxy mode you can choose between (all, missing or none)")
-		proxyURLFlag   = flag.String("proxy-url", "", "proxy url, you need to choose a proxy-mode")
+		configFilePath = flag.String("config", _defaultConfigFile, "path to the configuration file")
+		watcherFlag    = flag.Bool("watcher", false, "enable the file watcher, which reloads the server on every file change")
+		proxyModeFlag  = flag.String("proxy-mode", _defaultProxyMode.String(), "proxy mode (choose between 'all', 'missing' or 'none')")
+		proxyURLFlag   = flag.String("proxy-url", "", "proxy url, use it in combination with proxy-mode")
+		debugger       = flag.Bool("debugger", _defaultDebugger, "run your server with the debugger")
+		debuggerAddr   = flag.String("debugger-addr", _defaultDebuggerAddr, "debugger address")
 	)
 
 	flag.Parse()
@@ -60,6 +64,7 @@ func main() {
 		killgrave.WithProxyConfiguration(*proxyModeFlag, *proxyURLFlag),
 		killgrave.WithWatcherConfiguration(*watcherFlag),
 		killgrave.WithConfigFile(*configFilePath),
+		killgrave.WithDebuggerConfiguration(*debugger, *debuggerAddr),
 	)
 	if err != nil {
 		log.Println(err)
@@ -119,15 +124,21 @@ func runServer(host string, port int, cfg killgrave.Config) server.Server {
 		log.Fatal(err)
 	}
 
-	s := server.NewServer(
+	s, err := server.NewServer(
 		cfg.ImpostersPath,
 		router,
 		httpServer,
 		proxyServer,
 		cfg.Secure,
+		cfg.Debugger,
 	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	if err := s.Build(); err != nil {
 		log.Fatal(err)
 	}
+
 	return s
 }

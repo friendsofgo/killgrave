@@ -1,10 +1,13 @@
 package debugger
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 
@@ -12,6 +15,9 @@ import (
 )
 
 type Debugger struct {
+	srv *http.Server
+	mux *http.ServeMux
+
 	// TODO: Evaluate if more connections are needed
 	conn *websocket.Conn
 	// TODO: Evaluate Upgrader best practices
@@ -24,8 +30,21 @@ type Debugger struct {
 	waitResponseContinue *debuggerWait
 }
 
-func New() *Debugger {
+func New(cfg killgrave.ConfigDebugger) (*Debugger, error) {
+	mux := http.NewServeMux()
+
+	srv := &http.Server{
+		Addr:              cfg.Address,
+		ReadTimeout:       1 * time.Second,
+		WriteTimeout:      1 * time.Second,
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 2 * time.Second,
+		Handler:           mux,
+	}
+
 	d := &Debugger{
+		srv: srv,
+		mux: mux,
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -35,13 +54,55 @@ func New() *Debugger {
 		},
 	}
 
-	return d
+	// App's index.html
+	d.registerIndex()
 
+	// App's static assets (css, js, etc)
+	if err := d.registerStatic(); err != nil {
+		return nil, err
+	}
+
+	// WebSocket endpoint
+	d.registerWs()
+
+	// Start server
+	go func() {
+		log.Printf("The debugger app has been enabled and is available now on: %s\n", cfg.Address)
+		err := d.srv.ListenAndServe()
+		if err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	return d, nil
 }
 
-func (d *Debugger) Run() error {
-	// TODO: Use a non-default server
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+//go:embed app/index.html
+var index []byte
+
+func (d *Debugger) registerIndex() {
+	d.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write(index)
+		w.WriteHeader(http.StatusOK)
+	})
+}
+
+//go:embed app/static/*
+var public embed.FS
+
+func (d *Debugger) registerStatic() error {
+	static, err := fs.Sub(public, "app")
+	if err != nil {
+		return err
+	}
+
+	staticFs := http.FileServer(http.FS(static))
+	d.mux.Handle("/static/", staticFs)
+	return nil
+}
+
+func (d *Debugger) registerWs() {
+	d.mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		d.conn, err = d.upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -81,9 +142,6 @@ func (d *Debugger) Run() error {
 			}
 		}(d.conn)
 	})
-
-	// TODO: Make debugger address/port configurable
-	return http.ListenAndServe(":8080", nil)
 }
 
 // TODO: Similar for other types?

@@ -11,13 +11,14 @@ import (
 
 // Config representation of config file yaml
 type Config struct {
-	ImpostersPath string      `yaml:"imposters_path"`
-	Port          int         `yaml:"port"`
-	Host          string      `yaml:"host"`
-	CORS          ConfigCORS  `yaml:"cors"`
-	Proxy         ConfigProxy `yaml:"proxy"`
-	Secure        bool        `yaml:"secure"`
-	Watcher       bool        `yaml:"watcher"`
+	ImpostersPath string         `yaml:"imposters_path"`
+	Port          int            `yaml:"port"`
+	Host          string         `yaml:"host"`
+	CORS          ConfigCORS     `yaml:"cors"`
+	Proxy         ConfigProxy    `yaml:"proxy"`
+	Secure        bool           `yaml:"secure"`
+	Watcher       bool           `yaml:"watcher"`
+	Debugger      ConfigDebugger `yaml:"debugger"`
 }
 
 // ConfigCORS representation of section CORS of the yaml
@@ -93,6 +94,12 @@ func (p *ProxyMode) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+// ConfigDebugger is a representation of section debugger of the yaml
+type ConfigDebugger struct {
+	Enabled bool   `yaml:"enabled"`
+	Address string `yaml:"address"`
+}
+
 // ConfigOpt function to encapsulate optional parameters
 type ConfigOpt func(cfg *Config) error
 
@@ -154,6 +161,16 @@ func WithWatcherConfiguration(watcher bool) ConfigOpt {
 	return func(cfg *Config) error {
 
 		cfg.Watcher = watcher
+		return nil
+	}
+}
+
+// WithDebuggerConfiguration sets debugger configuration
+func WithDebuggerConfiguration(enabled bool, addr string) ConfigOpt {
+	return func(cfg *Config) error {
+		cfg.Debugger.Enabled = enabled
+		cfg.Debugger.Address = addr
+
 		return nil
 	}
 }

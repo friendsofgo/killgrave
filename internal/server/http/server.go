@@ -42,21 +42,38 @@ type Server struct {
 	httpServer    *http.Server
 	proxy         *Proxy
 	secure        bool
-
-	debugger *debugger.Debugger
+	debugger      *debugger.Debugger
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool) Server {
+func NewServer(
+	p string,
+	r *mux.Router,
+	httpServer *http.Server,
+	proxyServer *Proxy,
+	secure bool,
+	debuggerCfg killgrave.ConfigDebugger,
+) (Server, error) {
+	var (
+		dbg *debugger.Debugger
+		err error
+	)
+
+	if debuggerCfg.Enabled {
+		dbg, err = debugger.New(debuggerCfg)
+		if err != nil {
+			return Server{}, err
+		}
+	}
+
 	return Server{
 		impostersPath: p,
 		router:        r,
 		httpServer:    httpServer,
 		proxy:         proxyServer,
 		secure:        secure,
-
-		debugger: debugger.New(),
-	}
+		debugger:      dbg,
+	}, nil
 }
 
 // PrepareAccessControl Return options to initialize the mock server with default access control
@@ -91,14 +108,6 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 // Build read all the files on the impostersPath and add different
 // handlers for each imposter
 func (s *Server) Build() error {
-	// TODO: Parameterize debugger
-	// TODO: Attach to application lifecycle (context)
-	if s.debugger != nil {
-		go func() {
-			log.Fatal(s.debugger.Run())
-		}()
-	}
-
 	if s.proxy.mode == killgrave.ProxyAll {
 		s.handleAll(s.proxy.Handler())
 	}

@@ -139,23 +139,27 @@ Killgrave takes the following command line options. Killgrave is almost fully co
 $ killgrave -h
 
   -config string
-        path with configuration file
+        path to the configuration file
+  -debugger
+        run your server with the debugger
+  -debugger-addr string
+        debugger address (default ":30000")
   -host string
-        if you run your server on a different host (default "localhost")
+        run your server on a different host (default "localhost")
   -imposters string
-        directory where your imposters are saved (default "imposters")
+        directory where imposters are read from (default "imposters")
   -port int
-        port to run the server (default 3000)
-  -secure bool
-        if you run your server using TLS (https)
+        run your server on a different port (default 3000)
   -proxy-mode string
-        proxy mode you can choose between (all, missing or none) (default "none")
+        proxy mode (choose between 'all', 'missing' or 'none') (default "none")
   -proxy-url string
-        proxy url, you need to choose a proxy-mode
+        proxy url, use it in combination with proxy-mode
+  -secure
+        run your server using TLS (https)
   -version
         show the _version of the application
   -watcher
-        file watcher, reload the server with each file change
+        enable the file watcher, which reloads the server on every file change
 ```
 
 ### Using Killgrave by config file
@@ -180,8 +184,10 @@ cors:
   exposed_headers: ["Cache-Control"]
   origins: ["*"]
   allow_credentials: true
-watcher: true
 secure: true
+debugger:
+    enabled: true
+    address: ":30000"
 ```
 
 As you can see, you can configure all the options in a very easy way. For the above example, the file tree looks as follows, with the current working directory being `mymock`.
