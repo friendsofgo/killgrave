@@ -1,6 +1,4 @@
 import React, {
-  Dispatch,
-  MouseEventHandler,
   MutableRefObject,
   useCallback,
   useEffect,
@@ -11,7 +9,6 @@ import './App.css';
 import logo from './logo.svg';
 import Editor, { Monaco } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
-import { Tooltip } from 'flowbite-react';
 import {
   DebuggerInfo,
   DebuggerMessageType,
@@ -20,29 +17,18 @@ import {
   DebuggerTransition,
   WsMessage, WsMessageType
 } from './Debugger';
-import { IconGlassMinus, IconGlassPlus, IconMoon, IconPlay, IconStop, IconSun } from './icons';
+import { IconPlay, IconStop } from './icons';
+import { Console, HelpButton, SwitchThemeButton, ToggleIconButton, TooltipButton } from './components';
+import { useEventBus } from './bus/hooks';
+import { EventBusMessages, FontSizeChangedMessage, ThemeChangedMessage } from './bus/messages';
+import { FONT_SIZE_CHANGED_TOPIC, NOTIFICATION_TOPIC, THEME_CHANGED_TOPIC } from './bus/topics';
+import { EventBus } from './bus/types';
+import { FontSizeControl } from './components/FontSizeControl';
+
+const DEFAULT_FONT_SIZE = 14;
 
 function App() {
-  // Font size
-  const defaultFontSize = 12;
-  const [fontSize, setFontSize] = useState<number>(defaultFontSize);
-  const defaultLineNumberSize = 7;
-  const [lineNumberSize, setLineNumberSize] = useState<number>(defaultLineNumberSize);
-
-  const increaseFontSize = () => {
-    setFontSize(fontSize + 1);
-    setLineNumberSize(lineNumberSize + 0.1);
-  }
-
-  const decreaseFontSize = () => {
-    setFontSize(fontSize - 1);
-    setLineNumberSize(lineNumberSize - 0.1);
-  }
-
-  // Debugger status
-  const [running, setRunning] = useState<boolean>(false);
-
-  // Register actions
+  // Monaco / Editor
   const editorRef = useRef<null | monaco.editor.IStandaloneCodeEditor>(null);
   const monacoRef = useRef<null | Monaco>(null);
 
@@ -50,6 +36,35 @@ function App() {
     editorRef.current = editor;
     monacoRef.current = monaco;
   }
+
+  // Event bus
+  const eventBus = useEventBus<EventBusMessages>();
+
+  useEffect(() => {
+    const themeListener = eventBus.subscribe(THEME_CHANGED_TOPIC, (m: ThemeChangedMessage) => {
+      if (m.dark) {
+        monacoRef.current?.editor.setTheme('vs-dark')
+        document.getElementById('root')?.classList.add('dark')
+      } else {
+        monacoRef.current?.editor.setTheme('vs')
+        document.getElementById('root')?.classList.remove('dark')
+      }
+    })
+
+    const fontSizeListener = eventBus.subscribe(FONT_SIZE_CHANGED_TOPIC, (m: FontSizeChangedMessage) => {
+      const currFontSize = editorRef.current?.getRawOptions().fontSize || DEFAULT_FONT_SIZE;
+      const newFontSize = m.increased ? currFontSize + 1 : currFontSize - 1
+      editorRef.current?.updateOptions({fontSize: newFontSize});
+    })
+
+    return () => {
+      themeListener.unsubscribe();
+      fontSizeListener.unsubscribe();
+    };
+  }, [eventBus]);
+
+  // Debugger status
+  const [running, setRunning] = useState<boolean>(false);
 
   // Set up handle key press
   const handleKeyPress = useCallback((event: any) => {
@@ -79,7 +94,6 @@ function App() {
   const debuggerInfo = useRef<Partial<DebuggerInfo>>({});
 
   const debuggerState = useRef<DebuggerStateMachine>(new DebuggerStateMachine());
-
   debuggerState.current.register(
     DebuggerTransition.ConnectionRequested,
     () => establishConnection(wsRef, debuggerInfo, debuggerState)
@@ -130,56 +144,15 @@ function App() {
     }
   }, [running])
 
-  // Dark mode
-  const [dark, setDark] = useState<boolean>(false);
-  const toggleDark = (dark: boolean) => {
-    if (dark) {
-      monacoRef.current?.editor.setTheme('vs-dark')
-      document.getElementById('root')?.classList.add('dark')
-    } else {
-      monacoRef.current?.editor.setTheme('vs')
-      document.getElementById('root')?.classList.remove('dark')
-    }
-    setDark(dark);
-  }
-
   return (
     <div className="App bg-white dark:bg-dark h-full">
       <div className="container">
-        <h1 className="text-3xl pt-10 pb-5 font-bold text-purplegrave">Killgrave Debugger</h1>
+        <h1 className="text-3xl pt-8 pb-4 font-bold text-purplegrave">Killgrave Debugger</h1>
         <div className="flex items-center justify-center text-purplegrave"><img className="h-24" src={logo}
                                                                                 alt="Killgrave Logo"/></div>
-        <div className="p-1 flex items-center justify-center text-purplegrave font-bold text-s italic">
-          Tip: Use CTRL + SHIFT + L to format code
-        </div>
         <div className="p-3 flex items-center justify-center">
-          {/* Light / dark toggle button*/}
-          <TooltipButton
-            tooltip={"Toggle dark mode"}
-            button={<ToggleIconButton
-              show={dark}
-              setShow={toggleDark}
-              primary={<IconSun/>} secondary={<IconMoon/>}
-            />}
-          />
-
-          {/* Smaller font button*/}
-          <TooltipButton
-            tooltip={"Make font smaller"}
-            button={<ClickIconButton
-              icon={<IconGlassMinus/>}
-              onClick={decreaseFontSize}
-            />}
-          />
-
-          {/* Larger font button*/}
-          <TooltipButton
-            tooltip={"Make font larger"}
-            button={<ClickIconButton
-              icon={<IconGlassPlus/>}
-              onClick={increaseFontSize}
-            />}
-          />
+          <SwitchThemeButton/>
+          <FontSizeControl/>
 
           {/* Play / pause button*/}
           <TooltipButton
@@ -192,75 +165,28 @@ function App() {
               primary={<IconStop/>} secondary={<IconPlay/>}
             />}
           />
-
+          <HelpButton/>
         </div>
         <Editor
-          height="55vh"
+          height="45vh"
           className="border-4 h-full border-purplegrave p-3"
           defaultLanguage="json"
           defaultValue="// some comment"
           options={{
-            fontSize: fontSize,
+            fontSize: DEFAULT_FONT_SIZE,
             minimap: {enabled: false},
             scrollbar: {verticalScrollbarSize: 5},
             lineNumbersMinChars: 1,
           }}
           onMount={handleEditorDidMount}
         />
+
+        <Console/>
       </div>
 
     </div>
   );
 }
-
-interface TooltipButtonProps {
-  tooltip: string;
-  button: JSX.Element;
-}
-
-const TooltipButton: React.FC<TooltipButtonProps> = ({tooltip, button}) =>
-  // eslint-disable-next-line
-  <Tooltip style={'auto'} arrow={false} content={tooltip} animation="duration-100">
-    {button}
-  </Tooltip>;
-
-interface ToggleIconButtonProps {
-  show: boolean;
-  setShow: Dispatch<boolean>;
-  primary: JSX.Element;
-  secondary: JSX.Element;
-  tooltip?: string;
-}
-
-const ToggleIconButton: React.FC<ToggleIconButtonProps> = ({show, setShow, primary, secondary, tooltip}) =>
-  (show ? (
-    <button
-      className="flex text-4xl font-bold text-purplegrave items-center cursor-pointer"
-      onClick={() => setShow(!show)}
-    >
-      {primary}
-    </button>
-  ) : (
-    <button
-      className="flex text-4xl font-bold text-purplegrave items-center cursor-pointer"
-      onClick={() => setShow(!show)}
-    >
-      {secondary}
-    </button>
-  ));
-
-interface ClickIconButtonProps {
-  icon: JSX.Element;
-  onClick: MouseEventHandler;
-}
-
-const ClickIconButton: React.FC<ClickIconButtonProps> = ({icon, onClick}) =>
-  <button
-    className="flex text-4xl font-bold text-purplegrave items-center cursor-pointer"
-    onClick={onClick}
-  >
-    {icon}
-  </button>;
 
 export default App;
 
@@ -271,16 +197,17 @@ function establishConnection(
   debuggerInfo: MutableRefObject<Partial<DebuggerInfo>>,
   debuggerState: MutableRefObject<null | DebuggerStateMachine>,
 ) {
-  const href = window.location.href;
-  const root = href.split("://")[1]
+  const eventBus = EventBus<EventBusMessages>();
 
-  wsRef.current = new WebSocket(`ws://${root}ws`);
+  wsRef.current = new WebSocket(`ws://localhost:3030/ws`);
 
   wsRef.current.onopen = () => {
+    eventBus.publish({topic: NOTIFICATION_TOPIC, payload: {text: "Connection established"}});
     debuggerState.current?.transition(DebuggerState.Connected);
   };
 
   wsRef.current.onclose = () => {
+    eventBus.publish({topic: NOTIFICATION_TOPIC, payload: {text: "Connection closed"}});
     debuggerState.current?.transition(DebuggerState.Unknown);
   };
 
