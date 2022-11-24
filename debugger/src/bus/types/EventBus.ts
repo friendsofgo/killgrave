@@ -1,3 +1,5 @@
+import { isDevelopment } from '../../App';
+
 const defaultPublishOptions: PublishOptions = {
   targetOrigin: '*',
   targetWindow: window
@@ -12,6 +14,7 @@ export const EventBus = <MessagesMap extends Record<string, any>>() => {
     message: Message<MessagesMap, Topic>,
     options: PublishOptions = defaultPublishOptions
   ) => {
+    if (isDevelopment) console.log(message);
     options.targetWindow.postMessage(message, options.targetOrigin);
   };
 

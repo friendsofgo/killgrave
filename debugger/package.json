@@ -19,6 +19,7 @@
     "monaco-editor-webpack-plugin": "^7.0.1",
     "nanoid": "^4.0.0",
     "postcss": "^8.4.17",
+    "process": "^0.11.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",

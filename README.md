@@ -143,7 +143,7 @@ $ killgrave -h
   -debugger
         run your server with the debugger
   -debugger-addr string
-        debugger address (default ":30000")
+        debugger address (default "localhost:3030")
   -host string
         run your server on a different host (default "localhost")
   -imposters string
@@ -157,7 +157,7 @@ $ killgrave -h
   -secure
         run your server using TLS (https)
   -version
-        show the _version of the application
+        show the version of the application
   -watcher
         enable the file watcher, which reloads the server on every file change
 ```

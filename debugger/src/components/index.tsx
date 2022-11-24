@@ -1,5 +1,3 @@
-export { Console } from './Console';
-
 // Composable buttons
 export { TooltipButton } from './TooltipButton';
 export type { TooltipButtonProps } from './TooltipButton';
@@ -11,3 +9,9 @@ export type { ClickIconButtonProps } from './ClickIconButton';
 // Specific buttons
 export { SwitchThemeButton } from './SwitchThemeButton';
 export { HelpButton } from './HelpButton';
+
+// Specific components
+export { AppLogo } from './AppLogo';
+export { Toolbar } from './Toolbar';
+export { CodeEditor } from './CodeEditor';
+export { Console } from './Console';

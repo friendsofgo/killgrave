@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { IconMoon, IconSun } from '../../icons';
+import { IconMoon, IconSun } from '../icons';
 import { ToggleIconButton } from '../ToggleIconButton';
 import { TooltipButton } from '../TooltipButton';
 import { useEventBus } from '../../bus/hooks';
 import { EventBusMessages } from '../../bus/messages';
-import { THEME_CHANGED_TOPIC } from '../../bus/topics';
+import { Topics } from '../../bus/types';
 
 export const SwitchThemeButton: React.FC = () => {
   const eventBus = useEventBus<EventBusMessages>();
   const [dark, setDark] = useState<boolean>(false);
 
   const toggleDark = (dark: boolean) => {
-    eventBus.publish({topic: THEME_CHANGED_TOPIC, payload: {dark}});
+    eventBus.publish({topic: Topics.THEME_CHANGED, payload: {dark}});
     setDark(dark);
   }
 

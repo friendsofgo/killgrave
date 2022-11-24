@@ -39,7 +39,7 @@ func main() {
 		port           = flag.Int("port", _defaultPort, "run your server on a different port")
 		secure         = flag.Bool("secure", _defaultSecure, "run your server using TLS (https)")
 		imposters      = flag.String("imposters", _defaultImpostersPath, "directory where imposters are read from")
-		showVersion    = flag.Bool("version", false, "show the _version of the application")
+		showVersion    = flag.Bool("version", false, "show the version of the application")
 		configFilePath = flag.String("config", _defaultConfigFile, "path to the configuration file")
 		watcherFlag    = flag.Bool("watcher", false, "enable the file watcher, which reloads the server on every file change")
 		proxyModeFlag  = flag.String("proxy-mode", _defaultProxyMode.String(), "proxy mode (choose between 'all', 'missing' or 'none')")

@@ -1,17 +1,45 @@
-export interface ThemeChangedMessage {
-  dark: boolean;
-}
+import { NotificationMessage } from './notification';
+import { FontSizeChangedMessage, ThemeChangedMessage } from './ui';
+import {
+  RequestReceivedMessage,
+  RequestConfirmedMessage,
+  ImposterMatchedMessage,
+  ImposterConfirmedMessage,
+  ResponsePreparedMessage,
+  ResponseConfirmedMessage
+} from './debugger';
 
-export interface FontSizeChangedMessage {
-  increased: boolean;
-}
+export type { NotificationMessage } from './notification';
+export type { FontSizeChangedMessage, ThemeChangedMessage } from './ui';
+export type {
+  RequestReceivedMessage,
+  RequestConfirmedMessage,
+  ImposterMatchedMessage,
+  ImposterConfirmedMessage,
+  ResponsePreparedMessage,
+  ResponseConfirmedMessage
+} from './debugger';
 
-export interface NotificationMessage {
-  text: string;
-}
 
 export interface EventBusMessages {
+  // notification
+  Notification: NotificationMessage;
+
+  // ui
   ThemeChanged: ThemeChangedMessage;
   FontSizeChanged: FontSizeChangedMessage;
-  Notification: NotificationMessage;
+
+  // websocket
+  ConnectionEstablished: {};
+  ConnectionClosed: {};
+
+  // debugger
+  DebuggerStarted: {};
+  DebuggerStopped: {};
+  RequestReceived: RequestReceivedMessage;
+  RequestConfirmed: RequestConfirmedMessage;
+  ImposterMatched: ImposterMatchedMessage;
+  ImposterConfirmed: ImposterConfirmedMessage;
+  ResponsePrepared: ResponsePreparedMessage;
+  ResponseConfirmed: ResponseConfirmedMessage;
 }

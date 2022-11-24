@@ -1,19 +1,19 @@
 import React from 'react';
-import { IconGlassMinus, IconGlassPlus, } from '../../icons';
+import { IconGlassMinus, IconGlassPlus, } from '../icons';
 import { TooltipButton } from '../TooltipButton';
 import { useEventBus } from '../../bus/hooks';
 import { EventBusMessages } from '../../bus/messages';
-import { FONT_SIZE_CHANGED_TOPIC, } from '../../bus/topics';
 import { ClickIconButton } from '../ClickIconButton';
+import { Topics } from '../../bus/types';
 
 export const FontSizeControl: React.FC = () => {
   const eventBus = useEventBus<EventBusMessages>();
 
   const fontSizeIncreased = () => eventBus.publish(
-    {topic: FONT_SIZE_CHANGED_TOPIC, payload: {increased: true}});
+    {topic: Topics.FONT_SIZE_CHANGED, payload: {increased: true}});
 
   const fontSizeDecreased = () => eventBus.publish(
-    {topic: FONT_SIZE_CHANGED_TOPIC, payload: {increased: false}});
+    {topic: Topics.FONT_SIZE_CHANGED, payload: {increased: false}});
 
   return <>
     <TooltipButton

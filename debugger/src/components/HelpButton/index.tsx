@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconQuestionMark } from '../../icons';
+import { IconQuestionMark } from '../icons';
 import { TooltipButton } from '../TooltipButton';
 
 export const HelpButton: React.FC = () => {
