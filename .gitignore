@@ -15,7 +15,3 @@ coverage.txt
 imposters
 
 !internal/server/http/test/testdata/imposters/
-
-# Frontend artifacts
-internal/debugger/app/*
-!internal/debugger/app/.gitkeep

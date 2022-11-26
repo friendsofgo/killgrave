@@ -1,0 +1,22 @@
+{
+  "name": "killgrave",
+  "version": "0.0.1",
+  "description": "Simple way to generate mock servers in Go",
+  "main": "index.js",
+  "authors": {
+    "name": "Friends of Go",
+    "email": "contact@friendsofgo.tech"
+  },
+  "repository": "https://github.com/friendsofgo/killgrave/killgrave",
+  "scripts": {
+    "dev": "vuepress dev src",
+    "build": "vuepress build src"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@vuepress/plugin-back-to-top": "^1.5.4",
+    "@vuepress/plugin-google-analytics": "^1.5.4",
+    "vuepress": "^1.5.3",
+    "vuepress-plugin-clean-urls": "^1.1.2"
+  }
+}

@@ -67,7 +67,7 @@ Killgrave provides:
 
 Imposters are the most important concept of the Killgrave tool. They define the rules that determine how the server should respond to a request.
 
-You can identify a Killgrave imposter file by its extension: `.imp.json`.
+You can identify a Killgrave imposter file by its extension: `.imp.json`, `.imp.yml` or `.imp.yaml`.
 
 You can learn more about how to configure imposters in the [Imposter Configuration Section](#imposter).
 
@@ -187,7 +187,7 @@ cors:
 secure: true
 debugger:
     enabled: true
-    address: ":30000"
+    address: "localhost:3030"
 ```
 
 As you can see, you can configure all the options in a very easy way. For the above example, the file tree looks as follows, with the current working directory being `mymock`.
