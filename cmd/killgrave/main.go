@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -107,7 +108,7 @@ func runWatcher(canWatch bool, pathToWatch string, currentSrv *server.Server, ho
 
 func runServer(host string, port int, cfg killgrave.Config) server.Server {
 	router := mux.NewRouter()
-	httpAddr := fmt.Sprintf("%s:%d", host, port)
+	httpAddr := net.JoinHostPort(host, strconv.Itoa(port))
 
 	httpServer := &http.Server{
 		Addr:    httpAddr,
