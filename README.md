@@ -69,7 +69,7 @@ Imposters are the most important concept of the Killgrave tool. They define the 
 
 You can identify a Killgrave imposter file by its extension: `.imp.json`.
 
-You can learn more about how to configure imposters in the [Imposter Configuration Section](#imposter).
+You can learn more about how to configure imposters in the [Imposter Configuration Section](#imposters).
 
 ## Installing
 > :warning:  Even though Killgrave is a very robust tool and is being used by some companies in production environments, it's still in initial development. Therefore, 'minor' version numbers are used to signify breaking changes and 'patch' version numbers are used for non-breaking changes or bugfixing. As soon as v1.0.0 is released, Killgrave will start to use [`SemVer`](https://semver.org/) as usual.
