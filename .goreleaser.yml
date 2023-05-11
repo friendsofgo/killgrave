@@ -41,6 +41,7 @@ brews:
     tap:
       owner: friendsofgo
       name: homebrew-tap
+      token: "{{ .Env.GH_RELEASER }}"
     folder: Formula
     description: |
       Simple way to generate fake servers

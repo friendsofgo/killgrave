@@ -25,7 +25,8 @@ jobs:
           version: latest
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_RELEASER }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_RELEASER: ${{ secrets.GH_RELEASER }}
   docker-hub:
     needs: release
     name: Deploy to docker-hub
