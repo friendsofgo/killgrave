@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.5.0 (2023/05/12)
+* Replace the use of `go flags` by `cobra`
+* Change all the `cli` commands and flags, more information on `README.md` (Breaking change if you are using single dash)
+* Deprecated Go Version 1.16, we support now Go 1.20
+* Change support of the filesystem, start using [afero](https://github.com/spf13/afero) library
+* Deprecated using test on the Go standard way and start to use [testify](https://github.com/stretchr/testify) library
+* Fix a bug with the `proxy-mode` `missing`, the app always tryed to load the imposter even when not match
+* Using stric slashes
+
 ## v0.4.1(2021/04/24)
 * Migration to Github actions and remove the use of Circle CI
 * Deprecation go versions before to v1.16
