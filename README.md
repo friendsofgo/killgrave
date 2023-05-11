@@ -152,7 +152,7 @@ Usage:
 
 Flags:
   -c, --config string       Path to your configuration file
-  -h, --help                help for killgrave
+  -h, --help                Help for Killgrave
   -H, --host string         Set a different host than localhost (default "localhost")
   -i, --imposters string    Directory where your imposters are located (default "imposters")
   -P, --port int            Port to run the server (default 3000)
