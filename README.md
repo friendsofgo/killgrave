@@ -26,16 +26,16 @@ Killgrave is a simulator for HTTP-based APIs, in simple words a **Mock Server**,
     * [Compile by yourself](#compile-by-yourself)
     * [Other](#other)
 - [Getting Started](#getting-started)
-    * [Using Killgrave by command line](#using-killgrave-by-command-line)
+    * [Using Killgrave by command line](#using-killgrave-from-the-command-line)
     * [Using Killgrave by config file](#using-killgrave-by-config-file)
     * [Configure CORS](#configure-cors)
-    * [Prepare Killgrave for Proxy Mode](#prepare-killgrave-for-proxy-mode)
-    * [Create an Imposter](#create-an-imposter)
+    * [Preparing Killgrave for Proxy Mode](#preparing-killgrave-for-proxy-mode)
+    * [Creating an Imposter](#creating-an-imposter)
     * [Imposters structure](#imposters-structure)
-    * [Create an Imposter using regex](#create-an-imposter-using-regex)
-    * [Create an imposter using JSON Schema](#create-an-imposter-using-json-schema)
-    * [Create an imposter with delay](#create-an-imposter-with-delay)
-    * [Create an imposter with dynamic responses](#create-an-imposter-with-dynamic-responses)
+    * [Using regex in imposters](#using-regex-in-imposters)
+    * [Creating an imposter using JSON Schema](#creating-an-imposter-using-json-schema)
+    * [Creating an imposter with delay](#creating-an-imposter-with-delay)
+    * [Creating an imposter with dynamic responses](#creating-an-imposter-with-dynamic-responses)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -397,7 +397,7 @@ In the next example, we have configured an imposter that uses regex to match an 
 ]
 ```
 
-### Create an imposter using JSON Schema
+### Creating an imposter using JSON Schema
 
 Sometimes, we need to validate our request more thoroughly. In cases like this we can
 create an imposter that only matches with a valid [json schema](https://json-schema.org/).
@@ -491,7 +491,7 @@ Then our imposter will be configured as follows:
 
 The path where the schema is located is relative to where the imposters are.
 
-### Create an imposter with delay
+### Creating an imposter with delay
 
 If we want to simulate a problem with the network, or create a more realistic response, we can use the `delay` property.
 
@@ -523,7 +523,7 @@ For example, we can modify our previous POST call to add a `delay` to determine 
 ]
 ````
 
-### Create an Imposter with dynamic responses
+### Creating an imposter with dynamic responses
 
 Killgrave allows dynamic responses. Using this feature, Killgrave can return different responses on the same endpoint.
 
