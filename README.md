@@ -145,24 +145,22 @@ Killgrave takes the following command line options. Killgrave is almost fully co
 ```sh
 $ killgrave -h
 
-  -config string
-        path with configuration file
-  -host string
-        if you run your server on a different host (default "localhost")
-  -imposters string
-        directory where your imposters are saved (default "imposters")
-  -port int
-        port to run the server (default 3000)
-  -secure bool
-        if you run your server using TLS (https)
-  -proxy-mode string
-        proxy mode you can choose between (all, missing or none) (default "none")
-  -proxy-url string
-        proxy url, you need to choose a proxy-mode
-  -version
-        show the _version of the application
-  -watcher
-        file watcher, reload the server with each file change
+Simple way to generate mock servers
+
+Usage:
+  killgrave [flags]
+
+Flags:
+  -c, --config string       Path to your configuration file
+  -h, --help                Help for Killgrave
+  -H, --host string         Set a different host than localhost (default "localhost")
+  -i, --imposters string    Directory where your imposters are located (default "imposters")
+  -P, --port int            Port to run the server (default 3000)
+  -m, --proxy-mode string   Proxy mode, the options are all, missing or none (default "none")
+  -u, --proxy-url string    The url where the proxy will redirect to
+  -s, --secure              Run mock server using TLS (https)
+  -v, --version             Version of Killgrave
+  -w, --watcher             File watcher will reload the server on each file change
 ```
 
 ### Using Killgrave by config file
@@ -215,7 +213,7 @@ The `watcher` configuration field is optional. With this setting you can enable 
 
 The `secure` configuration field is optional. With this setting you can run your server using TLS options with a dummy certificate, so as to make it work with the `HTTPS` protocol. Disabled by default.
 
-The option `proxy` allows you to configure the mock in proxy mode. When this mode is enabled, Killgrave will forward any unconfigured requests to another server. More information: [Proxy Section](#prepare-killgrave-for-proxy-mode)
+The option `proxy-mode` allows you to configure the mock in proxy mode. When this mode is enabled, Killgrave will forward any unconfigured requests to another server. More information: [Proxy Section](#prepare-killgrave-for-proxy-mode)
 
 ## How to use
 
