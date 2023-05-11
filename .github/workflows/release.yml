@@ -22,10 +22,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GH_RELEASER }}
   docker-hub:
+    needs: release
     name: Deploy to docker-hub
     runs-on: ubuntu-latest
     steps:
