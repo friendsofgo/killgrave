@@ -1,6 +1,3 @@
-before:
-  hooks:
-    - go mod download  
 builds:
   - 
     main: ./cmd/killgrave/main.go
