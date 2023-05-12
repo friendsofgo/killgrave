@@ -1,0 +1,81 @@
+-- imposters/create_gopher.imp.json --
+[
+    {
+        "request": {
+            "method": "POST",
+            "endpoint": "/gophers",
+            "schemaFile": "schemas/create_gopher_request.json",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "params": {
+                "gopherColor": "{v:[a-z]+}"
+            }
+        },
+        "response": {
+            "status": 200,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "bodyFile": "responses/create_gopher_response.json"
+        }
+    },
+    {
+        "t": "random_text"
+    }
+]
+-- imposters/schemas/create_gopher_request.json --
+{
+    "type": "object",
+    "properties": {
+        "data": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "gophers"
+                    ]
+                },
+                "attributes": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "color": {
+                            "type": "string"
+                        },
+                        "age": {
+                            "type": "integer"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "color",
+                        "age"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "attributes"
+            ]
+        }
+    },
+    "required": [
+        "data"
+    ]
+}
+-- imposters/responses/create_gopher_response.json --
+{
+    "data": {
+        "type": "gophers",
+        "id": "01D8EMQ185CA8PRGE20DKZTGSR",
+        "attributes": {
+            "name": "Zebediah",
+            "color": "Purple",
+            "age": 54
+        }
+    }
+}
