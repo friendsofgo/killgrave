@@ -46,4 +46,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${GITHUB_REPOSITORY}:latest,${GITHUB_REPOSITORY}:${IMAGE_TAG}
+          tags: ${{ env.GITHUB_REPOSITORY }}:latest,${{ env.GITHUB_REPOSITORY }}:${IMAGE_TAG}
