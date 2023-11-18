@@ -41,9 +41,10 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Extract Docker metadata
+        id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ github.action_repository }}
+          images: ${{ github.repository }}
           tags: |
             type=ref,event=tag
 
