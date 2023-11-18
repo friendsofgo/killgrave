@@ -152,7 +152,7 @@ func runWatcher(cfg killgrave.Config, currentSrv *server.Server) (*watcher.Watch
 		if err := currentSrv.Shutdown(); err != nil {
 			log.Fatal(err)
 		}
-		runServer(cfg)
+		*currentSrv = runServer(cfg)
 	})
 	return w, nil
 }
