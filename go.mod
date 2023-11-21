@@ -6,7 +6,7 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.1
 	github.com/radovskyb/watcher v1.0.7
-	github.com/spf13/afero v1.6.0
+	github.com/spf13/afero v1.10.0
 	github.com/spf13/cobra v1.0.0
 	github.com/stretchr/testify v1.8.4
 	github.com/xeipuuv/gojsonschema v1.2.0
