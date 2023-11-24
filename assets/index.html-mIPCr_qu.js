@@ -1,1 +1,0 @@
-const e=JSON.parse('{"key":"v-fffb8e28","path":"/guide/","title":"Killgrave","lang":"en-US","frontmatter":{"prev":false,"next":"./concepts.md"},"headers":[],"git":{"updatedTime":1700862554000,"contributors":[{"name":"Joan López de la Franca Beltran","email":"joanjan14@gmail.com","commits":1}]},"filePathRelative":"guide/README.md"}');export{e as data};

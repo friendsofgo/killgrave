@@ -1,0 +1,25 @@
+import{_ as t,r,o,c as l,a as e,b as n,d as s,e as c}from"./app-lnPknyyT.js";const p={},d=e("h1",{id:"command-line-interface-cli",tabindex:"-1"},[e("a",{class:"header-anchor",href:"#command-line-interface-cli","aria-hidden":"true"},"#"),n(" Command-line interface (CLI)")],-1),u=["src"],v=e("h2",{id:"killgrave",tabindex:"-1"},[e("a",{class:"header-anchor",href:"#killgrave","aria-hidden":"true"},"#"),n(" Killgrave")],-1),h={href:"/config/#imposters",target:"_blank",rel:"noopener noreferrer"},m={href:"/config",target:"_blank",rel:"noopener noreferrer"},g={href:"/guide",target:"_blank",rel:"noopener noreferrer"},b=c(`<p>However, you can tune up some of their settings like the host and port where the mock server is listening to, among others, by providing some configuration settings.</p><p>To provide those settings, you can either use the <a href="#available-flags">available CLI flags</a> or use the <code>-config</code> flag to provide the path to a settings file. In such case, you can either use a JSON or YAML configuration file.</p><h3 id="available-flags" tabindex="-1"><a class="header-anchor" href="#available-flags" aria-hidden="true">#</a> Available flags</h3><p>See below the list of available flags:</p><div class="language-bash line-numbers-mode" data-ext="sh"><pre class="language-bash"><code>$ killgrave <span class="token parameter variable">-h</span>
+
+  <span class="token parameter variable">-config</span> string
+        path to the configuration <span class="token function">file</span>
+  <span class="token parameter variable">-debugger</span>
+        run your server with the debugger
+  -debugger-addr string
+        debugger address <span class="token punctuation">(</span>default <span class="token string">&quot;localhost:3030&quot;</span><span class="token punctuation">)</span>
+  <span class="token parameter variable">-host</span> string
+        run your server on a different <span class="token function">host</span> <span class="token punctuation">(</span>default <span class="token string">&quot;localhost&quot;</span><span class="token punctuation">)</span>
+  <span class="token parameter variable">-imposters</span> string
+        directory where imposters are <span class="token builtin class-name">read</span> from <span class="token punctuation">(</span>default <span class="token string">&quot;imposters&quot;</span><span class="token punctuation">)</span>
+  <span class="token parameter variable">-port</span> int
+        run your server on a different port <span class="token punctuation">(</span>default <span class="token number">3000</span><span class="token punctuation">)</span>
+  -proxy-mode string
+        proxy mode <span class="token punctuation">(</span>choose between <span class="token string">&#39;all&#39;</span>, <span class="token string">&#39;missing&#39;</span> or <span class="token string">&#39;none&#39;</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>default <span class="token string">&quot;none&quot;</span><span class="token punctuation">)</span>
+  -proxy-url string
+        proxy url, use it <span class="token keyword">in</span> combination with proxy-mode
+  <span class="token parameter variable">-secure</span>
+        run your server using TLS <span class="token punctuation">(</span>https<span class="token punctuation">)</span>
+  <span class="token parameter variable">-version</span>
+        show the version of the application
+  <span class="token parameter variable">-watcher</span>
+        <span class="token builtin class-name">enable</span> the <span class="token function">file</span> watcher, <span class="token function">which</span> reloads the server on every <span class="token function">file</span> change
+</code></pre><div class="line-numbers" aria-hidden="true"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div>`,5);function f(i,k){const a=r("ExternalLinkIcon");return o(),l("div",null,[d,e("img",{src:i.$withBase("/img/killgrave.png"),alt:"killgrave",style:{"max-width":"130px"}},null,8,u),v,e("p",null,[n("Killgrave is basically a command-line interface (CLI) that can be used with no explicit configuration, but a set of "),e("a",h,[n("imposters"),s(a)]),n(". Look at the "),e("a",m,[n("config reference"),s(a)]),n(" or "),e("a",g,[n("guide"),s(a)]),n(" for further details.")]),b])}const x=t(p,[["render",f],["__file","index.html.vue"]]);export{x as default};
