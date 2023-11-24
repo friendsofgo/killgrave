@@ -1,0 +1,1 @@
+const e=JSON.parse('{"key":"v-d5fc1798","path":"/guide/ht-delays.html","title":"Use delayed responses","lang":"en-US","frontmatter":{"prev":"./ht-json","next":"./ht-dynamic"},"headers":[],"git":{"updatedTime":null,"contributors":[]},"filePathRelative":"guide/ht-delays.md"}');export{e as data};

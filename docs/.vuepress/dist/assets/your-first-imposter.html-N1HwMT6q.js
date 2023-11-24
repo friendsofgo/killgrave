@@ -1,0 +1,1 @@
+const t=JSON.parse('{"key":"v-56beebfd","path":"/guide/your-first-imposter.html","title":"Your first imposter","lang":"en-US","frontmatter":{"prev":"./getting-started","next":"./advanced"},"headers":[],"git":{"updatedTime":null,"contributors":[]},"filePathRelative":"guide/your-first-imposter.md"}');export{t as data};

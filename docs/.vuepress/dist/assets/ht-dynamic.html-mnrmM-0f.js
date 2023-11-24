@@ -1,0 +1,1 @@
+const e=JSON.parse('{"key":"v-0549a6a2","path":"/guide/ht-dynamic.html","title":"Use dynamic responses","lang":"en-US","frontmatter":{"prev":"./your-first-imposter","next":"./debug-intro"},"headers":[],"git":{"updatedTime":null,"contributors":[]},"filePathRelative":"guide/ht-dynamic.md"}');export{e as data};

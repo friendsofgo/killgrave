@@ -1,0 +1,30 @@
+name: Docs
+
+on:
+  push:
+    paths: [ docs/** ]
+    branches: [ docs ]
+    # branches: [main]
+
+defaults:
+  run:
+    working-directory: ./docs
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+      - name: Build docs site
+        run: |
+          npm install
+          npm run build
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs/.vuepress/dist

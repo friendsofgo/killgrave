@@ -1,0 +1,17 @@
+{
+  "name": "killgrave-docs",
+  "version": "0.5.1",
+  "description": "Killgrave docs site",
+  "author": "Friends of Go",
+  "repository": "https://github.com/friendsofgo/killgrave",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vuepress dev",
+    "build": "vuepress build"
+  },
+  "devDependencies": {
+    "@vuepress/plugin-search": "^2.0.0-rc.0",
+    "@vuepress/theme-default": "^2.0.0-rc.0",
+    "vuepress": "^2.0.0-rc.0"
+  }
+}

@@ -1,0 +1,1 @@
+const e=JSON.parse('{"key":"v-fffb8e28","path":"/guide/","title":"Killgrave","lang":"en-US","frontmatter":{"prev":false,"next":"./concepts.md"},"headers":[],"git":{"updatedTime":null,"contributors":[]},"filePathRelative":"guide/README.md"}');export{e as data};
