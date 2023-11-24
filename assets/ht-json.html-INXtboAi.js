@@ -1,0 +1,1 @@
+const e=JSON.parse('{"key":"v-5cac6c5c","path":"/guide/ht-json.html","title":"Use JSON Schema","lang":"en-US","frontmatter":{"prev":"./ht-regex","next":"./ht-delays"},"headers":[],"git":{"updatedTime":1700862554000,"contributors":[{"name":"Joan López de la Franca Beltran","email":"joanjan14@gmail.com","commits":1}]},"filePathRelative":"guide/ht-json.md"}');export{e as data};
