@@ -3,14 +3,13 @@ package http
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/spf13/afero"
 	"gopkg.in/yaml.v2"
 )
 
@@ -73,17 +72,24 @@ type Response struct {
 }
 
 type ImposterFs struct {
-	fs afero.Fs
+	path string
+	fs   fs.FS
 }
 
-func NewImposterFS(fs afero.Fs) ImposterFs {
-	return ImposterFs{
-		fs: fs,
+func NewImposterFS(path string) (ImposterFs, error) {
+	// TODO: What if user lacks permissions?
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return ImposterFs{}, fmt.Errorf("%w: the directory %s doesn't exists", err, path)
 	}
+
+	return ImposterFs{
+		path: path,
+		fs:   os.DirFS(path),
+	}, nil
 }
 
-func (i ImposterFs) FindImposters(impostersDirectory string, impostersCh chan []Imposter) error {
-	err := afero.Walk(i.fs, impostersDirectory, func(path string, info os.FileInfo, err error) error {
+func (i ImposterFs) FindImposters(impostersCh chan []Imposter) error {
+	err := fs.WalkDir(i.fs, ".", func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("%w: error finding imposters", err)
 		}
@@ -111,10 +117,8 @@ func (i ImposterFs) FindImposters(impostersDirectory string, impostersCh chan []
 }
 
 func (i ImposterFs) unmarshalImposters(imposterConfig ImposterConfig) ([]Imposter, error) {
-	imposterFile, _ := i.fs.Open(imposterConfig.FilePath)
-	defer imposterFile.Close()
-
-	bytes, _ := ioutil.ReadAll(imposterFile)
+	// TODO: Error handling?
+	bytes, _ := fs.ReadFile(i.fs, imposterConfig.FilePath)
 
 	var parseError error
 	var imposters []Imposter
@@ -132,7 +136,7 @@ func (i ImposterFs) unmarshalImposters(imposterConfig ImposterConfig) ([]Imposte
 		return nil, fmt.Errorf("%w: error while unmarshalling imposter's file %s", parseError, imposterConfig.FilePath)
 	}
 
-	for i, _ := range imposters {
+	for i := range imposters {
 		imposters[i].BasePath = filepath.Dir(imposterConfig.FilePath)
 		imposters[i].Path = imposterConfig.FilePath
 	}
