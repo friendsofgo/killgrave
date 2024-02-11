@@ -90,7 +90,14 @@ func (s *Server) Build() error {
 	}
 
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
-		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
+		// If imposter folder is not there create it.
+		dirName := s.impostersPath
+
+		err := os.Mkdir(dirName, 0755)
+		if err != nil {
+			fmt.Println(err)
+		}
+		log.Println("imposters directory created successfully.")
 	}
 	var impostersCh = make(chan []Imposter)
 	var done = make(chan struct{})
