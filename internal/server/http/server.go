@@ -92,8 +92,9 @@ func (s *Server) Build() error {
 	if _, err := os.Stat(s.impostersPath); os.IsNotExist(err) {
 		return fmt.Errorf("%w: the directory %s doesn't exists", err, s.impostersPath)
 	}
-	var impostersCh = make(chan []Imposter)
-	var done = make(chan struct{})
+	impostersCh := make(chan []Imposter)
+	done := make(chan struct{})
+	go s.callbackCron()
 
 	go func() {
 		s.imposterFs.FindImposters(s.impostersPath, impostersCh)

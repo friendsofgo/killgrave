@@ -38,10 +38,11 @@ type ImposterConfig struct {
 
 // Imposter define an imposter structure
 type Imposter struct {
-	BasePath string   `json:"-" yaml:"-"`
-	Path     string   `json:"-" yaml:"-"`
-	Request  Request  `json:"request"`
-	Response Response `json:"response"`
+	BasePath string    `json:"-" yaml:"-"`
+	Path     string    `json:"-" yaml:"-"`
+	Request  Request   `json:"request"`
+	Callback *Callback `json:"callback"`
+	Response Response  `json:"response"`
 }
 
 // Delay returns delay for response that user can specify in imposter config
@@ -60,6 +61,7 @@ type Request struct {
 	Endpoint   string             `json:"endpoint"`
 	SchemaFile *string            `json:"schemaFile"`
 	Params     *map[string]string `json:"params"`
+	Body       *map[string]string `json:"body"`
 	Headers    *map[string]string `json:"headers"`
 }
 
@@ -132,7 +134,7 @@ func (i ImposterFs) unmarshalImposters(imposterConfig ImposterConfig) ([]Imposte
 		return nil, fmt.Errorf("%w: error while unmarshalling imposter's file %s", parseError, imposterConfig.FilePath)
 	}
 
-	for i, _ := range imposters {
+	for i := range imposters {
 		imposters[i].BasePath = filepath.Dir(imposterConfig.FilePath)
 		imposters[i].Path = imposterConfig.FilePath
 	}

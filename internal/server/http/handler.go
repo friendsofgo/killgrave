@@ -14,6 +14,18 @@ func ImposterHandler(imposter Imposter) http.HandlerFunc {
 		if imposter.Delay() > 0 {
 			time.Sleep(imposter.Delay())
 		}
+
+		if imposter.Callback != nil {
+			tickerTime := imposter.Callback.Delay.Delay()
+			if tickerTime <= 0 {
+				tickerTime = time.Second
+			}
+
+			tickerInstance := time.NewTicker(tickerTime)
+			imposter.Callback.Ticker = tickerInstance
+			callbackMapInstance.Add(tickerInstance, imposter.Callback)
+		}
+
 		writeHeaders(imposter, w)
 		w.WriteHeader(imposter.Response.Status)
 		writeBody(imposter, w)

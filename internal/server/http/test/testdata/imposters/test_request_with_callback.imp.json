@@ -1,0 +1,26 @@
+[
+    {
+        "request": {
+            "method": "GET",
+            "endpoint": "/testRequest"
+        },
+        "callback": {
+            "request":{
+                "method": "POST",
+                "endpoint": "http://localhost:3000/users",
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body": {
+                    "email":"mail@mail.com",
+                    "password":"ngab"                
+                }
+            },
+            "delay": "1s:1s"
+        },
+        "response": {
+            "status": 200,
+            "body": "test"
+        }
+    }
+]
