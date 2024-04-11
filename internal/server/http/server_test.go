@@ -32,7 +32,7 @@ func TestServer_Build(t *testing.T) {
 		err    error
 	}{
 		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false, imposterFs), errors.New("hello")},
-		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false, imposterFs), nil},
+		{"malformed json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false, imposterFs), nil},
 		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs), nil},
 	}
 
