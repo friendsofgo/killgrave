@@ -47,7 +47,7 @@ func TestMatcherBySchema(t *testing.T) {
 
 	httpRequestA := &http.Request{Body: bodyA}
 	httpRequestB := &http.Request{Body: bodyB}
-	okResponse := Response{Status: http.StatusOK}
+	okResponse := Responses{{Status: http.StatusOK}}
 
 	var matcherData = map[string]struct {
 		fn  mux.MatcherFunc
@@ -56,7 +56,7 @@ func TestMatcherBySchema(t *testing.T) {
 	}{
 		"correct request schema":               {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestA, true},
 		"imposter without request schema":      {MatcherBySchema(Imposter{Request: requestWithoutSchema, Response: okResponse}), httpRequestA, true},
-		"malformatted schema file":             {MatcherBySchema(Imposter{Request: requestWithWrongSchema, Response: okResponse}), httpRequestA, false},
+		"malformed schema file":                {MatcherBySchema(Imposter{Request: requestWithWrongSchema, Response: okResponse}), httpRequestA, false},
 		"incorrect request schema":             {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), httpRequestB, false},
 		"non-existing schema file":             {MatcherBySchema(Imposter{Request: requestWithNonExistingSchema, Response: okResponse}), httpRequestB, false},
 		"empty body with required schema file": {MatcherBySchema(Imposter{Request: requestWithSchema, Response: okResponse}), &http.Request{Body: emptyBody}, false},
