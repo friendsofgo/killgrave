@@ -3,7 +3,7 @@ package killgrave
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 
@@ -12,13 +12,15 @@ import (
 
 // Config representation of config file yaml
 type Config struct {
-	ImpostersPath string      `yaml:"imposters_path"`
-	Port          int         `yaml:"port"`
-	Host          string      `yaml:"host"`
-	CORS          ConfigCORS  `yaml:"cors"`
-	Proxy         ConfigProxy `yaml:"proxy"`
-	Secure        bool        `yaml:"secure"`
-	Watcher       bool        `yaml:"watcher"`
+	ImpostersPath    string      `yaml:"imposters_path"`
+	Port             int         `yaml:"port"`
+	Host             string      `yaml:"host"`
+	CORS             ConfigCORS  `yaml:"cors"`
+	Proxy            ConfigProxy `yaml:"proxy"`
+	Secure           bool        `yaml:"secure"`
+	Watcher          bool        `yaml:"watcher"`
+	Verbose          bool        `yaml:"verbose"`
+	DumpRequestsPath string      `yaml:"dump_requests_path"`
 }
 
 // ConfigCORS representation of section CORS of the yaml
@@ -111,7 +113,7 @@ func (cfg *Config) ConfigureProxy(proxyMode ProxyMode, proxyURL string) {
 type ConfigOpt func(cfg *Config) error
 
 // NewConfig initialize the config
-func NewConfig(impostersPath, host string, port int, secure bool) (Config, error) {
+func NewConfig(impostersPath, host string, port int, secure, verbose bool, dumpRequestsPath string) (Config, error) {
 	if impostersPath == "" {
 		return Config{}, errEmptyImpostersPath
 	}
@@ -125,10 +127,12 @@ func NewConfig(impostersPath, host string, port int, secure bool) (Config, error
 	}
 
 	cfg := Config{
-		ImpostersPath: impostersPath,
-		Host:          host,
-		Port:          port,
-		Secure:        secure,
+		ImpostersPath:    impostersPath,
+		Host:             host,
+		Port:             port,
+		Secure:           secure,
+		Verbose:          verbose,
+		DumpRequestsPath: dumpRequestsPath,
 	}
 
 	return cfg, nil
@@ -146,7 +150,7 @@ func NewConfigFromFile(cfgPath string) (Config, error) {
 	defer configFile.Close()
 
 	var cfg Config
-	bytes, _ := ioutil.ReadAll(configFile)
+	bytes, _ := io.ReadAll(configFile)
 	if err := yaml.Unmarshal(bytes, &cfg); err != nil {
 		return Config{}, fmt.Errorf("%w: error while unmarshalling configFile file %s, using default configuration instead", err, cfgPath)
 	}

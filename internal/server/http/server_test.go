@@ -1,14 +1,16 @@
 package http
 
 import (
+	"bytes"
 	"crypto/tls"
 	"errors"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,7 +21,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 	os.Exit(m.Run())
 }
 
@@ -31,9 +33,9 @@ func TestServer_Build(t *testing.T) {
 		server Server
 		err    error
 	}{
-		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false, imposterFs), errors.New("hello")},
-		{"malformed json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false, imposterFs), nil},
-		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs), nil},
+		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false, imposterFs, false, ""), errors.New("hello")},
+		{"malformed json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false, imposterFs, false, ""), nil},
+		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, false, ""), nil},
 	}
 
 	for _, tt := range serverData {
@@ -60,7 +62,7 @@ func TestBuildProxyMode(t *testing.T) {
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
 		assert.Nil(t, err)
 		imposterFs := NewImposterFS(afero.NewOsFs())
-		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false, imposterFs)
+		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false, imposterFs, false, "")
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -113,7 +115,7 @@ func TestBuildProxyMode(t *testing.T) {
 
 			s.router.ServeHTTP(w, req)
 			response := w.Result()
-			body, _ := ioutil.ReadAll(response.Body)
+			body, _ := io.ReadAll(response.Body)
 
 			assert.Equal(t, tc.body, string(body))
 			assert.Equal(t, tc.status, response.StatusCode)
@@ -136,7 +138,7 @@ func TestBuildSecureMode(t *testing.T) {
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
 		assert.Nil(t, err)
 		imposterFs := NewImposterFS(afero.NewOsFs())
-		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true, imposterFs)
+		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true, imposterFs, false, "")
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -187,7 +189,7 @@ func TestBuildSecureMode(t *testing.T) {
 
 				defer response.Body.Close()
 
-				body, err := ioutil.ReadAll(response.Body)
+				body, err := io.ReadAll(response.Body)
 				if err != nil {
 					return false
 				}
@@ -195,5 +197,65 @@ func TestBuildSecureMode(t *testing.T) {
 				return string(body) == tc.body && response.StatusCode == tc.status
 			}, 1*time.Second, 50*time.Millisecond)
 		})
+	}
+}
+
+func TestBuildLogRequests(t *testing.T) {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() {
+		log.SetOutput(os.Stderr)
+	}()
+
+	imposterFs := NewImposterFS(afero.NewOsFs())
+	server := NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, true, "")
+	err := server.Build()
+	assert.NoError(t, err)
+
+	expectedBody := "Dumped"
+	expectedLog := "GET /yamlTestDumpRequest HTTP/1.1\r\nHost: example.com\r\n\r\nDumped"
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader(expectedBody))
+
+	server.router.ServeHTTP(w, req)
+	response := w.Result()
+	assert.Equal(t, http.StatusOK, response.StatusCode, "Expected status code: %v, got: %v", http.StatusOK, response.StatusCode)
+
+	// verify the request is dumped in the logs
+	assert.Contains(t, buf.String(), expectedLog, "Expect request dumped on logs failed")
+}
+
+func TestBuildRecordRequests(t *testing.T) {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() {
+		log.SetOutput(os.Stderr)
+	}()
+	tempDir, err := os.MkdirTemp("", "testdir")
+	assert.NoError(t, err, "Failed to create temporary directory")
+	defer os.RemoveAll(tempDir)
+	dumpFile := filepath.Join(tempDir, "dump_requests.log")
+
+	imposterFs := NewImposterFS(afero.NewOsFs())
+	w := httptest.NewRecorder()
+	server := NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, true, dumpFile)
+	err = server.Build()
+	assert.NoError(t, err)
+
+	expectedBodies := []string{"Dumped1", "Dumped2"}
+	req1 := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader(expectedBodies[0]))
+	req2 := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader(expectedBodies[1]))
+	server.router.ServeHTTP(w, req1)
+	server.router.ServeHTTP(w, req2)
+
+	// wait for channel to print out the requests
+	time.Sleep(1 * time.Second)
+
+	// check recoreded request dumps
+	reqs, err := getRecordedRequests(dumpFile)
+	assert.NoError(t, err, "Failed to read requests from file")
+	assert.Equal(t, 2, len(reqs), "Expect 2 requests to be dumped in file failed")
+	for i, expectedBody := range expectedBodies {
+		assert.Equal(t, expectedBody, reqs[i].Body, "Expect request body to be dumped in file failed")
 	}
 }

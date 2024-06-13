@@ -4,12 +4,14 @@ LABEL MAINTAINER = 'Friends of Go (it@friendsofgo.tech)'
 
 ARG TARGETOS=linux
 ARG TARGETARCH=amd64
+ARG TAG=""
 
 RUN apk add --update git
 RUN apk add ca-certificates
 WORKDIR /go/src/github.com/friendsofgo/killgrave
 COPY . .
-RUN go mod tidy && TAG=$(git describe --tags --abbrev=0) \
+RUN go mod tidy \
+    && if [ -z "$TAG" ]; then TAG=$(git describe --tags --abbrev=0); fi \
     && LDFLAGS=$(echo "-s -w -X github.com/friendsofgo/killgrave/internal/app/cmd._version="docker-$TAG) \
     && CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" go build -a -installsuffix cgo -o /go/bin/killgrave -ldflags "$LDFLAGS" cmd/killgrave/main.go
 

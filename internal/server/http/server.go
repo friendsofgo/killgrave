@@ -31,23 +31,28 @@ type ServerOpt func(s *Server)
 
 // Server definition of mock server
 type Server struct {
-	impostersPath string
-	router        *mux.Router
-	httpServer    *http.Server
-	proxy         *Proxy
-	secure        bool
-	imposterFs    ImposterFs
+	impostersPath    string
+	router           *mux.Router
+	httpServer       *http.Server
+	proxy            *Proxy
+	secure           bool
+	imposterFs       ImposterFs
+	verbose          bool
+	dumpRequestsPath string
+	dumpCh           chan *RequestData
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, fs ImposterFs) Server {
+func NewServer(p string, r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, fs ImposterFs, verbose bool, dumpRequestsPath string) Server {
 	return Server{
-		impostersPath: p,
-		router:        r,
-		httpServer:    httpServer,
-		proxy:         proxyServer,
-		secure:        secure,
-		imposterFs:    fs,
+		impostersPath:    p,
+		router:           r,
+		httpServer:       httpServer,
+		proxy:            proxyServer,
+		secure:           secure,
+		imposterFs:       fs,
+		verbose:          verbose,
+		dumpRequestsPath: dumpRequestsPath,
 	}
 }
 
@@ -94,6 +99,12 @@ func (s *Server) Build() error {
 	}
 	var impostersCh = make(chan []Imposter)
 	var done = make(chan struct{})
+
+	// only intantiate the request dump if we need it
+	if s.dumpCh == nil && len(s.dumpRequestsPath) > 0 {
+		s.dumpCh = make(chan *RequestData, 100)
+		go RequestWriter(s.dumpRequestsPath, s.dumpCh)
+	}
 
 	go func() {
 		s.imposterFs.FindImposters(s.impostersPath, impostersCh)
@@ -162,7 +173,7 @@ func (s *Server) Shutdown() error {
 
 func (s *Server) addImposterHandler(imposters []Imposter) {
 	for _, imposter := range imposters {
-		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
+		r := s.router.HandleFunc(imposter.Request.Endpoint, s.handlerMiddleWare(imposter)).
 			Methods(imposter.Request.Method).
 			MatcherFunc(MatcherBySchema(imposter))
 
@@ -180,6 +191,18 @@ func (s *Server) addImposterHandler(imposters []Imposter) {
 	}
 }
 
-func (s *Server) handleAll(h http.HandlerFunc) {
-	s.router.PathPrefix("/").HandlerFunc(h)
+func (s *Server) handlerMiddleWare(i Imposter) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// handle anything we need before the request is used
+		// We need to grab the request data before the request is used since the body may be empty
+		requestData := GetRequestData(r)
+
+		// handle the imposter reqest
+		handler := ImposterHandler(i)
+		handler(w, r)
+
+		// handle anything we need after the request
+		LogRequest(requestData, s)
+		RecordRequest(requestData, s)
+	}
 }

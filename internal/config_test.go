@@ -203,7 +203,7 @@ func TestNewConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewConfig(tt.args.impostersPath, tt.args.host, tt.args.port, false)
+			got, err := NewConfig(tt.args.impostersPath, tt.args.host, tt.args.port, false, false, "")
 			assert.Equal(t, tt.err, err)
 			assert.Equal(t, tt.want, got)
 		})
@@ -221,7 +221,7 @@ func TestConfig_ConfigureProxy(t *testing.T) {
 		},
 	}
 
-	got, err := NewConfig("imposters", "localhost", 80, false)
+	got, err := NewConfig("imposters", "localhost", 80, false, false, "")
 	assert.NoError(t, err)
 
 	got.ConfigureProxy(ProxyAll, "https://friendsofgo.tech")

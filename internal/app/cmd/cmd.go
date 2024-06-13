@@ -28,22 +28,26 @@ const (
 	_defaultProxyMode     = killgrave.ProxyNone
 	_defaultStrictSlash   = true
 
-	_impostersFlag = "imposters"
-	_configFlag    = "config"
-	_hostFlag      = "host"
-	_portFlag      = "port"
-	_watcherFlag   = "watcher"
-	_secureFlag    = "secure"
-	_proxyModeFlag = "proxy-mode"
-	_proxyURLFlag  = "proxy-url"
+	_impostersFlag        = "imposters"
+	_configFlag           = "config"
+	_hostFlag             = "host"
+	_portFlag             = "port"
+	_watcherFlag          = "watcher"
+	_secureFlag           = "secure"
+	_proxyModeFlag        = "proxy-mode"
+	_proxyURLFlag         = "proxy-url"
+	_verboseFlag          = "verbose"
+	_dumpRequestsPathFlag = "dump-requests-path"
 )
 
 var (
-	errGetDataFromImpostersFlag = errors.New("error trying to get data from imposters flag")
-	errGetDataFromHostFlag      = errors.New("error trying to get data from host flag")
-	errGetDataFromPortFlag      = errors.New("error trying to get data from port flag")
-	errGetDataFromSecureFlag    = errors.New("error trying to get data from secure flag")
-	errMandatoryURL             = errors.New("the field proxy-url is mandatory if you selected a proxy mode")
+	errGetDataFromImpostersFlag        = errors.New("error trying to get data from imposters flag")
+	errGetDataFromHostFlag             = errors.New("error trying to get data from host flag")
+	errGetDataFromPortFlag             = errors.New("error trying to get data from port flag")
+	errGetDataFromSecureFlag           = errors.New("error trying to get data from secure flag")
+	errGetDataFromVerboseFlag          = errors.New("error trying to get data from verbose flag")
+	errGetDataFromDumpRequestsPathFlag = errors.New("error trying to get data from dump-requests-path flag")
+	errMandatoryURL                    = errors.New("the field proxy-url is mandatory if you selected a proxy mode")
 )
 
 // NewKillgraveCmd returns cobra.Command to run killgrave command
@@ -78,6 +82,8 @@ func NewKillgraveCmd() *cobra.Command {
 	rootCmd.Flags().BoolP(_secureFlag, "s", false, "Run mock server using TLS (https)")
 	rootCmd.Flags().StringP(_proxyModeFlag, "m", _defaultProxyMode.String(), "Proxy mode, the options are all, missing or none")
 	rootCmd.Flags().StringP(_proxyURLFlag, "u", "", "The url where the proxy will redirect to")
+	rootCmd.Flags().BoolP(_verboseFlag, "V", false, "More verbose logging, adds request dumps to logs")
+	rootCmd.Flags().StringP(_dumpRequestsPathFlag, "d", "", "Path the requests will be dumped to")
 
 	rootCmd.SetVersionTemplate("Killgrave version: {{.Version}}\n")
 
@@ -133,6 +139,8 @@ func runServer(cfg killgrave.Config) server.Server {
 		proxyServer,
 		cfg.Secure,
 		imposterFs,
+		cfg.Verbose,
+		cfg.DumpRequestsPath,
 	)
 	if err := s.Build(); err != nil {
 		log.Fatal(err)
@@ -183,7 +191,17 @@ func prepareConfig(cmd *cobra.Command) (killgrave.Config, error) {
 		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromSecureFlag)
 	}
 
-	cfg, err := killgrave.NewConfig(impostersPath, host, port, secure)
+	verbose, err := cmd.Flags().GetBool(_verboseFlag)
+	if err != nil {
+		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromVerboseFlag)
+	}
+
+	dumpRequestsPath, err := cmd.Flags().GetString(_dumpRequestsPathFlag)
+	if err != nil {
+		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromDumpRequestsPathFlag)
+	}
+
+	cfg, err := killgrave.NewConfig(impostersPath, host, port, secure, verbose, dumpRequestsPath)
 	if err != nil {
 		return killgrave.Config{}, err
 	}

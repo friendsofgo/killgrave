@@ -156,6 +156,8 @@ Flags:
   -s, --secure              Run mock server using TLS (https)
   -v, --version             Version of Killgrave
   -w, --watcher             File watcher will reload the server on each file change
+  -V, --verbose             Print out more detailed logging
+  -d, --dump-requests-path  Print requests out to specified file
 ```
 
 ### Using Killgrave by config file
@@ -182,6 +184,8 @@ cors:
   allow_credentials: true
 watcher: true
 secure: true
+verbose: false
+dump-requests-path: "/abc/def.log
 ```
 
 As you can see, you can configure all the options in a very easy way. For the above example, the file tree looks as follows, with the current working directory being `mymock`.
