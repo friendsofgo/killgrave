@@ -133,9 +133,16 @@ type ImposterFs struct {
 }
 
 func NewImposterFS(path string) (ImposterFs, error) {
-	// TODO: What if user lacks permissions?
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return ImposterFs{}, fmt.Errorf("%w: the directory %s doesn't exists", err, path)
+	_, err := os.Stat(path)
+	if err != nil {
+		switch {
+		case os.IsNotExist(err):
+			return ImposterFs{}, fmt.Errorf("the directory '%s' does not exist", path)
+		case os.IsPermission(err):
+			return ImposterFs{}, fmt.Errorf("could not read the directory '%s': permission denied", path)
+		default:
+			return ImposterFs{}, fmt.Errorf("could not read the directory '%s': %w", path, err)
+		}
 	}
 
 	return ImposterFs{

@@ -4,11 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 	_ "embed"
+	"log"
+	"net/http"
+
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"log"
-	"net/http"
 )
 
 //go:embed cert/server.key
