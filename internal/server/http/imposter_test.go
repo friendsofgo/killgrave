@@ -1,13 +1,26 @@
 package http
 
 import (
-	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
 	"testing"
 
+	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
+
+func TestNewImposterFS(t *testing.T) {
+	t.Run("imposters directory not found", func(t *testing.T) {
+		_, err := NewImposterFS("failImposterPath")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "the directory 'failImposterPath' does not exist")
+	})
+
+	t.Run("existing imposters directory", func(t *testing.T) {
+		_, err := NewImposterFS("test/testdata/imposters")
+		assert.NoError(t, err)
+	})
+}
 
 func TestResponses_MarshalJSON(t *testing.T) {
 	tcs := map[string]struct {
@@ -31,7 +44,6 @@ func TestResponses_MarshalJSON(t *testing.T) {
 			exp: `null`,
 		},
 	}
-
 	for name, tc := range tcs {
 		t.Run(name, func(t *testing.T) {
 			got, err := json.Marshal(tc.rr)
