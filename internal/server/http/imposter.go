@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/afero"
 	"gopkg.in/yaml.v2"
 )
 
@@ -128,17 +128,31 @@ func (rr *Responses) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 type ImposterFs struct {
-	fs afero.Fs
+	path string
+	fs   fs.FS
 }
 
-func NewImposterFS(fs afero.Fs) ImposterFs {
-	return ImposterFs{
-		fs: fs,
+func NewImposterFS(path string) (ImposterFs, error) {
+	_, err := os.Stat(path)
+	if err != nil {
+		switch {
+		case os.IsNotExist(err):
+			return ImposterFs{}, fmt.Errorf("the directory '%s' does not exist", path)
+		case os.IsPermission(err):
+			return ImposterFs{}, fmt.Errorf("could not read the directory '%s': permission denied", path)
+		default:
+			return ImposterFs{}, fmt.Errorf("could not read the directory '%s': %w", path, err)
+		}
 	}
+
+	return ImposterFs{
+		path: path,
+		fs:   os.DirFS(path),
+	}, nil
 }
 
-func (i ImposterFs) FindImposters(impostersDirectory string, impostersCh chan []Imposter) error {
-	err := afero.Walk(i.fs, impostersDirectory, func(path string, info os.FileInfo, err error) error {
+func (i ImposterFs) FindImposters(impostersCh chan []Imposter) error {
+	err := fs.WalkDir(i.fs, ".", func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("%w: error finding imposters", err)
 		}
@@ -187,7 +201,7 @@ func (i ImposterFs) unmarshalImposters(imposterConfig ImposterConfig) ([]Imposte
 		return nil, fmt.Errorf("%w: error while unmarshalling imposter's file %s", parseError, imposterConfig.FilePath)
 	}
 
-	for i, _ := range imposters {
+	for i := range imposters {
 		imposters[i].BasePath = filepath.Dir(imposterConfig.FilePath)
 		imposters[i].Path = imposterConfig.FilePath
 	}
