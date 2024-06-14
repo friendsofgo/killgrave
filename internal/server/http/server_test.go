@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 
 func TestServer_Build(t *testing.T) {
 	newServer := func(fs ImposterFs) Server {
-		return NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, fs)
+		return NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, fs, false, "")
 	}
 
 	testCases := map[string]struct {
@@ -70,7 +70,7 @@ func TestBuildProxyMode(t *testing.T) {
 		imposterFs, err := NewImposterFS("test/testdata/imposters")
 		require.NoError(t, err)
 
-		server := NewServer(router, httpServer, proxyServer, false, imposterFs)
+		server := NewServer(router, httpServer, proxyServer, false, imposterFs, false, "")
 		return &server, func() error {
 			return httpServer.Close()
 		}
@@ -151,7 +151,7 @@ func TestBuildSecureMode(t *testing.T) {
 		imposterFs, err := NewImposterFS("test/testdata/imposters_secure")
 		require.NoError(t, err)
 
-		server := NewServer(router, httpServer, proxyServer, true, imposterFs)
+		server := NewServer(router, httpServer, proxyServer, true, imposterFs, false, "")
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -221,9 +221,10 @@ func TestBuildLogRequests(t *testing.T) {
 		log.SetOutput(os.Stderr)
 	}()
 
-	imposterFs := NewImposterFS(afero.NewOsFs())
-	server := NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, true, "")
-	err := server.Build()
+	imposterFs, err := NewImposterFS("test/testdata/imposters")
+	assert.NoError(t, err)
+	server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, true, "")
+	err = server.Build()
 	assert.NoError(t, err)
 
 	expectedBody := "Dumped"
@@ -250,9 +251,10 @@ func TestBuildRecordRequests(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 	dumpFile := filepath.Join(tempDir, "dump_requests.log")
 
-	imposterFs := NewImposterFS(afero.NewOsFs())
+	imposterFs, err := NewImposterFS("test/testdata/imposters")
+	assert.NoError(t, err)
 	w := httptest.NewRecorder()
-	server := NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, true, dumpFile)
+	server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, true, dumpFile)
 	err = server.Build()
 	assert.NoError(t, err)
 
