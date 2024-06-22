@@ -14,11 +14,11 @@ import (
 
 // RequestData struct to hold request data
 type RequestData struct {
-	Method string              `json:"method"`
-	Host   string              `json:"host"`
-	URL    string              `json:"url"`
-	Header map[string][]string `json:"header"`
-	Body   string              `json:"body"`
+	Method string      `json:"method"`
+	Host   string      `json:"host"`
+	URL    string      `json:"url"`
+	Header http.Header `json:"header"`
+	Body   string      `json:"body"`
 }
 
 func GetRequestData(r *http.Request) *RequestData {
@@ -27,7 +27,7 @@ func GetRequestData(r *http.Request) *RequestData {
 		log.Printf("Error reading request body: %v", err)
 		return nil
 	}
-	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Reset the body
+	r.Body = io.NopCloser(bytes.NewReader(bodyBytes)) // Reset the body
 
 	return &RequestData{
 		Method: r.Method,
@@ -70,7 +70,14 @@ func RecordRequest(r *RequestData, s *Server) {
 	if len(s.dumpRequestsPath) < 1 || s.dumpCh == nil {
 		return
 	}
-	s.dumpCh <- r
+	select {
+	case s.dumpCh <- r:
+		// Successfully sent the request data to the channel
+	default:
+		// Handle the case where the channel is full
+		log.Println("Channel is full, dropping request and logging it instead:")
+		LogRequest(r, &Server{verbose: true})
+	}
 }
 
 // Goroutine function to write requests to a JSON file
@@ -86,6 +93,7 @@ func RequestWriter(filePath string, requestChan <-chan *RequestData) {
 		if err := encoder.Encode(requestData); err != nil {
 			log.Printf("Failed to write to file: %+v", err)
 		}
+		file.Sync()
 	}
 }
 

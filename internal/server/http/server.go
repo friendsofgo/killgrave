@@ -95,7 +95,7 @@ func (s *Server) Build() error {
 
 	// only intantiate the request dump if we need it
 	if s.dumpCh == nil && len(s.dumpRequestsPath) > 0 {
-		s.dumpCh = make(chan *RequestData, 100)
+		s.dumpCh = make(chan *RequestData, 1000)
 		go RequestWriter(s.dumpRequestsPath, s.dumpCh)
 	}
 
