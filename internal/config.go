@@ -150,7 +150,10 @@ func NewConfigFromFile(cfgPath string) (Config, error) {
 	defer configFile.Close()
 
 	var cfg Config
-	bytes, _ := io.ReadAll(configFile)
+	bytes, err := io.ReadAll(configFile)
+	if err != nil {
+		return Config{}, fmt.Errorf("%w: error while reading configFile file %s, using default configuration instead", err, cfgPath)
+	}
 	if err := yaml.Unmarshal(bytes, &cfg); err != nil {
 		return Config{}, fmt.Errorf("%w: error while unmarshalling configFile file %s, using default configuration instead", err, cfgPath)
 	}
