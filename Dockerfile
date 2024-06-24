@@ -1,6 +1,6 @@
 FROM golang:1.21-alpine AS build
 
-LABEL MAINTAINER = 'Friends of Go (it@friendsofgo.tech)'
+LABEL MAINTAINER='Friends of Go (it@friendsofgo.tech)'
 
 ARG TARGETOS=linux
 ARG TARGETARCH=amd64
