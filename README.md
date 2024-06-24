@@ -154,9 +154,9 @@ Flags:
   -m, --proxy-mode string   Proxy mode, the options are all, missing or none (default "none")
   -u, --proxy-url string    The url where the proxy will redirect to
   -s, --secure              Run mock server using TLS (https)
-  -v, --version             Version of Killgrave
+  --version                 Version of Killgrave
   -w, --watcher             File watcher will reload the server on each file change
-  -V, --verbose             Print out more detailed logging
+  -v, --verbose             Print out more detailed logging
   -d, --dump-requests-path  Print requests out to specified file
 ```
 

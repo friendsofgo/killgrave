@@ -80,7 +80,7 @@ func NewKillgraveCmd() *cobra.Command {
 	rootCmd.Flags().BoolP(_secureFlag, "s", false, "Run mock server using TLS (https)")
 	rootCmd.Flags().StringP(_proxyModeFlag, "m", _defaultProxyMode.String(), "Proxy mode, the options are all, missing or none")
 	rootCmd.Flags().StringP(_proxyURLFlag, "u", "", "The url where the proxy will redirect to")
-	rootCmd.Flags().BoolP(_verboseFlag, "V", false, "More verbose logging, adds request dumps to logs")
+	rootCmd.Flags().BoolP(_verboseFlag, "v", false, "More verbose logging, adds request dumps to logs")
 	rootCmd.Flags().StringP(_dumpRequestsPathFlag, "d", "", "Path the requests will be dumped to")
 
 	rootCmd.SetVersionTemplate("Killgrave version: {{.Version}}\n")
