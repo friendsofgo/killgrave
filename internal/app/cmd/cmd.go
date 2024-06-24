@@ -11,7 +11,6 @@ import (
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	server "github.com/friendsofgo/killgrave/internal/server/http"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/radovskyb/watcher"
 	"github.com/spf13/cobra"
@@ -121,8 +120,7 @@ func runServer(cfg killgrave.Config) server.Server {
 	httpAddr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 
 	httpServer := http.Server{
-		Addr:    httpAddr,
-		Handler: handlers.CORS(server.PrepareAccessControl(cfg.CORS)...)(router),
+		Addr: httpAddr,
 	}
 
 	proxyServer, err := server.NewProxy(cfg.Proxy.Url, cfg.Proxy.Mode)
@@ -141,6 +139,7 @@ func runServer(cfg killgrave.Config) server.Server {
 		proxyServer,
 		cfg.Secure,
 		imposterFs,
+		server.PrepareAccessControl(cfg.CORS),
 		cfg.Verbose,
 		cfg.DumpRequestsPath,
 	)

@@ -34,19 +34,21 @@ type Server struct {
 	proxy            *Proxy
 	secure           bool
 	imposterFs       ImposterFs
+	corsOptions      []handlers.CORSOption
 	verbose          bool
 	dumpRequestsPath string
 	dumpCh           chan *RequestData
 }
 
 // NewServer initialize the mock server
-func NewServer(r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, fs ImposterFs, verbose bool, dumpRequestsPath string) Server {
+func NewServer(r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, fs ImposterFs, CORSOptions []handlers.CORSOption, verbose bool, dumpRequestsPath string) Server {
 	return Server{
 		router:           r,
 		httpServer:       httpServer,
 		proxy:            proxyServer,
 		secure:           secure,
 		imposterFs:       fs,
+		corsOptions:      CORSOptions,
 		verbose:          verbose,
 		dumpRequestsPath: dumpRequestsPath,
 	}
@@ -89,6 +91,13 @@ func (s *Server) Build() error {
 		s.router.PathPrefix("/").HandlerFunc(s.proxy.Handler())
 		return nil
 	}
+
+	// setup the logging handler
+	var handler http.Handler = s.router
+	if s.verbose || (s.dumpCh != nil && len(s.dumpRequestsPath) > 0) {
+		handler = CustomLoggingHandler(log.Writer(), handler, s)
+	}
+	s.httpServer.Handler = handlers.CORS(s.corsOptions...)(handler)
 
 	var impostersCh = make(chan []Imposter)
 	var done = make(chan struct{})
@@ -166,7 +175,7 @@ func (s *Server) Shutdown() error {
 
 func (s *Server) addImposterHandler(imposters []Imposter) {
 	for _, imposter := range imposters {
-		r := s.router.HandleFunc(imposter.Request.Endpoint, s.handlerMiddleWare(imposter)).
+		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
 			Methods(imposter.Request.Method).
 			MatcherFunc(MatcherBySchema(imposter))
 
@@ -181,21 +190,5 @@ func (s *Server) addImposterHandler(imposters []Imposter) {
 				r.Queries(k, v)
 			}
 		}
-	}
-}
-
-func (s *Server) handlerMiddleWare(i Imposter) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// handle anything we need before the request is used
-		// We need to grab the request data before the request is used since the body may be empty
-		requestData := GetRequestData(r)
-
-		// handle the imposter reqest
-		handler := ImposterHandler(i)
-		handler(w, r)
-
-		// handle anything we need after the request
-		LogRequest(requestData, s)
-		RecordRequest(requestData, s)
 	}
 }
