@@ -166,6 +166,25 @@ func writeLog(writer io.Writer, params handlers.LogFormatterParams, body string)
 	writer.Write(buf)
 }
 
+// isBinaryContent checks to see if the body is a common binary content type
+func isBinaryContent(r *http.Request) bool {
+	contentType := r.Header.Get("Content-Type")
+	binaryContentTypes := []string{
+		"application/octet-stream",
+		"image/",
+		"audio/",
+		"video/",
+		"application/pdf",
+	}
+
+	for _, binaryType := range binaryContentTypes {
+		if strings.HasPrefix(contentType, binaryType) {
+			return true
+		}
+	}
+	return false
+}
+
 // CustomLoggingHandler provides a way to supply a custom log formatter
 // while taking advantage of the mechanisms in this package
 func CustomLoggingHandler(out io.Writer, h http.Handler, s *Server) http.Handler {
@@ -176,18 +195,22 @@ func CustomLoggingHandler(out io.Writer, h http.Handler, s *Server) http.Handler
 			return
 		}
 		params.Request.Body = io.NopCloser(bytes.NewReader(bodyBytes)) // Reset the body
-		base64Body := base64.StdEncoding.EncodeToString(bodyBytes)
+		body := string(bodyBytes)
+		// if content is binary, encode it to base64
+		if isBinaryContent(params.Request) {
+			body = base64.StdEncoding.EncodeToString(bodyBytes)
+		}
 		verbose := s.verbose
 
 		// record request, if error set verbose to true to log current request since
 		// it didn't make it into a full channel
-		err = recordRequest(params.Request, s, base64Body)
+		err = recordRequest(params.Request, s, body)
 		if err != nil {
 			verbose = true
 		}
 
 		if verbose {
-			writeLog(writer, params, base64Body)
+			writeLog(writer, params, body)
 		}
 	})
 }

@@ -219,6 +219,7 @@ func TestBuildLogRequests(t *testing.T) {
 	testCases := map[string]struct {
 		method         string
 		path           string
+		contentType    string
 		body           string
 		expectedLog    string
 		expectedStatus int
@@ -226,6 +227,15 @@ func TestBuildLogRequests(t *testing.T) {
 		"GET valid imposter request": {
 			method:         "GET",
 			path:           "/yamlTestDumpRequest",
+			contentType:    "text/plain",
+			body:           "Dumped",
+			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17 Dumped\n",
+			expectedStatus: http.StatusOK,
+		},
+		"GET valid imposter binary request": {
+			method:         "GET",
+			path:           "/yamlTestDumpRequest",
+			contentType:    "application/octet-stream",
 			body:           "Dumped",
 			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17 RHVtcGVk\n",
 			expectedStatus: http.StatusOK,
@@ -233,6 +243,7 @@ func TestBuildLogRequests(t *testing.T) {
 		"GET valid imposter request no body": {
 			method:         "GET",
 			path:           "/yamlTestDumpRequest",
+			contentType:    "text/plain",
 			body:           "",
 			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17\n",
 			expectedStatus: http.StatusOK,
@@ -240,6 +251,15 @@ func TestBuildLogRequests(t *testing.T) {
 		"GET invalid imposter request": {
 			method:         "GET",
 			path:           "/doesnotexist",
+			contentType:    "text/plain",
+			body:           "Dumped",
+			expectedLog:    "GET /doesnotexist HTTP/1.1\" 404 19 Dumped\n",
+			expectedStatus: http.StatusNotFound,
+		},
+		"GET invalid imposter binary request": {
+			method:         "GET",
+			path:           "/doesnotexist",
+			contentType:    "video/mp4",
 			body:           "Dumped",
 			expectedLog:    "GET /doesnotexist HTTP/1.1\" 404 19 RHVtcGVk\n",
 			expectedStatus: http.StatusNotFound,
@@ -247,6 +267,7 @@ func TestBuildLogRequests(t *testing.T) {
 		"GET invalid imposter request no body": {
 			method:         "GET",
 			path:           "/doesnotexist",
+			contentType:    "text/plain",
 			body:           "",
 			expectedLog:    "GET /doesnotexist HTTP/1.1\" 404 19\n",
 			expectedStatus: http.StatusNotFound,
@@ -270,6 +291,7 @@ func TestBuildLogRequests(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.body))
+			req.Header.Set("Content-Type", tc.contentType)
 
 			server.httpServer.Handler.ServeHTTP(w, req)
 
