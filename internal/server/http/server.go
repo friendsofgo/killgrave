@@ -35,13 +35,13 @@ type Server struct {
 	secure           bool
 	imposterFs       ImposterFs
 	corsOptions      []handlers.CORSOption
-	verbose          bool
+	logLevel         int
 	dumpRequestsPath string
 	dumpCh           chan *RequestData
 }
 
 // NewServer initialize the mock server
-func NewServer(r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, fs ImposterFs, CORSOptions []handlers.CORSOption, verbose bool, dumpRequestsPath string) Server {
+func NewServer(r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, fs ImposterFs, CORSOptions []handlers.CORSOption, logLevel int, dumpRequestsPath string) Server {
 	return Server{
 		router:           r,
 		httpServer:       httpServer,
@@ -49,7 +49,7 @@ func NewServer(r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secur
 		secure:           secure,
 		imposterFs:       fs,
 		corsOptions:      CORSOptions,
-		verbose:          verbose,
+		logLevel:         logLevel,
 		dumpRequestsPath: dumpRequestsPath,
 	}
 }
@@ -92,21 +92,21 @@ func (s *Server) Build() error {
 		return nil
 	}
 
+	// only intantiate the request dump if we need it
+	if s.dumpCh == nil && len(s.dumpRequestsPath) > 0 {
+		s.dumpCh = make(chan *RequestData, 1000)
+		go RequestWriter(s.dumpRequestsPath, s.dumpCh)
+	}
+
 	// setup the logging handler
 	var handler http.Handler = s.router
-	if s.verbose || (s.dumpCh != nil && len(s.dumpRequestsPath) > 0) {
+	if s.logLevel > 0 || shouldRecordRequest(s) {
 		handler = CustomLoggingHandler(log.Writer(), handler, s)
 	}
 	s.httpServer.Handler = handlers.CORS(s.corsOptions...)(handler)
 
 	var impostersCh = make(chan []Imposter)
 	var done = make(chan struct{})
-
-	// only intantiate the request dump if we need it
-	if s.dumpCh == nil && len(s.dumpRequestsPath) > 0 {
-		s.dumpCh = make(chan *RequestData, 1000)
-		go RequestWriter(s.dumpRequestsPath, s.dumpCh)
-	}
 
 	go func() {
 		s.imposterFs.FindImposters(impostersCh)

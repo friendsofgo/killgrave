@@ -185,40 +185,50 @@ func isBinaryContent(r *http.Request) bool {
 	return false
 }
 
+func shouldRecordRequest(s *Server) bool {
+	return len(s.dumpRequestsPath) > 0 && s.dumpCh != nil
+}
+
+func getBody(r *http.Request, s *Server) string {
+	if s.logLevel == 0 && !shouldRecordRequest(s) {
+		return ""
+	}
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Error reading request body: %v\n", err)
+		return ""
+	}
+	r.Body = io.NopCloser(bytes.NewReader(bodyBytes)) // Reset the body
+	body := string(bodyBytes)
+	// if content is binary, encode it to base64
+	if isBinaryContent(r) {
+		body = base64.StdEncoding.EncodeToString(bodyBytes)
+	}
+	return body
+}
+
 // CustomLoggingHandler provides a way to supply a custom log formatter
 // while taking advantage of the mechanisms in this package
 func CustomLoggingHandler(out io.Writer, h http.Handler, s *Server) http.Handler {
 	return handlers.CustomLoggingHandler(out, h, func(writer io.Writer, params handlers.LogFormatterParams) {
-		bodyBytes, err := io.ReadAll(params.Request.Body)
-		if err != nil {
-			log.Printf("Error reading request body: %v\n", err)
-			return
-		}
-		params.Request.Body = io.NopCloser(bytes.NewReader(bodyBytes)) // Reset the body
-		body := string(bodyBytes)
-		// if content is binary, encode it to base64
-		if isBinaryContent(params.Request) {
-			body = base64.StdEncoding.EncodeToString(bodyBytes)
-		}
-		verbose := s.verbose
+		body := getBody(params.Request, s)
 
-		// record request, if error set verbose to true to log current request since
-		// it didn't make it into a full channel
-		err = recordRequest(params.Request, s, body)
-		if err != nil {
-			verbose = true
+		var err error
+		if shouldRecordRequest(s) {
+			err = recordRequest(params.Request, s, body)
 		}
 
-		if verbose {
+		// log the request based on the log level
+		// if err is set, log the request, but only add the body if the log level is 2 or higher
+		if s.logLevel >= 2 {
 			writeLog(writer, params, body)
+		} else if err != nil || s.logLevel > 0 {
+			writeLog(writer, params, "")
 		}
 	})
 }
 
 func recordRequest(r *http.Request, s *Server, body string) error {
-	if len(s.dumpRequestsPath) < 1 || s.dumpCh == nil {
-		return nil
-	}
 	rd := getRequestData(r, body)
 	select {
 	case s.dumpCh <- rd:

@@ -19,7 +19,7 @@ type Config struct {
 	Proxy            ConfigProxy `yaml:"proxy"`
 	Secure           bool        `yaml:"secure"`
 	Watcher          bool        `yaml:"watcher"`
-	Verbose          bool        `yaml:"verbose"`
+	LogLevel         int         `yaml:"log_level"`
 	DumpRequestsPath string      `yaml:"dump_requests_path"`
 }
 
@@ -113,7 +113,7 @@ func (cfg *Config) ConfigureProxy(proxyMode ProxyMode, proxyURL string) {
 type ConfigOpt func(cfg *Config) error
 
 // NewConfig initialize the config
-func NewConfig(impostersPath, host string, port int, secure, verbose bool, dumpRequestsPath string) (Config, error) {
+func NewConfig(impostersPath, host string, port int, secure bool, logLevel int, dumpRequestsPath string) (Config, error) {
 	if impostersPath == "" {
 		return Config{}, errEmptyImpostersPath
 	}
@@ -131,7 +131,7 @@ func NewConfig(impostersPath, host string, port int, secure, verbose bool, dumpR
 		Host:             host,
 		Port:             port,
 		Secure:           secure,
-		Verbose:          verbose,
+		LogLevel:         logLevel,
 		DumpRequestsPath: dumpRequestsPath,
 	}
 

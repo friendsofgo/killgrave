@@ -3,7 +3,6 @@ package http
 import (
 	"bytes"
 	"crypto/tls"
-	"encoding/base64"
 	"io"
 	"log"
 	"net/http"
@@ -27,7 +26,7 @@ func TestMain(m *testing.M) {
 
 func TestServer_Build(t *testing.T) {
 	newServer := func(fs ImposterFs) Server {
-		return NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, fs, nil, false, "")
+		return NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, fs, nil, 0, "")
 	}
 
 	testCases := map[string]struct {
@@ -71,7 +70,7 @@ func TestBuildProxyMode(t *testing.T) {
 		imposterFs, err := NewImposterFS("test/testdata/imposters")
 		require.NoError(t, err)
 
-		server := NewServer(router, httpServer, proxyServer, false, imposterFs, nil, false, "")
+		server := NewServer(router, httpServer, proxyServer, false, imposterFs, nil, 0, "")
 		return &server, func() error {
 			return httpServer.Close()
 		}
@@ -152,7 +151,7 @@ func TestBuildSecureMode(t *testing.T) {
 		imposterFs, err := NewImposterFS("test/testdata/imposters_secure")
 		require.NoError(t, err)
 
-		server := NewServer(router, httpServer, proxyServer, true, imposterFs, nil, false, "")
+		server := NewServer(router, httpServer, proxyServer, true, imposterFs, nil, 0, "")
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -221,6 +220,7 @@ func TestBuildLogRequests(t *testing.T) {
 		path           string
 		contentType    string
 		body           string
+		logLevel       int
 		expectedLog    string
 		expectedStatus int
 	}{
@@ -229,6 +229,16 @@ func TestBuildLogRequests(t *testing.T) {
 			path:           "/yamlTestDumpRequest",
 			contentType:    "text/plain",
 			body:           "Dumped",
+			logLevel:       1,
+			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17\n",
+			expectedStatus: http.StatusOK,
+		},
+		"GET valid imposter request with body": {
+			method:         "GET",
+			path:           "/yamlTestDumpRequest",
+			contentType:    "text/plain",
+			body:           "Dumped",
+			logLevel:       2,
 			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17 Dumped\n",
 			expectedStatus: http.StatusOK,
 		},
@@ -237,6 +247,16 @@ func TestBuildLogRequests(t *testing.T) {
 			path:           "/yamlTestDumpRequest",
 			contentType:    "application/octet-stream",
 			body:           "Dumped",
+			logLevel:       1,
+			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17\n",
+			expectedStatus: http.StatusOK,
+		},
+		"GET valid imposter binary request with body": {
+			method:         "GET",
+			path:           "/yamlTestDumpRequest",
+			contentType:    "application/octet-stream",
+			body:           "Dumped",
+			logLevel:       2,
 			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17 RHVtcGVk\n",
 			expectedStatus: http.StatusOK,
 		},
@@ -245,6 +265,7 @@ func TestBuildLogRequests(t *testing.T) {
 			path:           "/yamlTestDumpRequest",
 			contentType:    "text/plain",
 			body:           "",
+			logLevel:       2,
 			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17\n",
 			expectedStatus: http.StatusOK,
 		},
@@ -253,14 +274,25 @@ func TestBuildLogRequests(t *testing.T) {
 			path:           "/doesnotexist",
 			contentType:    "text/plain",
 			body:           "Dumped",
+			logLevel:       1,
+			expectedLog:    "GET /doesnotexist HTTP/1.1\" 404 19\n",
+			expectedStatus: http.StatusNotFound,
+		},
+		"GET invalid imposter request with body": {
+			method:         "GET",
+			path:           "/doesnotexist",
+			contentType:    "text/plain",
+			body:           "Dumped",
+			logLevel:       2,
 			expectedLog:    "GET /doesnotexist HTTP/1.1\" 404 19 Dumped\n",
 			expectedStatus: http.StatusNotFound,
 		},
-		"GET invalid imposter binary request": {
+		"GET invalid imposter binary request with body": {
 			method:         "GET",
 			path:           "/doesnotexist",
 			contentType:    "video/mp4",
 			body:           "Dumped",
+			logLevel:       2,
 			expectedLog:    "GET /doesnotexist HTTP/1.1\" 404 19 RHVtcGVk\n",
 			expectedStatus: http.StatusNotFound,
 		},
@@ -269,6 +301,7 @@ func TestBuildLogRequests(t *testing.T) {
 			path:           "/doesnotexist",
 			contentType:    "text/plain",
 			body:           "",
+			logLevel:       2,
 			expectedLog:    "GET /doesnotexist HTTP/1.1\" 404 19\n",
 			expectedStatus: http.StatusNotFound,
 		},
@@ -285,7 +318,7 @@ func TestBuildLogRequests(t *testing.T) {
 
 			imposterFs, err := NewImposterFS("test/testdata/imposters")
 			assert.NoError(t, err)
-			server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, nil, true, "")
+			server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, nil, tc.logLevel, "")
 			err = server.Build()
 			assert.NoError(t, err)
 
@@ -305,6 +338,7 @@ func TestBuildLogRequests(t *testing.T) {
 }
 
 func TestBuildRecordRequests(t *testing.T) {
+
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
 	defer func() {
@@ -318,14 +352,13 @@ func TestBuildRecordRequests(t *testing.T) {
 	imposterFs, err := NewImposterFS("test/testdata/imposters")
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
-	server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, nil, true, dumpFile)
+	server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, nil, 0, dumpFile)
 	err = server.Build()
 	assert.NoError(t, err)
 
-	inputBodies := []string{"Dumped1", ""}
-	expectedBodies := []string{"RHVtcGVkMQ==", ""}
-	req1 := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader(inputBodies[0]))
-	req2 := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader(inputBodies[1]))
+	expectedBodies := []string{"Dumped1", ""}
+	req1 := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader(expectedBodies[0]))
+	req2 := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader(expectedBodies[1]))
 	server.httpServer.Handler.ServeHTTP(w, req1)
 	server.httpServer.Handler.ServeHTTP(w, req2)
 
@@ -338,8 +371,5 @@ func TestBuildRecordRequests(t *testing.T) {
 	assert.Equal(t, 2, len(reqs), "Expect 2 requests to be dumped in file failed")
 	for i, expectedBody := range expectedBodies {
 		assert.Equal(t, expectedBody, reqs[i].Body, "Expect request body to be dumped in file failed")
-		decodedString, err := base64.StdEncoding.DecodeString(reqs[i].Body)
-		assert.NoError(t, err, "Failed to decode base64 string")
-		assert.Equal(t, inputBodies[i], string(decodedString), "Expect request body to be dumped in file failed")
 	}
 }
