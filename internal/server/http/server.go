@@ -29,21 +29,28 @@ type ServerOpt func(s *Server)
 
 // Server definition of mock server
 type Server struct {
-	router     *mux.Router
-	httpServer *http.Server
-	proxy      *Proxy
-	secure     bool
-	imposterFs ImposterFs
+	router           *mux.Router
+	httpServer       *http.Server
+	proxy            *Proxy
+	secure           bool
+	imposterFs       ImposterFs
+	corsOptions      []handlers.CORSOption
+	logLevel         int
+	dumpRequestsPath string
+	dumpCh           chan *RequestData
 }
 
 // NewServer initialize the mock server
-func NewServer(r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, fs ImposterFs) Server {
+func NewServer(r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, fs ImposterFs, CORSOptions []handlers.CORSOption, logLevel int, dumpRequestsPath string) Server {
 	return Server{
-		router:     r,
-		httpServer: httpServer,
-		proxy:      proxyServer,
-		secure:     secure,
-		imposterFs: fs,
+		router:           r,
+		httpServer:       httpServer,
+		proxy:            proxyServer,
+		secure:           secure,
+		imposterFs:       fs,
+		corsOptions:      CORSOptions,
+		logLevel:         logLevel,
+		dumpRequestsPath: dumpRequestsPath,
 	}
 }
 
@@ -84,6 +91,19 @@ func (s *Server) Build() error {
 		s.router.PathPrefix("/").HandlerFunc(s.proxy.Handler())
 		return nil
 	}
+
+	// only intantiate the request dump if we need it
+	if s.dumpCh == nil && len(s.dumpRequestsPath) > 0 {
+		s.dumpCh = make(chan *RequestData, 1000)
+		go RequestWriter(s.dumpRequestsPath, s.dumpCh)
+	}
+
+	// setup the logging handler
+	var handler http.Handler = s.router
+	if s.logLevel > 0 || shouldRecordRequest(s) {
+		handler = CustomLoggingHandler(log.Writer(), handler, s)
+	}
+	s.httpServer.Handler = handlers.CORS(s.corsOptions...)(handler)
 
 	var impostersCh = make(chan []Imposter)
 	var done = make(chan struct{})
@@ -171,8 +191,4 @@ func (s *Server) addImposterHandler(imposters []Imposter) {
 			}
 		}
 	}
-}
-
-func (s *Server) handleAll(h http.HandlerFunc) {
-	s.router.PathPrefix("/").HandlerFunc(h)
 }

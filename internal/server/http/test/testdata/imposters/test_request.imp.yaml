@@ -5,3 +5,10 @@
   response:
     status: 200
     body: "Yaml Handled"
+- request:
+    method: GET
+    endpoint: /yamlTestDumpRequest
+    dump: true
+  response:
+    status: 200
+    body: "Yaml Dump Handled"
