@@ -19,6 +19,14 @@ import (
 	"github.com/gorilla/handlers"
 )
 
+var binaryContentTypes = []string{
+	"application/octet-stream",
+	"image/",
+	"audio/",
+	"video/",
+	"application/pdf",
+}
+
 // RequestData struct to hold request data
 type RequestData struct {
 	Method string      `json:"method"`
@@ -169,14 +177,6 @@ func writeLog(writer io.Writer, params handlers.LogFormatterParams, body string)
 // isBinaryContent checks to see if the body is a common binary content type
 func isBinaryContent(r *http.Request) bool {
 	contentType := r.Header.Get("Content-Type")
-	binaryContentTypes := []string{
-		"application/octet-stream",
-		"image/",
-		"audio/",
-		"video/",
-		"application/pdf",
-	}
-
 	for _, binaryType := range binaryContentTypes {
 		if strings.HasPrefix(contentType, binaryType) {
 			return true
