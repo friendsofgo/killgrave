@@ -13,8 +13,6 @@ bin
 *.out
 coverage.txt
 
-.vscode
-
 imposters
 
 !internal/server/http/test/testdata/imposters/
