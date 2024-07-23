@@ -106,8 +106,7 @@ func recordRequest(r *http.Request, s *Server, body string) error {
 		// Successfully sent the request data to the channel
 	default:
 		// Handle the case where the channel is full
-		log.Println("Channel is full, dropping request and logging it instead:")
-		return fmt.Errorf("request dump channel is full")
+		return fmt.Errorf("request dump channel is full, could not write request")
 	}
 	return nil
 }
