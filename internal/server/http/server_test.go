@@ -381,7 +381,6 @@ func TestBuildRecordRequests(t *testing.T) {
 	}
 }
 
-// TODO: make so we don't need to read from a file by abstracting test to write with io.Writer instead of a file somehow
 // getRecordedRequests reads the requests from the file and returns them as a slice of RequestData
 func getRecordedRequests(filePath string) ([]RequestData, error) {
 	// Read the file contents

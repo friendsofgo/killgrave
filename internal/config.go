@@ -3,6 +3,7 @@ package killgrave
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -21,6 +22,7 @@ type Config struct {
 	Watcher          bool        `yaml:"watcher"`
 	LogLevel         int         `yaml:"log_level"`
 	DumpRequestsPath string      `yaml:"dump_requests_path"`
+	LogWriter        io.Writer
 }
 
 // ConfigCORS representation of section CORS of the yaml

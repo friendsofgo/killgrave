@@ -114,7 +114,6 @@ func recordRequest(r *http.Request, s *Server, body string) error {
 // Goroutine function to write requests to a JSON file
 func RequestWriter(ctx context.Context, wg *sync.WaitGroup, writer io.Writer, requestChan <-chan *RequestData) {
 	defer wg.Done()
-	// defer file.Close()
 
 	encoder := json.NewEncoder(writer)
 	for {
@@ -126,9 +125,8 @@ func RequestWriter(ctx context.Context, wg *sync.WaitGroup, writer io.Writer, re
 
 			if err := encoder.Encode(requestData); err != nil {
 				log.Printf("Failed to write to file: %+v", err)
-				fmt.Printf("Failed to write to file: %+v", err)
 			}
-			// Type assertion to call Sync if writer is *os.File
+			// call Sync if writer is *os.File
 			if f, ok := writer.(*os.File); ok {
 				f.Sync()
 			}

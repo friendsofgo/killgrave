@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"log"
 	"net/http"
-	"os"
 	"sync"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
@@ -99,9 +98,10 @@ func (s *Server) Build() error {
 		return nil
 	}
 
-	// only intantiate the request dump if we need it
+	// only instantiate the request dump if we need it
 	if s.dumpCh == nil && s.serverCfg.LogWriter != nil {
 		s.dumpCh = make(chan *RequestData, 1000)
+
 		// Start the RequestWriter goroutine with context
 		s.wg.Add(1)
 		go RequestWriter(s.ctx, s.wg, s.serverCfg.LogWriter, s.dumpCh)
@@ -184,11 +184,6 @@ func (s *Server) Shutdown() error {
 
 	// wait for all goroutines to finish
 	s.wg.Wait()
-	if s.serverCfg.LogWriter != nil {
-		if f, ok := s.serverCfg.LogWriter.(*os.File); ok {
-			f.Close()
-		}
-	}
 
 	return nil
 }

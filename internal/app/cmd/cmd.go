@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -98,6 +97,16 @@ func runHTTP(cmd *cobra.Command, cfg killgrave.Config) error {
 
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
+	// setup the log file and its deferred close if needed
+	if len(cfg.DumpRequestsPath) > 0 && cfg.LogLevel > 0 {
+		file, err := os.OpenFile(cfg.DumpRequestsPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatalf("Failed to open file: %+v", err)
+		}
+		cfg.LogWriter = file
+		defer file.Close()
+	}
+
 	srv := runServer(cfg)
 
 	watcherFlag, _ := cmd.Flags().GetBool(_watcherFlag)
@@ -137,15 +146,6 @@ func runServer(cfg killgrave.Config) server.Server {
 		log.Fatal(err)
 	}
 
-	var logWriter io.Writer
-	if len(cfg.DumpRequestsPath) > 0 && cfg.LogLevel > 0 {
-		file, err := os.OpenFile(cfg.DumpRequestsPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Fatalf("Failed to open file: %+v", err)
-		}
-		logWriter = file
-	}
-
 	s := server.NewServer(
 		router,
 		&httpServer,
@@ -154,7 +154,7 @@ func runServer(cfg killgrave.Config) server.Server {
 		imposterFs,
 		sc.WithCORSOptions(server.PrepareAccessControl(cfg.CORS)),
 		sc.WithLogLevel(cfg.LogLevel),
-		sc.WithLogWriter(logWriter),
+		sc.WithLogWriter(cfg.LogWriter),
 	)
 	if err := s.Build(); err != nil {
 		log.Fatal(err)
