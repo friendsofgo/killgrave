@@ -69,10 +69,11 @@ func getBody(r *http.Request, s *Server) string {
 		return ""
 	}
 	r.Body = io.NopCloser(bytes.NewReader(bodyBytes)) // Reset the body
-	body := string(bodyBytes)
-	// if content is binary, encode it to base64
-	if isBinaryContent(r) {
-		body = base64.StdEncoding.EncodeToString(bodyBytes)
+
+	body := base64.StdEncoding.EncodeToString(bodyBytes)
+	// if content is not binary, get it as a string
+	if !isBinaryContent(r) {
+		body = string(bodyBytes)
 	}
 	return body
 }
