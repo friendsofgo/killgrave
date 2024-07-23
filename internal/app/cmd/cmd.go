@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	server "github.com/friendsofgo/killgrave/internal/server/http"
+	sc "github.com/friendsofgo/killgrave/internal/serverconfig"
 	"github.com/gorilla/mux"
 	"github.com/radovskyb/watcher"
 	"github.com/spf13/cobra"
@@ -35,7 +37,7 @@ const (
 	_secureFlag           = "secure"
 	_proxyModeFlag        = "proxy-mode"
 	_proxyURLFlag         = "proxy-url"
-	_logLevel             = "log-level"
+	_logLevelFlag         = "log-level"
 	_dumpRequestsPathFlag = "dump-requests-path"
 )
 
@@ -82,7 +84,7 @@ func NewKillgraveCmd() *cobra.Command {
 	rootCmd.Flags().BoolP(_secureFlag, "s", false, "Run mock server using TLS (https)")
 	rootCmd.Flags().StringP(_proxyModeFlag, "m", _defaultProxyMode.String(), "Proxy mode, the options are all, missing or none")
 	rootCmd.Flags().StringP(_proxyURLFlag, "u", "", "The url where the proxy will redirect to")
-	rootCmd.Flags().IntP(_logLevel, "l", _defaultLogLevel, "Log level, the options are 0, 1, 2. Default is 0, 1 adds requests, 2 adds request body")
+	rootCmd.Flags().IntP(_logLevelFlag, "l", _defaultLogLevel, "Log level, the options are 0, 1, 2. Default is 0, 1 adds requests, 2 adds request body")
 	rootCmd.Flags().StringP(_dumpRequestsPathFlag, "d", "", "Path the requests will be dumped to")
 
 	rootCmd.SetVersionTemplate("Killgrave version: {{.Version}}\n")
@@ -135,15 +137,24 @@ func runServer(cfg killgrave.Config) server.Server {
 		log.Fatal(err)
 	}
 
+	var logWriter io.Writer
+	if len(cfg.DumpRequestsPath) > 0 && cfg.LogLevel > 0 {
+		file, err := os.OpenFile(cfg.DumpRequestsPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatalf("Failed to open file: %+v", err)
+		}
+		logWriter = file
+	}
+
 	s := server.NewServer(
 		router,
 		&httpServer,
 		proxyServer,
 		cfg.Secure,
 		imposterFs,
-		server.PrepareAccessControl(cfg.CORS),
-		cfg.LogLevel,
-		cfg.DumpRequestsPath,
+		sc.WithCORSOptions(server.PrepareAccessControl(cfg.CORS)),
+		sc.WithLogLevel(cfg.LogLevel),
+		sc.WithLogWriter(logWriter),
 	)
 	if err := s.Build(); err != nil {
 		log.Fatal(err)
@@ -194,7 +205,7 @@ func prepareConfig(cmd *cobra.Command) (killgrave.Config, error) {
 		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromSecureFlag)
 	}
 
-	logLevel, err := cmd.Flags().GetInt(_logLevel)
+	logLevel, err := cmd.Flags().GetInt(_logLevelFlag)
 	if err != nil {
 		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromLogLevelFlag)
 	}

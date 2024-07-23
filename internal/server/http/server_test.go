@@ -3,6 +3,8 @@ package http
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -14,6 +16,7 @@ import (
 	"time"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
+	sc "github.com/friendsofgo/killgrave/internal/serverconfig"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +29,7 @@ func TestMain(m *testing.M) {
 
 func TestServer_Build(t *testing.T) {
 	newServer := func(fs ImposterFs) Server {
-		return NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, fs, nil, 0, "")
+		return NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, fs)
 	}
 
 	testCases := map[string]struct {
@@ -70,7 +73,7 @@ func TestBuildProxyMode(t *testing.T) {
 		imposterFs, err := NewImposterFS("test/testdata/imposters")
 		require.NoError(t, err)
 
-		server := NewServer(router, httpServer, proxyServer, false, imposterFs, nil, 0, "")
+		server := NewServer(router, httpServer, proxyServer, false, imposterFs)
 		return &server, func() error {
 			return httpServer.Close()
 		}
@@ -151,7 +154,7 @@ func TestBuildSecureMode(t *testing.T) {
 		imposterFs, err := NewImposterFS("test/testdata/imposters_secure")
 		require.NoError(t, err)
 
-		server := NewServer(router, httpServer, proxyServer, true, imposterFs, nil, 0, "")
+		server := NewServer(router, httpServer, proxyServer, true, imposterFs)
 		return &server, func() {
 			httpServer.Close()
 		}
@@ -318,7 +321,7 @@ func TestBuildLogRequests(t *testing.T) {
 
 			imposterFs, err := NewImposterFS("test/testdata/imposters")
 			assert.NoError(t, err)
-			server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, nil, tc.logLevel, "")
+			server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, sc.WithLogLevel(tc.logLevel))
 			err = server.Build()
 			assert.NoError(t, err)
 
@@ -338,7 +341,6 @@ func TestBuildLogRequests(t *testing.T) {
 }
 
 func TestBuildRecordRequests(t *testing.T) {
-
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
 	defer func() {
@@ -352,7 +354,12 @@ func TestBuildRecordRequests(t *testing.T) {
 	imposterFs, err := NewImposterFS("test/testdata/imposters")
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
-	server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, nil, 0, dumpFile)
+	file, err := os.OpenFile(dumpFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatalf("Failed to open file: %+v", err)
+	}
+	defer file.Close()
+	server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, sc.WithLogWriter(file), sc.WithLogLevel(2))
 	err = server.Build()
 	assert.NoError(t, err)
 
@@ -372,4 +379,31 @@ func TestBuildRecordRequests(t *testing.T) {
 	for i, expectedBody := range expectedBodies {
 		assert.Equal(t, expectedBody, reqs[i].Body, "Expect request body to be dumped in file failed")
 	}
+}
+
+// TODO: make so we don't need to read from a file by abstracting test to write with io.Writer instead of a file somehow
+// getRecordedRequests reads the requests from the file and returns them as a slice of RequestData
+func getRecordedRequests(filePath string) ([]RequestData, error) {
+	// Read the file contents
+	fileContent, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading file: %w", err)
+	}
+
+	// Split the contents by the newline separator
+	requestDumps := strings.Split(string(fileContent), "\n")
+	requestsData := []RequestData{}
+	for _, requestDump := range requestDumps {
+		if requestDump == "" {
+			continue
+		}
+		// Unmarshal the JSON string into the RequestData struct
+		rd := RequestData{}
+		err := json.Unmarshal([]byte(requestDump), &rd)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshaling JSON: %w", err)
+		}
+		requestsData = append(requestsData, rd)
+	}
+	return requestsData, nil
 }
