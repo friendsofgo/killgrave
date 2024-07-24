@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -13,7 +12,6 @@ import (
 	"strings"
 	"sync"
 
-	internal_handlers "github.com/friendsofgo/killgrave/internal/gorilla/handlers"
 	"github.com/gorilla/handlers"
 )
 
@@ -31,17 +29,28 @@ type RequestData struct {
 	Host   string      `json:"host"`
 	URL    string      `json:"url"`
 	Header http.Header `json:"header"`
-	Body   string      `json:"body"`
+	Status int         `json:"statusCode,omitempty"`
+	Body   string      `json:"body,omitempty"`
 }
 
-func getRequestData(r *http.Request, body string) *RequestData {
+func getRequestData(r *http.Request, status int, body string) *RequestData {
 	return &RequestData{
 		Method: r.Method,
 		Host:   r.Host,
 		URL:    r.URL.String(),
 		Header: r.Header,
+		Status: status,
 		Body:   body,
 	}
+}
+
+// ToJSON converts the RequestData struct to JSON.
+func (rd *RequestData) toJSON() ([]byte, error) {
+	jsonData, err := json.Marshal(rd)
+	if err != nil {
+		return nil, err
+	}
+	return jsonData, nil
 }
 
 // isBinaryContent checks to see if the body is a common binary content type
@@ -83,39 +92,40 @@ func getBody(r *http.Request, s *Server) string {
 func CustomLoggingHandler(out io.Writer, h http.Handler, s *Server) http.Handler {
 	return handlers.CustomLoggingHandler(out, h, func(writer io.Writer, params handlers.LogFormatterParams) {
 		body := getBody(params.Request, s)
+		requestData := getRequestData(params.Request, params.StatusCode, body)
 
-		var err error
-		if shouldRecordRequest(s) {
-			err = recordRequest(params.Request, s, body)
-		}
+		// log the request
+		if s.serverCfg.LogLevel > 0 {
+			// if we add other formats to log in we can switch here and return the bytes
+			data, err := requestData.toJSON()
+			if err != nil {
+				log.Printf("Error encoding request data: %+v\n", err)
+				return
+			}
 
-		// log the request based on the log level
-		// if err is set, log the request, but only add the body if the log level is 2 or higher
-		if s.serverCfg.LogLevel >= 2 {
-			internal_handlers.WriteLog(writer, params, body)
-		} else if err != nil || s.serverCfg.LogLevel > 0 {
-			internal_handlers.WriteLog(writer, params, "")
+			data = append(data, '\n')
+			writer.Write(data)
+			if shouldRecordRequest(s) {
+				recordRequest(&data, s)
+			}
 		}
 	})
 }
 
-func recordRequest(r *http.Request, s *Server, body string) error {
-	rd := getRequestData(r, body)
+func recordRequest(request *[]byte, s *Server) {
 	select {
-	case s.dumpCh <- rd:
+	case s.dumpCh <- request:
 		// Successfully sent the request data to the channel
 	default:
 		// Handle the case where the channel is full
-		return fmt.Errorf("request dump channel is full, could not write request")
+		log.Println("request dump channel is full, could not write request")
 	}
-	return nil
 }
 
 // Goroutine function to write requests to a JSON file
-func RequestWriter(ctx context.Context, wg *sync.WaitGroup, writer io.Writer, requestChan <-chan *RequestData) {
+func RequestWriter(ctx context.Context, wg *sync.WaitGroup, writer io.Writer, requestChan <-chan *[]byte) {
 	defer wg.Done()
 
-	encoder := json.NewEncoder(writer)
 	for {
 		select {
 		case requestData := <-requestChan:
@@ -123,9 +133,7 @@ func RequestWriter(ctx context.Context, wg *sync.WaitGroup, writer io.Writer, re
 				return // channel closed
 			}
 
-			if err := encoder.Encode(requestData); err != nil {
-				log.Printf("Failed to write to file: %+v", err)
-			}
+			writer.Write(*requestData)
 			// call Sync if writer is *os.File
 			if f, ok := writer.(*os.File); ok {
 				f.Sync()

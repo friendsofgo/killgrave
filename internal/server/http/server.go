@@ -34,7 +34,7 @@ type Server struct {
 	secure     bool
 	imposterFs ImposterFs
 	serverCfg  *sc.ServerConfig
-	dumpCh     chan *RequestData
+	dumpCh     chan *[]byte
 	wg         *sync.WaitGroup
 	ctx        context.Context
 	cancel     context.CancelFunc
@@ -100,7 +100,7 @@ func (s *Server) Build() error {
 
 	// only instantiate the request dump if we need it
 	if s.dumpCh == nil && s.serverCfg.LogWriter != nil {
-		s.dumpCh = make(chan *RequestData, 1000)
+		s.dumpCh = make(chan *[]byte, 1000)
 
 		// Start the RequestWriter goroutine with context
 		s.wg.Add(1)

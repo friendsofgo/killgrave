@@ -233,7 +233,7 @@ func TestBuildLogRequests(t *testing.T) {
 			contentType:    "text/plain",
 			body:           "Dumped",
 			logLevel:       1,
-			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17\n",
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/yamlTestDumpRequest\",\"header\":{\"Content-Type\":[\"text/plain\"]},\"statusCode\":200,\"body\":\"Dumped\"}\n",
 			expectedStatus: http.StatusOK,
 		},
 		"GET valid imposter request with body": {
@@ -242,7 +242,7 @@ func TestBuildLogRequests(t *testing.T) {
 			contentType:    "text/plain",
 			body:           "Dumped",
 			logLevel:       2,
-			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17 Dumped\n",
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/yamlTestDumpRequest\",\"header\":{\"Content-Type\":[\"text/plain\"]},\"statusCode\":200,\"body\":\"Dumped\"}\n",
 			expectedStatus: http.StatusOK,
 		},
 		"GET valid imposter binary request": {
@@ -251,7 +251,7 @@ func TestBuildLogRequests(t *testing.T) {
 			contentType:    "application/octet-stream",
 			body:           "Dumped",
 			logLevel:       1,
-			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17\n",
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/yamlTestDumpRequest\",\"header\":{\"Content-Type\":[\"application/octet-stream\"]},\"statusCode\":200,\"body\":\"RHVtcGVk\"}\n",
 			expectedStatus: http.StatusOK,
 		},
 		"GET valid imposter binary request with body": {
@@ -260,7 +260,7 @@ func TestBuildLogRequests(t *testing.T) {
 			contentType:    "application/octet-stream",
 			body:           "Dumped",
 			logLevel:       2,
-			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17 RHVtcGVk\n",
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/yamlTestDumpRequest\",\"header\":{\"Content-Type\":[\"application/octet-stream\"]},\"statusCode\":200,\"body\":\"RHVtcGVk\"}\n",
 			expectedStatus: http.StatusOK,
 		},
 		"GET valid imposter request no body": {
@@ -269,7 +269,7 @@ func TestBuildLogRequests(t *testing.T) {
 			contentType:    "text/plain",
 			body:           "",
 			logLevel:       2,
-			expectedLog:    "GET /yamlTestDumpRequest HTTP/1.1\" 200 17\n",
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/yamlTestDumpRequest\",\"header\":{\"Content-Type\":[\"text/plain\"]},\"statusCode\":200}\n",
 			expectedStatus: http.StatusOK,
 		},
 		"GET invalid imposter request": {
@@ -278,7 +278,7 @@ func TestBuildLogRequests(t *testing.T) {
 			contentType:    "text/plain",
 			body:           "Dumped",
 			logLevel:       1,
-			expectedLog:    "GET /doesnotexist HTTP/1.1\" 404 19\n",
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/doesnotexist\",\"header\":{\"Content-Type\":[\"text/plain\"]},\"statusCode\":404,\"body\":\"Dumped\"}\n",
 			expectedStatus: http.StatusNotFound,
 		},
 		"GET invalid imposter request with body": {
@@ -287,7 +287,7 @@ func TestBuildLogRequests(t *testing.T) {
 			contentType:    "text/plain",
 			body:           "Dumped",
 			logLevel:       2,
-			expectedLog:    "GET /doesnotexist HTTP/1.1\" 404 19 Dumped\n",
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/doesnotexist\",\"header\":{\"Content-Type\":[\"text/plain\"]},\"statusCode\":404,\"body\":\"Dumped\"}\n",
 			expectedStatus: http.StatusNotFound,
 		},
 		"GET invalid imposter binary request with body": {
@@ -296,7 +296,7 @@ func TestBuildLogRequests(t *testing.T) {
 			contentType:    "video/mp4",
 			body:           "Dumped",
 			logLevel:       2,
-			expectedLog:    "GET /doesnotexist HTTP/1.1\" 404 19 RHVtcGVk\n",
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/doesnotexist\",\"header\":{\"Content-Type\":[\"video/mp4\"]},\"statusCode\":404,\"body\":\"RHVtcGVk\"}\n",
 			expectedStatus: http.StatusNotFound,
 		},
 		"GET invalid imposter request no body": {
@@ -305,7 +305,7 @@ func TestBuildLogRequests(t *testing.T) {
 			contentType:    "text/plain",
 			body:           "",
 			logLevel:       2,
-			expectedLog:    "GET /doesnotexist HTTP/1.1\" 404 19\n",
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/doesnotexist\",\"header\":{\"Content-Type\":[\"text/plain\"]},\"statusCode\":404}\n",
 			expectedStatus: http.StatusNotFound,
 		},
 	}
