@@ -72,17 +72,15 @@ func getBody(r *http.Request, s *Server) string {
 	if s.serverCfg.LogLevel == 0 && !shouldRecordRequest(s) {
 		return ""
 	}
-	bodyBytes, err := io.ReadAll(r.Body)
+	// Use io.LimitedReader to read up to the max allowed bytes
+	limitedReader := &io.LimitedReader{R: r.Body, N: int64(s.serverCfg.LogBodyMax)}
+	bodyBytes, err := io.ReadAll(limitedReader)
 	if err != nil {
 		log.Printf("Error reading request body: %v\n", err)
 		return ""
 	}
-	r.Body = io.NopCloser(bytes.NewReader(bodyBytes)) // Reset the body
-
-	// trim if larger than the limit allowed
-	if len(bodyBytes) > s.serverCfg.LogBodyMax {
-		bodyBytes = bodyBytes[:s.serverCfg.LogBodyMax]
-	}
+	// Reset the body
+	r.Body = io.NopCloser(io.MultiReader(bytes.NewReader(bodyBytes), r.Body))
 
 	body := base64.StdEncoding.EncodeToString(bodyBytes)
 	// if content is not binary, get it as a string
