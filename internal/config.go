@@ -3,6 +3,7 @@ package killgrave
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -12,13 +13,17 @@ import (
 
 // Config representation of config file yaml
 type Config struct {
-	ImpostersPath string      `yaml:"imposters_path"`
-	Port          int         `yaml:"port"`
-	Host          string      `yaml:"host"`
-	CORS          ConfigCORS  `yaml:"cors"`
-	Proxy         ConfigProxy `yaml:"proxy"`
-	Secure        bool        `yaml:"secure"`
-	Watcher       bool        `yaml:"watcher"`
+	ImpostersPath    string      `yaml:"imposters_path"`
+	Port             int         `yaml:"port"`
+	Host             string      `yaml:"host"`
+	CORS             ConfigCORS  `yaml:"cors"`
+	Proxy            ConfigProxy `yaml:"proxy"`
+	Secure           bool        `yaml:"secure"`
+	Watcher          bool        `yaml:"watcher"`
+	LogLevel         int         `yaml:"log_level"`
+	LogBodyMax       int         `yaml:"log_body_max"`
+	DumpRequestsPath string      `yaml:"dump_requests_path"`
+	LogWriter        io.Writer
 }
 
 // ConfigCORS representation of section CORS of the yaml
@@ -111,7 +116,7 @@ func (cfg *Config) ConfigureProxy(proxyMode ProxyMode, proxyURL string) {
 type ConfigOpt func(cfg *Config) error
 
 // NewConfig initialize the config
-func NewConfig(impostersPath, host string, port int, secure bool) (Config, error) {
+func NewConfig(impostersPath, host string, port int, secure bool, logLevel, logBodyMax int, dumpRequestsPath string) (Config, error) {
 	if impostersPath == "" {
 		return Config{}, errEmptyImpostersPath
 	}
@@ -125,10 +130,13 @@ func NewConfig(impostersPath, host string, port int, secure bool) (Config, error
 	}
 
 	cfg := Config{
-		ImpostersPath: impostersPath,
-		Host:          host,
-		Port:          port,
-		Secure:        secure,
+		ImpostersPath:    impostersPath,
+		Host:             host,
+		Port:             port,
+		Secure:           secure,
+		LogLevel:         logLevel,
+		LogBodyMax:       logBodyMax,
+		DumpRequestsPath: dumpRequestsPath,
 	}
 
 	return cfg, nil

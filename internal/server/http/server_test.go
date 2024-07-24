@@ -1,16 +1,22 @@
 package http
 
 import (
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
+	sc "github.com/friendsofgo/killgrave/internal/serverconfig"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -209,4 +215,196 @@ func TestBuildSecureMode(t *testing.T) {
 			}, 1*time.Second, 50*time.Millisecond)
 		})
 	}
+}
+
+func TestBuildLogRequests(t *testing.T) {
+	testCases := map[string]struct {
+		method         string
+		path           string
+		contentType    string
+		body           string
+		logLevel       int
+		expectedLog    string
+		expectedStatus int
+	}{
+		"GET valid imposter request": {
+			method:         "GET",
+			path:           "/yamlTestDumpRequest",
+			contentType:    "text/plain",
+			body:           "Dumped",
+			logLevel:       1,
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/yamlTestDumpRequest\",\"header\":{\"Content-Type\":[\"text/plain\"]},\"statusCode\":200,\"body\":\"Dumped\"}\n",
+			expectedStatus: http.StatusOK,
+		},
+		"GET valid imposter request with body": {
+			method:         "GET",
+			path:           "/yamlTestDumpRequest",
+			contentType:    "text/plain",
+			body:           "Dumped",
+			logLevel:       2,
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/yamlTestDumpRequest\",\"header\":{\"Content-Type\":[\"text/plain\"]},\"statusCode\":200,\"body\":\"Dumped\"}\n",
+			expectedStatus: http.StatusOK,
+		},
+		"GET valid imposter binary request": {
+			method:         "GET",
+			path:           "/yamlTestDumpRequest",
+			contentType:    "application/octet-stream",
+			body:           "Dumped",
+			logLevel:       1,
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/yamlTestDumpRequest\",\"header\":{\"Content-Type\":[\"application/octet-stream\"]},\"statusCode\":200,\"body\":\"RHVtcGVk\"}\n",
+			expectedStatus: http.StatusOK,
+		},
+		"GET valid imposter binary request with body": {
+			method:         "GET",
+			path:           "/yamlTestDumpRequest",
+			contentType:    "application/octet-stream",
+			body:           "Dumped",
+			logLevel:       2,
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/yamlTestDumpRequest\",\"header\":{\"Content-Type\":[\"application/octet-stream\"]},\"statusCode\":200,\"body\":\"RHVtcGVk\"}\n",
+			expectedStatus: http.StatusOK,
+		},
+		"GET valid imposter request no body": {
+			method:         "GET",
+			path:           "/yamlTestDumpRequest",
+			contentType:    "text/plain",
+			body:           "",
+			logLevel:       2,
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/yamlTestDumpRequest\",\"header\":{\"Content-Type\":[\"text/plain\"]},\"statusCode\":200}\n",
+			expectedStatus: http.StatusOK,
+		},
+		"GET invalid imposter request": {
+			method:         "GET",
+			path:           "/doesnotexist",
+			contentType:    "text/plain",
+			body:           "Dumped",
+			logLevel:       1,
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/doesnotexist\",\"header\":{\"Content-Type\":[\"text/plain\"]},\"statusCode\":404,\"body\":\"Dumped\"}\n",
+			expectedStatus: http.StatusNotFound,
+		},
+		"GET invalid imposter request with body": {
+			method:         "GET",
+			path:           "/doesnotexist",
+			contentType:    "text/plain",
+			body:           "Dumped",
+			logLevel:       2,
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/doesnotexist\",\"header\":{\"Content-Type\":[\"text/plain\"]},\"statusCode\":404,\"body\":\"Dumped\"}\n",
+			expectedStatus: http.StatusNotFound,
+		},
+		"GET invalid imposter binary request with body": {
+			method:         "GET",
+			path:           "/doesnotexist",
+			contentType:    "video/mp4",
+			body:           "Dumped",
+			logLevel:       2,
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/doesnotexist\",\"header\":{\"Content-Type\":[\"video/mp4\"]},\"statusCode\":404,\"body\":\"RHVtcGVk\"}\n",
+			expectedStatus: http.StatusNotFound,
+		},
+		"GET invalid imposter request no body": {
+			method:         "GET",
+			path:           "/doesnotexist",
+			contentType:    "text/plain",
+			body:           "",
+			logLevel:       2,
+			expectedLog:    "{\"method\":\"GET\",\"host\":\"example.com\",\"url\":\"/doesnotexist\",\"header\":{\"Content-Type\":[\"text/plain\"]},\"statusCode\":404}\n",
+			expectedStatus: http.StatusNotFound,
+		},
+	}
+	for name, tc := range testCases {
+		name := name
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			var buf bytes.Buffer
+			log.SetOutput(&buf)
+			defer func() {
+				log.SetOutput(os.Stderr)
+			}()
+
+			imposterFs, err := NewImposterFS("test/testdata/imposters")
+			assert.NoError(t, err)
+			server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, sc.WithLogLevel(tc.logLevel), sc.WithLogBodyMax(512))
+			err = server.Build()
+			assert.NoError(t, err)
+
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.body))
+			req.Header.Set("Content-Type", tc.contentType)
+
+			server.httpServer.Handler.ServeHTTP(w, req)
+
+			response := w.Result()
+			assert.Equal(t, tc.expectedStatus, response.StatusCode, "Expected status code: %v, got: %v", tc.expectedStatus, response.StatusCode)
+
+			// verify the request is dumped in the logs
+			assert.Contains(t, buf.String(), tc.expectedLog, "Expect request dumped on logs failed")
+		})
+	}
+}
+
+func TestBuildRecordRequests(t *testing.T) {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() {
+		log.SetOutput(os.Stderr)
+	}()
+	tempDir, err := os.MkdirTemp("", "testdir")
+	assert.NoError(t, err, "Failed to create temporary directory")
+	defer os.RemoveAll(tempDir)
+	dumpFile := filepath.Join(tempDir, "dump_requests.log")
+
+	imposterFs, err := NewImposterFS("test/testdata/imposters")
+	assert.NoError(t, err)
+	w := httptest.NewRecorder()
+	file, err := os.OpenFile(dumpFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatalf("Failed to open file: %+v", err)
+	}
+	defer file.Close()
+	server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, sc.WithLogWriter(file), sc.WithLogLevel(2), sc.WithLogBodyMax(8))
+	err = server.Build()
+	assert.NoError(t, err)
+
+	expectedBodies := []string{"Dumped1", "", "longer t"}
+	req1 := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader(expectedBodies[0]))
+	req2 := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader(expectedBodies[1]))
+	req3 := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader("longer than allowed"))
+	server.httpServer.Handler.ServeHTTP(w, req1)
+	server.httpServer.Handler.ServeHTTP(w, req2)
+	server.httpServer.Handler.ServeHTTP(w, req3)
+
+	// wait for channel to print out the requests
+	time.Sleep(1 * time.Second)
+
+	// check recoreded request dumps
+	reqs, err := getRecordedRequests(dumpFile)
+	assert.NoError(t, err, "Failed to read requests from file")
+	assert.Equal(t, 3, len(reqs), "Expect 2 requests to be dumped in file failed")
+	for i, expectedBody := range expectedBodies {
+		assert.Equal(t, expectedBody, reqs[i].Body, "Expect request body to be dumped in file failed")
+	}
+}
+
+// getRecordedRequests reads the requests from the file and returns them as a slice of RequestData
+func getRecordedRequests(filePath string) ([]RequestData, error) {
+	// Read the file contents
+	fileContent, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading file: %w", err)
+	}
+
+	// Split the contents by the newline separator
+	requestDumps := strings.Split(string(fileContent), "\n")
+	requestsData := []RequestData{}
+	for _, requestDump := range requestDumps {
+		if requestDump == "" {
+			continue
+		}
+		// Unmarshal the JSON string into the RequestData struct
+		rd := RequestData{}
+		err := json.Unmarshal([]byte(requestDump), &rd)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshaling JSON: %w", err)
+		}
+		requestsData = append(requestsData, rd)
+	}
+	return requestsData, nil
 }

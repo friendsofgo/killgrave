@@ -11,7 +11,7 @@ import (
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	server "github.com/friendsofgo/killgrave/internal/server/http"
-	"github.com/gorilla/handlers"
+	sc "github.com/friendsofgo/killgrave/internal/serverconfig"
 	"github.com/gorilla/mux"
 	"github.com/radovskyb/watcher"
 	"github.com/spf13/cobra"
@@ -26,23 +26,32 @@ const (
 	_defaultPort          = 3000
 	_defaultProxyMode     = killgrave.ProxyNone
 	_defaultStrictSlash   = true
+	_defaultLogLevel      = 0
+	_defaultLogBodyMax    = 512
 
-	_impostersFlag = "imposters"
-	_configFlag    = "config"
-	_hostFlag      = "host"
-	_portFlag      = "port"
-	_watcherFlag   = "watcher"
-	_secureFlag    = "secure"
-	_proxyModeFlag = "proxy-mode"
-	_proxyURLFlag  = "proxy-url"
+	_impostersFlag        = "imposters"
+	_configFlag           = "config"
+	_hostFlag             = "host"
+	_portFlag             = "port"
+	_watcherFlag          = "watcher"
+	_secureFlag           = "secure"
+	_proxyModeFlag        = "proxy-mode"
+	_proxyURLFlag         = "proxy-url"
+	_logLevelFlag         = "log-level"
+	_logBodyMaxFlag       = "log-body-max"
+	_dumpRequestsPathFlag = "dump-requests-path"
 )
 
 var (
-	errGetDataFromImpostersFlag = errors.New("error trying to get data from imposters flag")
-	errGetDataFromHostFlag      = errors.New("error trying to get data from host flag")
-	errGetDataFromPortFlag      = errors.New("error trying to get data from port flag")
-	errGetDataFromSecureFlag    = errors.New("error trying to get data from secure flag")
-	errMandatoryURL             = errors.New("the field proxy-url is mandatory if you selected a proxy mode")
+	errGetDataFromImpostersFlag        = errors.New("error trying to get data from imposters flag")
+	errGetDataFromHostFlag             = errors.New("error trying to get data from host flag")
+	errGetDataFromPortFlag             = errors.New("error trying to get data from port flag")
+	errGetDataFromSecureFlag           = errors.New("error trying to get data from secure flag")
+	errGetDataFromLogLevelFlag         = errors.New("error trying to get data from log-level flag")
+	errGetDataLogLevelInvalid          = errors.New("error setting log-level, must be between 0 and 2 inclusive")
+	errGetDataFromLogBodyMaxFlag       = errors.New("error trying to get data from log-body-max flag")
+	errGetDataFromDumpRequestsPathFlag = errors.New("error trying to get data from dump-requests-path flag")
+	errMandatoryURL                    = errors.New("the field proxy-url is mandatory if you selected a proxy mode")
 )
 
 // NewKillgraveCmd returns cobra.Command to run killgrave command
@@ -77,6 +86,9 @@ func NewKillgraveCmd() *cobra.Command {
 	rootCmd.Flags().BoolP(_secureFlag, "s", false, "Run mock server using TLS (https)")
 	rootCmd.Flags().StringP(_proxyModeFlag, "m", _defaultProxyMode.String(), "Proxy mode, the options are all, missing or none")
 	rootCmd.Flags().StringP(_proxyURLFlag, "u", "", "The url where the proxy will redirect to")
+	rootCmd.Flags().IntP(_logLevelFlag, "l", _defaultLogLevel, "Log level, the options are 0, 1, 2. Default is 0, 1 adds requests, 2 adds request body")
+	rootCmd.Flags().Int(_logBodyMaxFlag, _defaultLogBodyMax, fmt.Sprintf("The maximum size of body that will be returned, will cut off if body is longer, default size is %s", _defaultLogBodyMax))
+	rootCmd.Flags().StringP(_dumpRequestsPathFlag, "d", "", "Path the requests will be dumped to")
 
 	rootCmd.SetVersionTemplate("Killgrave version: {{.Version}}\n")
 
@@ -88,6 +100,16 @@ func runHTTP(cmd *cobra.Command, cfg killgrave.Config) error {
 	defer close(done)
 
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
+
+	// setup the log file and its deferred close if needed
+	if len(cfg.DumpRequestsPath) > 0 && cfg.LogLevel > 0 {
+		file, err := os.OpenFile(cfg.DumpRequestsPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatalf("Failed to open file: %+v", err)
+		}
+		cfg.LogWriter = file
+		defer file.Close()
+	}
 
 	srv := runServer(cfg)
 
@@ -115,8 +137,7 @@ func runServer(cfg killgrave.Config) server.Server {
 	httpAddr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 
 	httpServer := http.Server{
-		Addr:    httpAddr,
-		Handler: handlers.CORS(server.PrepareAccessControl(cfg.CORS)...)(router),
+		Addr: httpAddr,
 	}
 
 	proxyServer, err := server.NewProxy(cfg.Proxy.Url, cfg.Proxy.Mode)
@@ -135,6 +156,10 @@ func runServer(cfg killgrave.Config) server.Server {
 		proxyServer,
 		cfg.Secure,
 		imposterFs,
+		sc.WithCORSOptions(server.PrepareAccessControl(cfg.CORS)),
+		sc.WithLogLevel(cfg.LogLevel),
+		sc.WithLogBodyMax(cfg.LogBodyMax),
+		sc.WithLogWriter(cfg.LogWriter),
 	)
 	if err := s.Build(); err != nil {
 		log.Fatal(err)
@@ -185,7 +210,25 @@ func prepareConfig(cmd *cobra.Command) (killgrave.Config, error) {
 		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromSecureFlag)
 	}
 
-	cfg, err := killgrave.NewConfig(impostersPath, host, port, secure)
+	logLevel, err := cmd.Flags().GetInt(_logLevelFlag)
+	if err != nil {
+		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromLogLevelFlag)
+	}
+	if logLevel < 0 || logLevel > 2 {
+		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataLogLevelInvalid)
+	}
+
+	logBodyMax, err := cmd.Flags().GetInt(_logBodyMaxFlag)
+	if err != nil {
+		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromLogBodyMaxFlag)
+	}
+
+	dumpRequestsPath, err := cmd.Flags().GetString(_dumpRequestsPathFlag)
+	if err != nil {
+		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromDumpRequestsPathFlag)
+	}
+
+	cfg, err := killgrave.NewConfig(impostersPath, host, port, secure, logLevel, logBodyMax, dumpRequestsPath)
 	if err != nil {
 		return killgrave.Config{}, err
 	}

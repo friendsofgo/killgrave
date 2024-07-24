@@ -6,8 +6,10 @@ import (
 	_ "embed"
 	"log"
 	"net/http"
+	"sync"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
+	sc "github.com/friendsofgo/killgrave/internal/serverconfig"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -24,9 +26,6 @@ var (
 	defaultCORSExposedHeaders = []string{"Cache-Control", "Content-Language", "Content-Type", "Expires", "Last-Modified", "Pragma"}
 )
 
-// ServerOpt function that allow modify the current server
-type ServerOpt func(s *Server)
-
 // Server definition of mock server
 type Server struct {
 	router     *mux.Router
@@ -34,16 +33,30 @@ type Server struct {
 	proxy      *Proxy
 	secure     bool
 	imposterFs ImposterFs
+	serverCfg  *sc.ServerConfig
+	dumpCh     chan *[]byte
+	wg         *sync.WaitGroup
+	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
 // NewServer initialize the mock server
-func NewServer(r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, fs ImposterFs) Server {
+func NewServer(r *mux.Router, httpServer *http.Server, proxyServer *Proxy, secure bool, fs ImposterFs, options ...sc.ServerOption) Server {
+	ctx, cancel := context.WithCancel(context.Background())
+	cfg := &sc.ServerConfig{}
+	for _, opt := range options {
+		opt(cfg)
+	}
 	return Server{
 		router:     r,
 		httpServer: httpServer,
 		proxy:      proxyServer,
 		secure:     secure,
 		imposterFs: fs,
+		serverCfg:  cfg,
+		wg:         &sync.WaitGroup{},
+		ctx:        ctx,
+		cancel:     cancel,
 	}
 }
 
@@ -84,6 +97,22 @@ func (s *Server) Build() error {
 		s.router.PathPrefix("/").HandlerFunc(s.proxy.Handler())
 		return nil
 	}
+
+	// only instantiate the request dump if we need it
+	if s.dumpCh == nil && s.serverCfg.LogWriter != nil {
+		s.dumpCh = make(chan *[]byte, 1000)
+
+		// Start the RequestWriter goroutine with context
+		s.wg.Add(1)
+		go RequestWriter(s.ctx, s.wg, s.serverCfg.LogWriter, s.dumpCh)
+	}
+
+	// setup the logging handler
+	var handler http.Handler = s.router
+	if s.serverCfg.LogLevel > 0 || shouldRecordRequest(s) {
+		handler = CustomLoggingHandler(log.Writer(), handler, s)
+	}
+	s.httpServer.Handler = handlers.CORS(s.serverCfg.CORSOptions...)(handler)
 
 	var impostersCh = make(chan []Imposter)
 	var done = make(chan struct{})
@@ -146,9 +175,15 @@ func (s *Server) run(secure bool) error {
 // Shutdown shutdown the current http server
 func (s *Server) Shutdown() error {
 	log.Println("stopping server...")
-	if err := s.httpServer.Shutdown(context.TODO()); err != nil {
+	if err := s.httpServer.Shutdown(s.ctx); err != nil {
 		log.Fatalf("Server Shutdown Failed:%+v", err)
 	}
+
+	// Cancel the context to stop the RequestWriter goroutine
+	s.cancel()
+
+	// wait for all goroutines to finish
+	s.wg.Wait()
 
 	return nil
 }
