@@ -79,6 +79,11 @@ func getBody(r *http.Request, s *Server) string {
 	}
 	r.Body = io.NopCloser(bytes.NewReader(bodyBytes)) // Reset the body
 
+	// trim if larger than the limit allowed
+	if len(bodyBytes) > s.serverCfg.LogBodyMax {
+		bodyBytes = bodyBytes[:s.serverCfg.LogBodyMax]
+	}
+
 	body := base64.StdEncoding.EncodeToString(bodyBytes)
 	// if content is not binary, get it as a string
 	if !isBinaryContent(r) {

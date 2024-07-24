@@ -321,7 +321,7 @@ func TestBuildLogRequests(t *testing.T) {
 
 			imposterFs, err := NewImposterFS("test/testdata/imposters")
 			assert.NoError(t, err)
-			server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, sc.WithLogLevel(tc.logLevel))
+			server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, sc.WithLogLevel(tc.logLevel), sc.WithLogBodyMax(512))
 			err = server.Build()
 			assert.NoError(t, err)
 
@@ -359,15 +359,17 @@ func TestBuildRecordRequests(t *testing.T) {
 		log.Fatalf("Failed to open file: %+v", err)
 	}
 	defer file.Close()
-	server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, sc.WithLogWriter(file), sc.WithLogLevel(2))
+	server := NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs, sc.WithLogWriter(file), sc.WithLogLevel(2), sc.WithLogBodyMax(8))
 	err = server.Build()
 	assert.NoError(t, err)
 
-	expectedBodies := []string{"Dumped1", ""}
+	expectedBodies := []string{"Dumped1", "", "longer t"}
 	req1 := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader(expectedBodies[0]))
 	req2 := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader(expectedBodies[1]))
+	req3 := httptest.NewRequest("GET", "/yamlTestDumpRequest", strings.NewReader("longer than allowed"))
 	server.httpServer.Handler.ServeHTTP(w, req1)
 	server.httpServer.Handler.ServeHTTP(w, req2)
+	server.httpServer.Handler.ServeHTTP(w, req3)
 
 	// wait for channel to print out the requests
 	time.Sleep(1 * time.Second)
@@ -375,7 +377,7 @@ func TestBuildRecordRequests(t *testing.T) {
 	// check recoreded request dumps
 	reqs, err := getRecordedRequests(dumpFile)
 	assert.NoError(t, err, "Failed to read requests from file")
-	assert.Equal(t, 2, len(reqs), "Expect 2 requests to be dumped in file failed")
+	assert.Equal(t, 3, len(reqs), "Expect 2 requests to be dumped in file failed")
 	for i, expectedBody := range expectedBodies {
 		assert.Equal(t, expectedBody, reqs[i].Body, "Expect request body to be dumped in file failed")
 	}

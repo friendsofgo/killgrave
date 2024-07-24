@@ -21,6 +21,7 @@ type Config struct {
 	Secure           bool        `yaml:"secure"`
 	Watcher          bool        `yaml:"watcher"`
 	LogLevel         int         `yaml:"log_level"`
+	LogBodyMax       int         `yaml:"log_body_max"`
 	DumpRequestsPath string      `yaml:"dump_requests_path"`
 	LogWriter        io.Writer
 }
@@ -115,7 +116,7 @@ func (cfg *Config) ConfigureProxy(proxyMode ProxyMode, proxyURL string) {
 type ConfigOpt func(cfg *Config) error
 
 // NewConfig initialize the config
-func NewConfig(impostersPath, host string, port int, secure bool, logLevel int, dumpRequestsPath string) (Config, error) {
+func NewConfig(impostersPath, host string, port int, secure bool, logLevel, logBodyMax int, dumpRequestsPath string) (Config, error) {
 	if impostersPath == "" {
 		return Config{}, errEmptyImpostersPath
 	}
@@ -134,6 +135,7 @@ func NewConfig(impostersPath, host string, port int, secure bool, logLevel int, 
 		Port:             port,
 		Secure:           secure,
 		LogLevel:         logLevel,
+		LogBodyMax:       logBodyMax,
 		DumpRequestsPath: dumpRequestsPath,
 	}
 

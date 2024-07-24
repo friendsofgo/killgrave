@@ -157,6 +157,7 @@ Flags:
   -v, --version             Version of Killgrave
   -w, --watcher             File watcher will reload the server on each file change
   -l, --log-level           The higher the log level the more detail you get (default 0, 1 adds requests, 2 adds request body)
+      --log-body-max        The maximum size of body that will be returned, will cut off if body is longer, default size is 512
   -d, --dump-requests-path  Print requests out to specified file
 ```
 
@@ -185,6 +186,7 @@ cors:
 watcher: true
 secure: true
 log_level: 1
+log_body_max: 256
 dump_requests_path: "/abc/def.log
 ```
 

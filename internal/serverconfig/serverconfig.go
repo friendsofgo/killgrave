@@ -9,6 +9,7 @@ import (
 type ServerConfig struct {
 	CORSOptions []handlers.CORSOption
 	LogLevel    int
+	LogBodyMax  int
 	LogWriter   io.Writer
 }
 
@@ -23,6 +24,12 @@ func WithCORSOptions(corsOptions []handlers.CORSOption) ServerOption {
 func WithLogLevel(logLevel int) ServerOption {
 	return func(cfg *ServerConfig) {
 		cfg.LogLevel = logLevel
+	}
+}
+
+func WithLogBodyMax(logBodyMax int) ServerOption {
+	return func(cfg *ServerConfig) {
+		cfg.LogBodyMax = logBodyMax
 	}
 }
 

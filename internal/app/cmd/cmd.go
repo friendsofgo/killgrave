@@ -27,6 +27,7 @@ const (
 	_defaultProxyMode     = killgrave.ProxyNone
 	_defaultStrictSlash   = true
 	_defaultLogLevel      = 0
+	_defaultLogBodyMax    = 512
 
 	_impostersFlag        = "imposters"
 	_configFlag           = "config"
@@ -37,6 +38,7 @@ const (
 	_proxyModeFlag        = "proxy-mode"
 	_proxyURLFlag         = "proxy-url"
 	_logLevelFlag         = "log-level"
+	_logBodyMaxFlag       = "log-body-max"
 	_dumpRequestsPathFlag = "dump-requests-path"
 )
 
@@ -47,6 +49,7 @@ var (
 	errGetDataFromSecureFlag           = errors.New("error trying to get data from secure flag")
 	errGetDataFromLogLevelFlag         = errors.New("error trying to get data from log-level flag")
 	errGetDataLogLevelInvalid          = errors.New("error setting log-level, must be between 0 and 2 inclusive")
+	errGetDataFromLogBodyMaxFlag       = errors.New("error trying to get data from log-body-max flag")
 	errGetDataFromDumpRequestsPathFlag = errors.New("error trying to get data from dump-requests-path flag")
 	errMandatoryURL                    = errors.New("the field proxy-url is mandatory if you selected a proxy mode")
 )
@@ -84,6 +87,7 @@ func NewKillgraveCmd() *cobra.Command {
 	rootCmd.Flags().StringP(_proxyModeFlag, "m", _defaultProxyMode.String(), "Proxy mode, the options are all, missing or none")
 	rootCmd.Flags().StringP(_proxyURLFlag, "u", "", "The url where the proxy will redirect to")
 	rootCmd.Flags().IntP(_logLevelFlag, "l", _defaultLogLevel, "Log level, the options are 0, 1, 2. Default is 0, 1 adds requests, 2 adds request body")
+	rootCmd.Flags().Int(_logBodyMaxFlag, _defaultLogBodyMax, fmt.Sprintf("The maximum size of body that will be returned, will cut off if body is longer, default size is %s", _defaultLogBodyMax))
 	rootCmd.Flags().StringP(_dumpRequestsPathFlag, "d", "", "Path the requests will be dumped to")
 
 	rootCmd.SetVersionTemplate("Killgrave version: {{.Version}}\n")
@@ -154,6 +158,7 @@ func runServer(cfg killgrave.Config) server.Server {
 		imposterFs,
 		sc.WithCORSOptions(server.PrepareAccessControl(cfg.CORS)),
 		sc.WithLogLevel(cfg.LogLevel),
+		sc.WithLogBodyMax(cfg.LogBodyMax),
 		sc.WithLogWriter(cfg.LogWriter),
 	)
 	if err := s.Build(); err != nil {
@@ -213,12 +218,17 @@ func prepareConfig(cmd *cobra.Command) (killgrave.Config, error) {
 		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataLogLevelInvalid)
 	}
 
+	logBodyMax, err := cmd.Flags().GetInt(_logBodyMaxFlag)
+	if err != nil {
+		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromLogBodyMaxFlag)
+	}
+
 	dumpRequestsPath, err := cmd.Flags().GetString(_dumpRequestsPathFlag)
 	if err != nil {
 		return killgrave.Config{}, fmt.Errorf("%v: %w", err, errGetDataFromDumpRequestsPathFlag)
 	}
 
-	cfg, err := killgrave.NewConfig(impostersPath, host, port, secure, logLevel, dumpRequestsPath)
+	cfg, err := killgrave.NewConfig(impostersPath, host, port, secure, logLevel, logBodyMax, dumpRequestsPath)
 	if err != nil {
 		return killgrave.Config{}, err
 	}
