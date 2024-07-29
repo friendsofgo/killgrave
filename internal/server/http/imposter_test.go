@@ -1,9 +1,9 @@
 package http
 
 import (
+	"encoding/json"
 	"testing"
 
-	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -20,6 +20,138 @@ func TestNewImposterFS(t *testing.T) {
 		_, err := NewImposterFS("test/testdata/imposters")
 		assert.NoError(t, err)
 	})
+}
+
+func TestImposterFS_FindImposters(t *testing.T) {
+	// Set up
+	const expected = 7
+	ifs, err := NewImposterFS("test/testdata/imposters")
+	require.NoError(t, err)
+
+	// We trigger the imposters search.
+	// We expect exactly [expected] imposters.
+	ch := make(chan []Imposter, expected)
+	err = ifs.FindImposters(ch)
+	require.NoError(t, err)
+
+	// We collect all the imposters.
+	received := make([]Imposter, 0, expected)
+	for ii := range ch {
+		received = append(received, ii...)
+	}
+	require.Len(t, received, expected)
+
+	// Imposter 1
+	schemaFile := "schemas/create_gopher_request.json"
+	bodyFile := "responses/create_gopher_response.json"
+	assert.EqualValues(t, Imposter{
+		BasePath: "test/testdata/imposters",
+		Path:     "create_gopher.imp.json",
+		Request: Request{
+			Method:     "POST",
+			Endpoint:   "/gophers",
+			SchemaFile: &schemaFile,
+			Params: &map[string]string{
+				"gopherColor": "{v:[a-z]+}",
+			},
+			Headers: &map[string]string{
+				"Content-Type": "application/json",
+			},
+		},
+		Response: Responses{{
+			Status: 200,
+			Headers: &map[string]string{
+				"Content-Type": "application/json",
+			},
+			BodyFile: &bodyFile,
+		}},
+	}, received[0])
+
+	// Imposter 2
+	assert.EqualValues(t, Imposter{
+		BasePath: "test/testdata/imposters",
+		Path:     "create_gopher.imp.json",
+		Request:  Request{},
+	}, received[1])
+
+	// Imposter 3
+	assert.EqualValues(t, Imposter{
+		BasePath: "test/testdata/imposters",
+		Path:     "test_request.imp.json",
+		Request: Request{
+			Method:   "GET",
+			Endpoint: "/testRequest",
+		},
+		Response: Responses{{
+			Status: 200,
+			Body:   "Handled",
+		}},
+	}, received[2])
+
+	// Imposter 4
+	assert.EqualValues(t, Imposter{
+		BasePath: "test/testdata/imposters",
+		Path:     "test_request.imp.yaml",
+		Request: Request{
+			Method:   "GET",
+			Endpoint: "/yamlTestRequest",
+		},
+		Response: Responses{{
+			Status: 200,
+			Body:   "Yaml Handled",
+		}},
+	}, received[3])
+
+	// Imposter 5
+	assert.EqualValues(t, Imposter{
+		BasePath: "test/testdata/imposters",
+		Path:     "test_request.imp.yml",
+		Request: Request{
+			Method:   "GET",
+			Endpoint: "/ymlTestRequest",
+		},
+		Response: Responses{{
+			Status: 200,
+			Body:   "Yml Handled",
+			Delay: ResponseDelay{
+				delay:  1000000000,
+				offset: 4000000000,
+			},
+		}},
+	}, received[4])
+
+	// Imposter 6
+	assert.EqualValues(t, Imposter{
+		BasePath: "test/testdata/imposters",
+		Path:     "test_request.imp.yml",
+		Request: Request{
+			Method:   "POST",
+			Endpoint: "/yamlGophers",
+			Headers: &map[string]string{
+				"Content-Type": "application/json",
+			},
+		},
+		Response: Responses{{
+			Status: 201,
+			Headers: &map[string]string{
+				"Content-Type": "application/json",
+				"X-Source":     "YAML",
+			},
+			BodyFile: &bodyFile,
+		}},
+	}, received[5])
+
+	// Imposter 7
+	assert.EqualValues(t, Imposter{
+		BasePath: "test/testdata/imposters",
+		Path:     "test_request.imp.yml",
+		Request:  Request{},
+	}, received[6])
+
+	// Finally, once the search is done,
+	// the channel must be closed.
+	_, open := <-ch
+	require.False(t, open)
 }
 
 func TestResponses_MarshalJSON(t *testing.T) {
