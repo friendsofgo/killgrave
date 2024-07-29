@@ -2,7 +2,7 @@ package killgrave
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"testing"
@@ -13,7 +13,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 	os.Exit(m.Run())
 }
 
