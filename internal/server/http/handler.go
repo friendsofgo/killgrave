@@ -1,7 +1,7 @@
 package http
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -49,7 +49,7 @@ func fetchBodyFromFile(bodyFile string) (bytes []byte) {
 
 	f, _ := os.Open(bodyFile)
 	defer f.Close()
-	bytes, err := ioutil.ReadAll(f)
+	bytes, err := io.ReadAll(f)
 	if err != nil {
 		log.Printf("imposible read the file %s: %v\n", bodyFile, err)
 	}

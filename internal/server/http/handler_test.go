@@ -2,7 +2,7 @@ package http
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -40,7 +40,7 @@ func TestImposterHandler(t *testing.T) {
 
 	f, _ := os.Open(bodyFile)
 	defer f.Close()
-	expectedBodyFileData, _ := ioutil.ReadAll(f)
+	expectedBodyFileData, _ := io.ReadAll(f)
 
 	var dataTest = []struct {
 		name         string

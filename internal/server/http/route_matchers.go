@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -37,7 +37,7 @@ func validateSchema(imposter Imposter, req *http.Request) error {
 
 	defer func() {
 		req.Body.Close()
-		req.Body = ioutil.NopCloser(bytes.NewBuffer(requestBodyBytes))
+		req.Body = io.NopCloser(bytes.NewBuffer(requestBodyBytes))
 	}()
 
 	schemaFile := imposter.CalculateFilePath(*imposter.Request.SchemaFile)
@@ -45,7 +45,7 @@ func validateSchema(imposter Imposter, req *http.Request) error {
 		return fmt.Errorf("%w: the schema file %s not found", err, schemaFile)
 	}
 
-	requestBodyBytes, err := ioutil.ReadAll(req.Body)
+	requestBodyBytes, err := io.ReadAll(req.Body)
 	if err != nil {
 		return fmt.Errorf("%w: impossible read the request body", err)
 	}
@@ -60,7 +60,7 @@ func validateSchema(imposter Imposter, req *http.Request) error {
 		return fmt.Errorf("%w: impossible find the schema", err)
 	}
 
-	schemaBytes, err := ioutil.ReadFile(schemaFilePath)
+	schemaBytes, err := os.ReadFile(schemaFilePath)
 	if err != nil {
 		return fmt.Errorf("%w: impossible read the schema", err)
 	}
