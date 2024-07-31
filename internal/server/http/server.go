@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	_ "embed"
+	"errors"
 	"log"
 	"net/http"
 
@@ -86,23 +87,19 @@ func (s *Server) Build() error {
 	}
 
 	var impostersCh = make(chan []Imposter)
-	var done = make(chan struct{})
 
 	go func() {
 		s.imposterFs.FindImposters(impostersCh)
-		done <- struct{}{}
 	}()
 loop:
 	for {
-		select {
-		case imposters := <-impostersCh:
-			s.addImposterHandler(imposters)
-			log.Printf("imposter %s loaded\n", imposters[0].Path)
-		case <-done:
-			close(impostersCh)
-			close(done)
+		imposters, ok := <-impostersCh
+		if !ok {
 			break loop
 		}
+
+		s.addImposterHandler(imposters)
+		log.Printf("imposter %s loaded\n", imposters[0].Path)
 	}
 	if s.proxy.mode == killgrave.ProxyMissing {
 		s.router.NotFoundHandler = s.proxy.Handler()
@@ -120,7 +117,7 @@ func (s *Server) Run() {
 		}
 		log.Printf("The fake server is on tap now: %s%s\n", s.httpServer.Addr, tlsString)
 		err := s.run(s.secure)
-		if err != http.ErrServerClosed {
+		if !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
 		}
 	}()
@@ -143,7 +140,7 @@ func (s *Server) run(secure bool) error {
 	return s.httpServer.ListenAndServeTLS("", "")
 }
 
-// Shutdown shutdown the current http server
+// Shutdown shutdowns the current http server
 func (s *Server) Shutdown() error {
 	log.Println("stopping server...")
 	if err := s.httpServer.Shutdown(context.TODO()); err != nil {
