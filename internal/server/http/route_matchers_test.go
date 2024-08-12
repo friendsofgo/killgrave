@@ -3,7 +3,7 @@ package http
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -12,10 +12,10 @@ import (
 )
 
 func TestMatcherBySchema(t *testing.T) {
-	bodyA := ioutil.NopCloser(bytes.NewReader([]byte("{\"type\": \"gopher\"}")))
-	bodyB := ioutil.NopCloser(bytes.NewReader([]byte("{\"type\": \"cat\"}")))
-	emptyBody := ioutil.NopCloser(bytes.NewReader([]byte("")))
-	wrongBody := ioutil.NopCloser(errReader(0))
+	bodyA := io.NopCloser(bytes.NewReader([]byte("{\"type\": \"gopher\"}")))
+	bodyB := io.NopCloser(bytes.NewReader([]byte("{\"type\": \"cat\"}")))
+	emptyBody := io.NopCloser(bytes.NewReader([]byte("")))
+	wrongBody := io.NopCloser(errReader(0))
 
 	schemaGopherFile := "test/testdata/imposters/schemas/type_gopher.json"
 	schemaCatFile := "test/testdata/imposters/schemas/type_cat.json"
