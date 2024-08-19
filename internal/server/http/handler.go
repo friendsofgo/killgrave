@@ -1,10 +1,12 @@
 package http
 
 import (
+	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -15,9 +17,10 @@ func ImposterHandler(i Imposter) http.HandlerFunc {
 		if res.Delay.Delay() > 0 {
 			time.Sleep(res.Delay.Delay())
 		}
+		vars := mux.Vars(r)
 		writeHeaders(res, w)
 		w.WriteHeader(res.Status)
-		writeBody(i, res, w)
+		writeBody(i, res, w, vars)
 	}
 }
 
@@ -31,11 +34,14 @@ func writeHeaders(r Response, w http.ResponseWriter) {
 	}
 }
 
-func writeBody(i Imposter, r Response, w http.ResponseWriter) {
+func writeBody(i Imposter, r Response, w http.ResponseWriter, vars map[string]string) {
 	wb := []byte(r.Body)
 
 	if r.BodyFile != nil {
 		bodyFile := i.CalculateFilePath(*r.BodyFile)
+		for key, value := range vars {
+			bodyFile = strings.ReplaceAll(bodyFile, "{"+key+"}", value)
+		}
 		wb = fetchBodyFromFile(bodyFile)
 	}
 	w.Write(wb)
