@@ -117,7 +117,6 @@ func TestImposterHandler_Variables(t *testing.T) {
 			defer expectedBodyPathFile.Close()
 			expectedBody, _ := io.ReadAll(expectedBodyPathFile)
 
-			//handler.ServeHTTP(rec, req)
 			assert.Equal(t, rec.Code, tt.statusCode)
 			assert.Equal(t, string(expectedBody), rec.Body.String())
 
