@@ -1,0 +1,11 @@
+{
+    "data": {
+        "type": "gophers",
+        "id": "1_2",
+        "attributes": {
+            "name": "Zebediah",
+            "color": "Purple",
+            "age": 54
+        }
+    }
+}
