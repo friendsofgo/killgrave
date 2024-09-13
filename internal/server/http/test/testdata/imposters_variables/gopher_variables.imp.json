@@ -30,5 +30,21 @@
             },
             "bodyFile": "test/testdata/imposters_variables/responses/gopher_{id}_{second_id}_response.json"
         }
+    },
+    {
+        "request": {
+            "method": "GET",
+            "endpoint": "/gophers/1",
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        },
+        "response": {
+            "status": 200,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "bodyFile": "test/testdata/imposters_variables/responses/gopher_{id}_response.json"
+        }
     }
 ]

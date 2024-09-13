@@ -79,15 +79,19 @@ func TestImposterHandler_Variables(t *testing.T) {
 	responseId2 := "test/testdata/imposters_variables/responses/gopher_2_response.json"
 	responseId1Variable1 := "test/testdata/imposters_variables/responses/gopher_1_1_response.json"
 	responseId1Variable2 := "test/testdata/imposters_variables/responses/gopher_1_2_response.json"
+	responseId1WithoutVariable := "test/testdata/imposters_variables/responses/gopher_1_without_variable_response.json"
 
 	imposterFilePath := "test/testdata/imposters_variables/gopher_variables.imp.json"
-	imposterFile, _ := os.Open(imposterFilePath)
+	imposterFile, err := os.Open(imposterFilePath)
+	require.NoError(t, err)
 	defer imposterFile.Close()
-	imposterBytes, _ := io.ReadAll(imposterFile)
+
+	imposterBytes, err := io.ReadAll(imposterFile)
+	require.NoError(t, err)
 
 	var imposters []Imposter
-	err := json.Unmarshal(imposterBytes, &imposters)
-	assert.NoError(t, err)
+	err = json.Unmarshal(imposterBytes, &imposters)
+	require.NoError(t, err)
 
 	var dataTest = []struct {
 		name             string
@@ -100,12 +104,14 @@ func TestImposterHandler_Variables(t *testing.T) {
 		{"valid imposter with id 2 in path", imposters[0], "/gophers/2", responseId2, http.StatusOK},
 		{"valid imposter with id 1 and second variable 1 in path", imposters[1], "/gophers/1/1", responseId1Variable1, http.StatusOK},
 		{"valid imposter with id 1 and second variable 2 in path", imposters[1], "/gophers/1/2", responseId1Variable2, http.StatusOK},
+		{"valid imposter without variable but body file has variable", imposters[2], "/gophers/1", responseId1WithoutVariable, http.StatusOK},
 	}
 
 	for _, tt := range dataTest {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest("GET", tt.url, nil)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			rec := httptest.NewRecorder()
 			handler := ImposterHandler(tt.imposter)
 
@@ -115,7 +121,8 @@ func TestImposterHandler_Variables(t *testing.T) {
 
 			expectedBodyPathFile, _ := os.Open(tt.expectedBodyPath)
 			defer expectedBodyPathFile.Close()
-			expectedBody, _ := io.ReadAll(expectedBodyPathFile)
+			expectedBody, err := io.ReadAll(expectedBodyPathFile)
+			require.NoError(t, err)
 
 			assert.Equal(t, rec.Code, tt.statusCode)
 			assert.Equal(t, string(expectedBody), rec.Body.String())
