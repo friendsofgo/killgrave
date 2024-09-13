@@ -1,0 +1,11 @@
+{
+    "data": {
+        "type": "gophers",
+        "id": "2",
+        "attributes": {
+            "name": "Brian",
+            "color": "Red",
+            "age": 35
+        }
+    }
+}
