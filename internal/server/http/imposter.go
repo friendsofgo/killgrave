@@ -201,9 +201,9 @@ func (i ImposterFs) unmarshalImposters(imposterConfig ImposterConfig) ([]Imposte
 		return nil, fmt.Errorf("%w: error while unmarshalling imposter's file %s", parseError, imposterConfig.FilePath)
 	}
 
-	for i := range imposters {
-		imposters[i].BasePath = filepath.Dir(imposterConfig.FilePath)
-		imposters[i].Path = imposterConfig.FilePath
+	for idx := range imposters {
+		imposters[idx].BasePath = filepath.Dir(filepath.Join(i.path, imposterConfig.FilePath))
+		imposters[idx].Path = imposterConfig.FilePath
 	}
 
 	return imposters, nil
