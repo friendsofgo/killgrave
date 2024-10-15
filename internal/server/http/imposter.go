@@ -73,7 +73,7 @@ func (i *Imposter) PopulateBodyData() {
 
 func fetchBodyFromFile(bodyFile string) (bytes []byte) {
 	if _, err := os.Stat(bodyFile); os.IsNotExist(err) {
-		log.Printf("the body file %s not found\n", bodyFile)
+		log.Printf("ERROR: the body file %s not found\n", bodyFile)
 		return
 	}
 
@@ -81,7 +81,7 @@ func fetchBodyFromFile(bodyFile string) (bytes []byte) {
 	defer f.Close()
 	bytes, err := io.ReadAll(f)
 	if err != nil {
-		log.Printf("imposible read the file %s: %v\n", bodyFile, err)
+		log.Printf("ERROR: imposible read the file %s: %v\n", bodyFile, err)
 	}
 	return
 }
