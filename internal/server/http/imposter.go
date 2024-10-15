@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -57,6 +58,34 @@ func (i *Imposter) CalculateFilePath(filePath string) string {
 	return path.Join(i.BasePath, filePath)
 }
 
+func (i *Imposter) PopulateBodyData() {
+	for idx, resp := range i.Response {
+		resp.BodyData = []byte(resp.Body)
+
+		if resp.BodyFile != nil {
+			bodyFile := i.CalculateFilePath(*resp.BodyFile)
+			resp.BodyData = fetchBodyFromFile(bodyFile)
+		}
+
+		i.Response[idx] = resp
+	}
+}
+
+func fetchBodyFromFile(bodyFile string) (bytes []byte) {
+	if _, err := os.Stat(bodyFile); os.IsNotExist(err) {
+		log.Printf("ERROR: the body file %s not found\n", bodyFile)
+		return
+	}
+
+	f, _ := os.Open(bodyFile)
+	defer f.Close()
+	bytes, err := io.ReadAll(f)
+	if err != nil {
+		log.Printf("ERROR: imposible read the file %s: %v\n", bodyFile, err)
+	}
+	return
+}
+
 // Request represent the structure of real request
 type Request struct {
 	Method     string             `json:"method"`
@@ -71,6 +100,7 @@ type Response struct {
 	Status   int                `json:"status"`
 	Body     string             `json:"body"`
 	BodyFile *string            `json:"bodyFile" yaml:"bodyFile"`
+	BodyData []byte             `json:"-" yaml:"-"`
 	Headers  *map[string]string `json:"headers"`
 	Delay    ResponseDelay      `json:"delay" yaml:"delay"`
 }
@@ -201,9 +231,9 @@ func (i ImposterFs) unmarshalImposters(imposterConfig ImposterConfig) ([]Imposte
 		return nil, fmt.Errorf("%w: error while unmarshalling imposter's file %s", parseError, imposterConfig.FilePath)
 	}
 
-	for i := range imposters {
-		imposters[i].BasePath = filepath.Dir(imposterConfig.FilePath)
-		imposters[i].Path = imposterConfig.FilePath
+	for idx := range imposters {
+		imposters[idx].BasePath = filepath.Dir(filepath.Join(i.path, imposterConfig.FilePath))
+		imposters[idx].Path = imposterConfig.FilePath
 	}
 
 	return imposters, nil
