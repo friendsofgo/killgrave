@@ -59,6 +59,7 @@ func TestImposterHandler(t *testing.T) {
 			assert.NoError(t, err)
 
 			rec := httptest.NewRecorder()
+			tt.imposter.PopulateBodyData()
 			handler := ImposterHandler(tt.imposter)
 
 			handler.ServeHTTP(rec, req)
@@ -95,6 +96,7 @@ func TestInvalidRequestWithSchema(t *testing.T) {
 			req, err := http.NewRequest("POST", "/gophers", bytes.NewBuffer(tt.request))
 			assert.Nil(t, err)
 			rec := httptest.NewRecorder()
+			tt.imposter.PopulateBodyData()
 			handler := ImposterHandler(tt.imposter)
 
 			handler.ServeHTTP(rec, req)
@@ -125,6 +127,7 @@ func TestImposterHandler_MultipleRequests(t *testing.T) {
 			},
 		}
 
+		imp.PopulateBodyData()
 		handler := ImposterHandler(imp)
 
 		// First request
@@ -141,12 +144,15 @@ func TestImposterHandler_MultipleRequests(t *testing.T) {
 	})
 
 	t.Run("idempotent", func(t *testing.T) {
-		handler := ImposterHandler(Imposter{
+		imp := Imposter{
 			Request: Request{Method: "POST", Endpoint: "/gophers"},
 			Response: Responses{
 				{Status: http.StatusAccepted, Body: "Accepted"},
 			},
-		})
+		}
+		imp.PopulateBodyData()
+
+		handler := ImposterHandler(imp)
 
 		// First request
 		rec := httptest.NewRecorder()

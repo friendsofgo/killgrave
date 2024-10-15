@@ -155,6 +155,7 @@ func (s *Server) Shutdown() error {
 
 func (s *Server) addImposterHandler(imposters []Imposter) {
 	for _, imposter := range imposters {
+		imposter.PopulateBodyData()
 		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
 			Methods(imposter.Request.Method).
 			MatcherFunc(MatcherBySchema(imposter))
