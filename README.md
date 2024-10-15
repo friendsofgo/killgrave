@@ -561,7 +561,7 @@ In the following example, we have defined multiple imposters for the `POST /goph
 ````
 
 #### Using Templating in Responses
-Killgrave supports templating in responses, allowing you to create dynamic responses based on request data. This feature uses Go's text/template package to render templates.
+Killgrave supports templating in responses, allowing you to create dynamic responses based on request data. This feature uses Go's `text/template` package to render templates.
 
 In the following example, we define an imposter for the `GET /gophers/{id}` endpoint. The response body uses templating to include the id from the request URL.
 
@@ -587,12 +587,13 @@ In this example:
 - The endpoint field uses a path parameter {id}.
 - The body field in the response uses a template to include the id from the request URL.
 
-You can also use other parts of the request in your templates, such as headers and query parameters.
+You can also use other parts of the request in your templates, such query parameters and the request body.
 Since query parameters can be used more than once, they are stored in an array and you can access them by index or use the `stringsJoin` function to concatenate them.
 
-Here is an example that includes a query parameter gopherColor in the response:
+Here is an example that includes query parameters gopherColor and gopherAge in the response, one of which can be used more than once:
 
 ````json
+// expects a request to, for example, GET /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b?gopherColor=Blue&gopherColor=Purple&gopherAge=42
 [
   {
     "request": {
@@ -600,7 +601,7 @@ Here is an example that includes a query parameter gopherColor in the response:
         "endpoint": "/gophers/{id}",
         "params": {
             "gopherColor": "{v:[a-z]+}",
-            "age": "{v:[0-9]+}"
+            "gopherAge": "{v:[0-9]+}"
         }
     },
     "response": {
@@ -608,13 +609,13 @@ Here is an example that includes a query parameter gopherColor in the response:
         "headers": {
             "Content-Type": "application/json"
         },
-        "body": "{\"id\": \"{{ .PathParams.id }}\", \"color\": \"{{ stringsJoin .QueryParams.gopherColor "," }}\", \"age\": {{ index .QueryParams.age 0 }}}"
+        "body": "{\"id\": \"{{ .PathParams.id }}\", \"color\": \"{{ stringsJoin .QueryParams.gopherColor "," }}\", \"age\": {{ index .QueryParams.gopherAge 0 }}}"
     }
   }
 ]
 ````
 
-Templates can also include data from the request, allowing you to create dynamic responses based on the request data. Currently only JSON bodies are supported. They also need to have the correct content type set.
+Templates can also include data from the request body, allowing you to create dynamic responses based on the request data. Currently only JSON bodies are supported. The request also needs to have the correct content type set (Content-Type: application/json).
 
 Here is an example that includes the request body in the response:
 
@@ -631,7 +632,7 @@ Here is an example that includes the request body in the response:
         },
         "params": {
             "gopherColor": "{v:[a-z]+}",
-            "age": "{v:[0-9]+}"
+            "gopherAge": "{v:[0-9]+}"
         }
     },
     "response": {
@@ -653,13 +654,13 @@ Here is an example that includes the request body in the response:
         "attributes": {
             "name": "{{ .RequestBody.data.attributes.name }}",
             "color": "{{ stringsJoin .QueryParams.gopherColor "," }}",
-            "age": {{ index .QueryParams.age 0 }}
+            "age": {{ index .QueryParams.gopherAge 0 }}
         }
     }
 }
 ````
 ````json
-// request body to POST /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b?gopherColor=Blue&gopherColor=Purple&age=42
+// request body to POST /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b?gopherColor=Blue&gopherColor=Purple&gopherAge=42
 {
   "data": {
     "type": "gophers",
