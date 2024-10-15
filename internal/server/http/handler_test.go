@@ -69,6 +69,74 @@ func TestImposterHandler(t *testing.T) {
 	}
 }
 
+func TestImposterHandlerTemplating(t *testing.T) {
+	bodyRequest := []byte(`{
+		"data": {
+		  "type": "gophers",
+		  "attributes": {
+			"name": "Natalissa"
+		  }
+		}
+	  }`)
+	var headers = make(map[string]string)
+	headers["Content-Type"] = "application/json"
+
+	schemaFile := "test/testdata/imposters_templating/schemas/create_gopher_request.json"
+	bodyFile := "test/testdata/imposters_templating/responses/create_gopher_response.json.tmpl"
+	bodyFileFake := "test/testdata/imposters_templating/responses/create_gopher_response_fail.json"
+	body := `{"test":true}`
+
+	validRequest := Request{
+		Method:     "POST",
+		Endpoint:   "/gophers/{GopherID}",
+		SchemaFile: &schemaFile,
+		Headers:    &headers,
+	}
+
+	f, _ := os.Open(bodyFile)
+	defer f.Close()
+
+	expectedBody := `{
+    "data": {
+        "type": "gophers",
+        "id": "bca49e8a-82dd-4c5d-b886-13a6ceb3744b",
+        "attributes": {
+            "name": "Natalissa",
+            "color": "Blue,Purple",
+            "age": 42
+        }
+    }
+}
+`
+
+	var dataTest = []struct {
+		name         string
+		imposter     Imposter
+		expectedBody string
+		statusCode   int
+	}{
+		{"valid imposter with body", Imposter{Request: validRequest, Response: Responses{{Status: http.StatusOK, Headers: &headers, Body: body}}}, body, http.StatusOK},
+		{"valid imposter with bodyFile", Imposter{Request: validRequest, Response: Responses{{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFile}}}, expectedBody, http.StatusOK},
+		{"valid imposter with not exists bodyFile", Imposter{Request: validRequest, Response: Responses{{Status: http.StatusOK, Headers: &headers, BodyFile: &bodyFileFake}}}, "", http.StatusOK},
+	}
+
+	for _, tt := range dataTest {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest("POST", "/gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b?gopherColor=Blue&gopherColor=Purple&gopherAge=42", bytes.NewBuffer(bodyRequest))
+			assert.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+
+			rec := httptest.NewRecorder()
+			handler := ImposterHandler(tt.imposter)
+
+			handler.ServeHTTP(rec, req)
+			assert.Equal(t, rec.Code, tt.statusCode)
+			assert.Equal(t, tt.expectedBody, rec.Body.String())
+
+		})
+	}
+}
+
 func TestInvalidRequestWithSchema(t *testing.T) {
 	validRequest := []byte(`{
 		"data": {

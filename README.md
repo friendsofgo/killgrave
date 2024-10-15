@@ -560,6 +560,129 @@ In the following example, we have defined multiple imposters for the `POST /goph
 ]
 ````
 
+#### Using Templating in Responses
+Killgrave supports templating in responses, allowing you to create dynamic responses based on request data. This feature uses Go's text/template package to render templates.
+
+In the following example, we define an imposter for the `GET /gophers/{id}` endpoint. The response body uses templating to include the id from the request URL.
+
+````json
+[
+  {
+    "request": {
+        "method": "GET",
+        "endpoint": "/gophers/{id}"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": "{\"id\": \"{{.PathParams.id}}\", \"name\": \"Gopher\"}"
+    }
+  }
+]
+````
+In this example:
+
+- The endpoint field uses a path parameter {id}.
+- The body field in the response uses a template to include the id from the request URL.
+
+You can also use other parts of the request in your templates, such as headers and query parameters.
+Since query parameters can be used more than once, they are stored in an array and you can access them by index or use the `stringsJoin` function to concatenate them.
+
+Here is an example that includes a query parameter gopherColor in the response:
+
+````json
+[
+  {
+    "request": {
+        "method": "GET",
+        "endpoint": "/gophers/{id}",
+        "params": {
+            "gopherColor": "{v:[a-z]+}",
+            "age": "{v:[0-9]+}"
+        }
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": "{\"id\": \"{{ .PathParams.id }}\", \"color\": \"{{ stringsJoin .QueryParams.gopherColor "," }}\", \"age\": {{ index .QueryParams.age 0 }}}"
+    }
+  }
+]
+````
+
+Templates can also include data from the request, allowing you to create dynamic responses based on the request data. Currently only JSON bodies are supported. They also need to have the correct content type set.
+
+Here is an example that includes the request body in the response:
+
+````json
+// imposters/gophers.imp.json
+[
+  {
+    "request": {
+        "method": "POST",
+        "endpoint": "/gophers",
+        "schemaFile": "schemas/create_gopher_request.json",
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "params": {
+            "gopherColor": "{v:[a-z]+}",
+            "age": "{v:[0-9]+}"
+        }
+    },
+    "response": {
+        "status": 201,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "bodyFile": "responses/create_gopher_response.json.tmpl"
+    }
+  }
+]
+````
+````tmpl
+// responses/create_gopher_response.json.tmpl
+{
+    "data": {
+        "type": "{{ .RequestBody.data.type }}",
+        "id": "{{ .PathParams.GopherID }}",
+        "attributes": {
+            "name": "{{ .RequestBody.data.attributes.name }}",
+            "color": "{{ stringsJoin .QueryParams.gopherColor "," }}",
+            "age": {{ index .QueryParams.age 0 }}
+        }
+    }
+}
+````
+````json
+// request body to POST /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b?gopherColor=Blue&gopherColor=Purple&age=42
+{
+  "data": {
+    "type": "gophers",
+    "attributes": {
+    	"name": "Natalissa",
+    }
+  }
+}
+// response
+{
+  "data": {
+    "type": "gophers",
+    "id": "bca49e8a-82dd-4c5d-b886-13a6ceb3744b",
+    "attributes": {
+      "name": "Natalissa",
+      "color": "Blue,Purple",
+      "age": 42
+    }
+  }
+}
+````
+
+
 ## Contributing
 [Contributions](CONTRIBUTING.md) are more than welcome, if you are interested please follow our guidelines to help you get started.
 

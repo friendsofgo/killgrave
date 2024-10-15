@@ -1,0 +1,11 @@
+{
+    "data": {
+        "type": "{{ .RequestBody.data.type }}",
+        "id": "{{ .PathParams.GopherID }}",
+        "attributes": {
+            "name": "{{ .RequestBody.data.attributes.name }}",
+            "color": "{{ stringsJoin .QueryParams.gopherColor "," }}",
+            "age": {{ index .QueryParams.gopherAge 0 }}
+        }
+    }
+}
