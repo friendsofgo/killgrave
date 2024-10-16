@@ -592,7 +592,7 @@ Since query parameters can be used more than once, they are stored in an array a
 
 Here is an example that includes query parameters gopherColor and gopherAge in the response, one of which can be used more than once:
 
-````json
+````jsonc
 // expects a request to, for example, GET /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b?gopherColor=Blue&gopherColor=Purple&gopherAge=42
 [
   {
@@ -621,7 +621,7 @@ This example also showcases the functions `timeNow`, `timeUTC`, `timeAdd`, `time
 
 Here is an example that includes the request body in the response:
 
-````json
+````jsonc
 // imposters/gophers.imp.json
 [
   {
@@ -665,7 +665,7 @@ Here is an example that includes the request body in the response:
 }
 
 ````
-````json
+````jsonc
 // request body to POST /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b?gopherColor=Blue&gopherColor=Purple&gopherAge=42
 {
   "data": {
