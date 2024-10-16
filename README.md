@@ -703,9 +703,9 @@ Here is an example that includes the request body in the response:
 
 These functions aren't part of the standard Go template functions, but are available for use in Killgrave templates:
 
-- `timeNow`: Returns the current time (in RFC3339 format).
-- `timeUTC`: Returns the current time in UTC (in RFC3339 format).
-- `timeAdd`: Adds a duration to a time.Time object. Uses the [Go ParseDuration format](https://pkg.go.dev/time#ParseDuration).
+- `timeNow`: Returns the current time. Returns RFC3339 formatted string.
+- `timeUTC`: Converts a RFC3339 formatted string to UTC. Returns RFC3339 formatted string.
+- `timeAdd`: Adds a duration to a RFC3339 formatted datetime string. Returns RFC3339 formatted string. Uses the [Go ParseDuration format](https://pkg.go.dev/time#ParseDuration).
 - `timeFormat`: Formats a RFC3339 string using the provided layout. Uses the [Go time package layout](https://pkg.go.dev/time#pkg-constants).
 - `jsonMarshal`: Marshals an object to a JSON string.
 - `stringsJoin`: Concatenates an array of strings using a separator.
