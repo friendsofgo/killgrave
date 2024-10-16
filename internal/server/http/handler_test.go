@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -72,12 +73,19 @@ func TestImposterHandler(t *testing.T) {
 func TestImposterHandlerTemplating(t *testing.T) {
 	bodyRequest := []byte(`{
 		"data": {
-		  "type": "gophers",
-		  "attributes": {
-			"name": "Natalissa"
-		  }
+			"type": "gophers",
+			"attributes": {
+				"name": "Natalissa"
+			},
+			"friends": [
+				{
+					"name": "Zebediah",
+					"color": "Purple",
+					"age": 55
+				}
+			]
 		}
-	  }`)
+	}`)
 	var headers = make(map[string]string)
 	headers["Content-Type"] = "application/json"
 
@@ -100,11 +108,14 @@ func TestImposterHandlerTemplating(t *testing.T) {
     "data": {
         "type": "gophers",
         "id": "bca49e8a-82dd-4c5d-b886-13a6ceb3744b",
+        "timestamp": "` + time.Now().UTC().Format("2006-01-02 15:04") + `",
+        "birthday": "` + time.Now().UTC().Add(time.Hour*24).Format("2006-01-02") + `",
         "attributes": {
             "name": "Natalissa",
             "color": "Blue,Purple",
             "age": 42
-        }
+        },
+        "friends": [{"age":55,"color":"Purple","name":"Zebediah"}]
     }
 }
 `
@@ -127,6 +138,7 @@ func TestImposterHandlerTemplating(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 
 			rec := httptest.NewRecorder()
+			tt.imposter.PopulateBodyData()
 			handler := ImposterHandler(tt.imposter)
 
 			handler.ServeHTTP(rec, req)

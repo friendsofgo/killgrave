@@ -2,10 +2,13 @@
     "data": {
         "type": "{{ .RequestBody.data.type }}",
         "id": "{{ .PathParams.GopherID }}",
+        "timestamp": "{{ timeFormat (timeUTC (timeNow)) "2006-01-02 15:04" }}",
+        "birthday": "{{ timeFormat (timeAdd (timeUTC (timeNow)) "24h") "2006-01-02" }}",
         "attributes": {
             "name": "{{ .RequestBody.data.attributes.name }}",
             "color": "{{ stringsJoin .QueryParams.gopherColor "," }}",
             "age": {{ index .QueryParams.gopherAge 0 }}
-        }
+        },
+        "friends": {{ jsonMarshal .RequestBody.data.friends }}
     }
 }

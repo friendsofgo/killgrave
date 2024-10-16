@@ -617,6 +617,8 @@ Here is an example that includes query parameters gopherColor and gopherAge in t
 
 Templates can also include data from the request body, allowing you to create dynamic responses based on the request data. Currently only JSON bodies are supported. The request also needs to have the correct content type set (Content-Type: application/json).
 
+This example also showcases the functions `timeNow`, `timeUTC`, `timeAdd`, `timeFormat`, `jsonMarshal` and `stringsJoin` that are available for use in templates.
+
 Here is an example that includes the request body in the response:
 
 ````json
@@ -651,13 +653,17 @@ Here is an example that includes the request body in the response:
     "data": {
         "type": "{{ .RequestBody.data.type }}",
         "id": "{{ .PathParams.GopherID }}",
+        "timestamp": "{{ timeFormat (timeUTC (timeNow)) "2006-01-02 15:04" }}",
+        "birthday": "{{ timeFormat (timeAdd (timeNow) "24h") "2006-01-02" }}",
         "attributes": {
             "name": "{{ .RequestBody.data.attributes.name }}",
             "color": "{{ stringsJoin .QueryParams.gopherColor "," }}",
             "age": {{ index .QueryParams.gopherAge 0 }}
-        }
+        },
+        "friends": {{ jsonMarshal .RequestBody.data.friends }}
     }
 }
+
 ````
 ````json
 // request body to POST /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b?gopherColor=Blue&gopherColor=Purple&gopherAge=42
@@ -665,8 +671,15 @@ Here is an example that includes the request body in the response:
   "data": {
     "type": "gophers",
     "attributes": {
-    	"name": "Natalissa",
-    }
+      "name": "Natalissa"
+    },
+    "friends": [
+      {
+        "name": "Zebediah",
+        "color": "Purple",
+        "age": 55
+      }
+    ]
   }
 }
 // response
@@ -674,14 +687,28 @@ Here is an example that includes the request body in the response:
   "data": {
     "type": "gophers",
     "id": "bca49e8a-82dd-4c5d-b886-13a6ceb3744b",
+    "timestamp": "2006-01-02 15:04",
+    "birthday": "2006-01-03",
     "attributes": {
       "name": "Natalissa",
       "color": "Blue,Purple",
       "age": 42
-    }
+    },
+    "friends": [{"age":55,"color":"Purple","name":"Zebediah"}]
   }
 }
 ````
+
+#### Available custom templating functions
+
+These functions aren't part of the standard Go template functions, but are available for use in Killgrave templates:
+
+- `timeNow`: Returns the current time (in RFC3339 format).
+- `timeUTC`: Returns the current time in UTC (in RFC3339 format).
+- `timeAdd`: Adds a duration to a time.Time object. Uses the [Go ParseDuration format](https://pkg.go.dev/time#ParseDuration).
+- `timeFormat`: Formats a RFC3339 string using the provided layout. Uses the [Go time package layout](https://pkg.go.dev/time#pkg-constants).
+- `jsonMarshal`: Marshals an object to a JSON string.
+- `stringsJoin`: Concatenates an array of strings using a separator.
 
 
 ## Contributing

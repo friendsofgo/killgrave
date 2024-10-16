@@ -82,7 +82,44 @@ func applyTemplate(i Imposter, bodyBytes []byte, r *http.Request) ([]byte, error
 	}
 
 	tmpl, err := template.New("body").
-		Funcs(template.FuncMap{"stringsJoin": strings.Join}).
+		Funcs(template.FuncMap{
+			"stringsJoin": strings.Join,
+			"jsonMarshal": func(v interface{}) (string, error) {
+				b, err := json.Marshal(v)
+				if err != nil {
+					return "", err
+				}
+				return string(b), nil
+			},
+			"timeNow": func() string {
+				return time.Now().Format(time.RFC3339)
+			},
+			"timeUTC": func(t string) (string, error) {
+				parsedTime, err := time.Parse(time.RFC3339, t)
+				if err != nil {
+					return "", fmt.Errorf("error parsing time: %v", err)
+				}
+				return parsedTime.UTC().Format(time.RFC3339), nil
+			},
+			"timeAdd": func(t string, d string) (string, error) {
+				parsedTime, err := time.Parse(time.RFC3339, t)
+				if err != nil {
+					return "", fmt.Errorf("error parsing time: %v", err)
+				}
+				duration, err := time.ParseDuration(d)
+				if err != nil {
+					return "", fmt.Errorf("error parsing duration: %v", err)
+				}
+				return parsedTime.Add(duration).Format(time.RFC3339), nil
+			},
+			"timeFormat": func(t string, layout string) (string, error) {
+				parsedTime, err := time.Parse(time.RFC3339, t)
+				if err != nil {
+					return "", fmt.Errorf("error parsing time: %v", err)
+				}
+				return parsedTime.Format(layout), nil
+			},
+		}).
 		Parse(bodyStr)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing template: %w", err)
@@ -111,7 +148,7 @@ func applyTemplate(i Imposter, bodyBytes []byte, r *http.Request) ([]byte, error
 
 func extractBody(r *http.Request) (map[string]interface{}, error) {
 	body := make(map[string]interface{})
-	if r.Body == nil {
+	if r.Body == http.NoBody {
 		return body, nil
 	}
 
