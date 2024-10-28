@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 
+	killgrave "github.com/friendsofgo/killgrave/internal"
+
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -19,9 +21,8 @@ func MatcherBySchema(imposter Imposter) mux.MatcherFunc {
 	return func(req *http.Request, rm *mux.RouteMatch) bool {
 		err := validateSchema(imposter, req)
 
-		// TODO: inject the logger
 		if err != nil {
-			log.Println(err)
+			log.WithFields(killgrave.LogFieldsFromRequest(req)).Warn(err)
 			return false
 		}
 		return true

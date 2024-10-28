@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -19,6 +20,13 @@ type Config struct {
 	Proxy         ConfigProxy `yaml:"proxy"`
 	Secure        bool        `yaml:"secure"`
 	Watcher       bool        `yaml:"watcher"`
+	Log           ConfigLog   `yaml:"log"`
+}
+
+// ConfigLog is a representation of the log section of the yaml
+// This should include configurations for future features for logging (output format, dump file, etc)
+type ConfigLog struct {
+	Level string `yaml:"level"`
 }
 
 // ConfigCORS representation of section CORS of the yaml
@@ -149,6 +157,9 @@ func NewConfigFromFile(cfgPath string) (Config, error) {
 	bytes, _ := io.ReadAll(configFile)
 	if err := yaml.Unmarshal(bytes, &cfg); err != nil {
 		return Config{}, fmt.Errorf("%w: error while unmarshalling configFile file %s, using default configuration instead", err, cfgPath)
+	}
+	if _, err := log.ParseLevel(cfg.Log.Level); err != nil {
+		return Config{}, err
 	}
 
 	cfg.ImpostersPath = path.Join(path.Dir(cfgPath), cfg.ImpostersPath)

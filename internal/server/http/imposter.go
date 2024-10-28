@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -207,4 +208,12 @@ func (i ImposterFs) unmarshalImposters(imposterConfig ImposterConfig) ([]Imposte
 	}
 
 	return imposters, nil
+}
+
+func (i Imposter) LogFields() log.Fields {
+	return log.Fields{
+		"endpoint": i.Request.Endpoint,
+		"method":   i.Request.Method,
+		"path":     i.Path,
+	}
 }

@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,6 +13,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/radovskyb/watcher"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +26,7 @@ const (
 	_defaultPort          = 3000
 	_defaultProxyMode     = killgrave.ProxyNone
 	_defaultStrictSlash   = true
+	_defaultLogLevel      = "info"
 
 	_impostersFlag = "imposters"
 	_configFlag    = "config"
@@ -35,6 +36,7 @@ const (
 	_secureFlag    = "secure"
 	_proxyModeFlag = "proxy-mode"
 	_proxyURLFlag  = "proxy-url"
+	_loglevelFlag  = "log-level"
 )
 
 var (
@@ -77,6 +79,7 @@ func NewKillgraveCmd() *cobra.Command {
 	rootCmd.Flags().BoolP(_secureFlag, "s", false, "Run mock server using TLS (https)")
 	rootCmd.Flags().StringP(_proxyModeFlag, "m", _defaultProxyMode.String(), "Proxy mode, the options are all, missing or none")
 	rootCmd.Flags().StringP(_proxyURLFlag, "u", "", "The url where the proxy will redirect to")
+	rootCmd.Flags().String(_loglevelFlag, _defaultLogLevel, "The log level to output")
 
 	rootCmd.SetVersionTemplate("Killgrave version: {{.Version}}\n")
 
@@ -86,6 +89,12 @@ func NewKillgraveCmd() *cobra.Command {
 func runHTTP(cmd *cobra.Command, cfg killgrave.Config) error {
 	done := make(chan os.Signal, 1)
 	defer close(done)
+
+	logLevel, err := log.ParseLevel(cfg.Log.Level)
+	if err != nil {
+		return fmt.Errorf("Could not parse log level: %v", err)
+	}
+	log.SetLevel(logLevel)
 
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
@@ -103,7 +112,8 @@ func runHTTP(cmd *cobra.Command, cfg killgrave.Config) error {
 
 	<-done
 	if err := srv.Shutdown(); err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		os.Exit(1)
 	}
 
 	return nil
@@ -121,12 +131,14 @@ func runServer(cfg killgrave.Config) server.Server {
 
 	proxyServer, err := server.NewProxy(cfg.Proxy.Url, cfg.Proxy.Mode)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		os.Exit(1)
 	}
 
 	imposterFs, err := server.NewImposterFS(cfg.ImpostersPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		os.Exit(1)
 	}
 
 	s := server.NewServer(
@@ -137,7 +149,8 @@ func runServer(cfg killgrave.Config) server.Server {
 		imposterFs,
 	)
 	if err := s.Build(); err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		os.Exit(1)
 	}
 
 	s.Run()
@@ -152,7 +165,8 @@ func runWatcher(cfg killgrave.Config, currentSrv *server.Server) (*watcher.Watch
 
 	killgrave.AttachWatcher(w, func() {
 		if err := currentSrv.Shutdown(); err != nil {
-			log.Fatal(err)
+			log.Error(err)
+			os.Exit(1)
 		}
 		*currentSrv = runServer(cfg)
 	})
@@ -190,7 +204,16 @@ func prepareConfig(cmd *cobra.Command) (killgrave.Config, error) {
 		return killgrave.Config{}, err
 	}
 
-	return cfg, configureProxyMode(cmd, &cfg)
+	if err := configureProxyMode(cmd, &cfg); err != nil {
+		return killgrave.Config{}, err
+
+	}
+
+	if err := configureLogging(cmd, &cfg); err != nil {
+		return killgrave.Config{}, err
+	}
+
+	return cfg, nil
 }
 
 func configureProxyMode(cmd *cobra.Command, cfg *killgrave.Config) error {
@@ -216,5 +239,14 @@ func configureProxyMode(cmd *cobra.Command, cfg *killgrave.Config) error {
 		}
 	}
 	cfg.ConfigureProxy(pMode, url)
+	return nil
+}
+
+func configureLogging(cmd *cobra.Command, cfg *killgrave.Config) error {
+	logLevel, err := cmd.Flags().GetString(_loglevelFlag)
+	if err != nil {
+		return err
+	}
+	cfg.Log.Level = logLevel
 	return nil
 }

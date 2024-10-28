@@ -107,6 +107,9 @@ func validConfig() Config {
 		},
 		Watcher: true,
 		Secure:  true,
+		Log: ConfigLog{
+			Level: "info",
+		},
 	}
 }
 

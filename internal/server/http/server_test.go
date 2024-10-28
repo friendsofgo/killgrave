@@ -3,7 +3,6 @@ package http
 import (
 	"crypto/tls"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -12,6 +11,7 @@ import (
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

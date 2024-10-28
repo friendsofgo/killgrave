@@ -3,12 +3,12 @@ package killgrave
 import (
 	"errors"
 	"io"
-	"log"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/radovskyb/watcher"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
