@@ -101,7 +101,8 @@ func TestImposterHandlerTemplating(t *testing.T) {
 		Headers:    &headers,
 	}
 
-	f, _ := os.Open(bodyFile)
+	f, err := os.Open(bodyFile)
+	require.NoError(t, err)
 	defer f.Close()
 
 	expectedBody := `{
