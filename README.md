@@ -590,7 +590,7 @@ In this example:
 You can also use other parts of the request in your templates, such query parameters and the request body.
 Since query parameters can be used more than once, they are stored in an array and you can access them by index or use the `stringsJoin` function to concatenate them.
 
-Here is an example that includes query parameters gopherColor and gopherAge in the response, one of which can be used more than once:
+Here is an example that includes query parameters `gopherColor` and `gopherAge` in the response, one of which can be used more than once:
 
 ````jsonc
 // expects a request to, for example, GET /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b?gopherColor=Blue&gopherColor=Purple&gopherAge=42
