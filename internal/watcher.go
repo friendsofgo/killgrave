@@ -2,7 +2,6 @@ package killgrave
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/radovskyb/watcher"
@@ -29,8 +28,7 @@ func InitializeWatcher(pathToWatch string) (*watcher.Watcher, error) {
 func AttachWatcher(w *watcher.Watcher, fn func()) {
 	go func() {
 		if err := w.Start(time.Millisecond * 100); err != nil {
-			log.Error(err)
-			os.Exit(1)
+			log.Fatal(err)
 		}
 	}()
 

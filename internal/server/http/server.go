@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"fmt"
 	"net/http"
-	"os"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/handlers"
@@ -127,8 +126,7 @@ func (s *Server) Run() {
 		log.Infof("The fake server is on tap now: %s%s\n", s.httpServer.Addr, tlsString)
 		err := s.run(s.secure)
 		if err != http.ErrServerClosed {
-			log.Error(err)
-			os.Exit(1)
+			log.Fatal(err)
 		}
 	}()
 }
@@ -140,8 +138,7 @@ func (s *Server) run(secure bool) error {
 
 	cert, err := tls.X509KeyPair(serverCert, serverKey)
 	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	s.httpServer.TLSConfig = &tls.Config{

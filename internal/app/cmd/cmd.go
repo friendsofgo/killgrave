@@ -112,8 +112,7 @@ func runHTTP(cmd *cobra.Command, cfg killgrave.Config) error {
 
 	<-done
 	if err := srv.Shutdown(); err != nil {
-		log.Error(err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	return nil
@@ -131,14 +130,12 @@ func runServer(cfg killgrave.Config) server.Server {
 
 	proxyServer, err := server.NewProxy(cfg.Proxy.Url, cfg.Proxy.Mode)
 	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	imposterFs, err := server.NewImposterFS(cfg.ImpostersPath)
 	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	s := server.NewServer(
@@ -149,8 +146,7 @@ func runServer(cfg killgrave.Config) server.Server {
 		imposterFs,
 	)
 	if err := s.Build(); err != nil {
-		log.Error(err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	s.Run()
@@ -165,8 +161,7 @@ func runWatcher(cfg killgrave.Config, currentSrv *server.Server) (*watcher.Watch
 
 	killgrave.AttachWatcher(w, func() {
 		if err := currentSrv.Shutdown(); err != nil {
-			log.Error(err)
-			os.Exit(1)
+			log.Fatal(err)
 		}
 		*currentSrv = runServer(cfg)
 	})
