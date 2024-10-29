@@ -134,7 +134,7 @@ func TestImposterHandlerTemplating(t *testing.T) {
 	for _, tt := range dataTest {
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest("POST", "/gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b?gopherColor=Blue&gopherColor=Purple&gopherAge=42", bytes.NewBuffer(bodyRequest))
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			req.Header.Set("Content-Type", "application/json")
 
 			rec := httptest.NewRecorder()
