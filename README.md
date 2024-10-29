@@ -615,13 +615,14 @@ Here is an example that includes query parameters `gopherColor` and `gopherAge` 
 ]
 ````
 
-Templates can also include data from the request body, allowing you to create dynamic responses based on the request data. Currently only JSON bodies are supported. The request also needs to have the correct content type set (Content-Type: application/json).
+### Using Data from JSON Requests
 
-This example also showcases the functions `timeNow`, `timeUTC`, `timeAdd`, `timeFormat`, `jsonMarshal` and `stringsJoin` that are available for use in templates.
+Templates can also include data from the request body, allowing you to create dynamic responses based on the request data.
+Currently only JSON bodies are supported. The request also needs to have the correct content type set (Content-Type: application/json).
 
 Here is an example that includes the request body in the response:
 
-````jsonc
+```jsonc
 // imposters/gophers.imp.json
 [
   {
@@ -632,10 +633,6 @@ Here is an example that includes the request body in the response:
         "headers": {
             "Content-Type": "application/json"
         },
-        "params": {
-            "gopherColor": "{v:[a-z]+}",
-            "gopherAge": "{v:[0-9]+}"
-        }
     },
     "response": {
         "status": 201,
@@ -653,20 +650,96 @@ Here is an example that includes the request body in the response:
     "data": {
         "type": "{{ .RequestBody.data.type }}",
         "id": "{{ .PathParams.GopherID }}",
-        "timestamp": "{{ timeFormat (timeUTC (timeNow)) "2006-01-02 15:04" }}",
-        "birthday": "{{ timeFormat (timeAdd (timeNow) "24h") "2006-01-02" }}",
         "attributes": {
             "name": "{{ .RequestBody.data.attributes.name }}",
-            "color": "{{ stringsJoin .QueryParams.gopherColor "," }}",
-            "age": {{ index .QueryParams.gopherAge 0 }}
-        },
-        "friends": {{ jsonMarshal .RequestBody.data.friends }}
+            "color": "{{ .RequestBody.data.attributes.gopherColor }}",
+            "age": {{ .RequestBody.data.attributes.gopherAge }}
+        }
     }
 }
 
 ````
 ````jsonc
-// request body to POST /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b?gopherColor=Blue&gopherColor=Purple&gopherAge=42
+// request body to POST /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b
+{
+  "data": {
+    "type": "gophers",
+    "attributes": {
+      "name": "Natalissa",
+      "color": "Blue",
+      "age": 42
+    },
+  }
+}
+// response
+{
+  "data": {
+    "type": "gophers",
+    "id": "bca49e8a-82dd-4c5d-b886-13a6ceb3744b",
+    "attributes": {
+      "name": "Natalissa",
+      "color": "Blue",
+      "age": 42
+    }
+  }
+}
+````
+
+#### Using Custom Templating Functions
+
+These functions aren't part of the standard Go template functions, but are available for use in Killgrave templates:
+
+- `timeNow`: Returns the current time. Returns RFC3339 formatted string.
+- `timeUTC`: Converts a RFC3339 formatted string to UTC. Returns RFC3339 formatted string.
+- `timeAdd`: Adds a duration to a RFC3339 formatted datetime string. Returns RFC3339 formatted string. Uses the [Go ParseDuration format](https://pkg.go.dev/time#ParseDuration).
+- `timeFormat`: Formats a RFC3339 string using the provided layout. Uses the [Go time package layout](https://pkg.go.dev/time#pkg-constants).
+- `jsonMarshal`: Marshals an object to a JSON string. Useful for including all data from a field.
+- `stringsJoin`: Concatenates an array of strings using a separator.
+
+
+
+```jsonc
+// imposters/gophers_with_functions.imp.json
+[
+  {
+    "request": {
+        "method": "POST",
+        "endpoint": "/gophers",
+        "schemaFile": "schemas/create_gopher_request.json",
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    },
+    "response": {
+        "status": 201,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "bodyFile": "responses/create_gopher_response_with_functions.json.tmpl"
+    }
+  }
+]
+````
+````tmpl
+// responses/create_gopher_response_with_functions.json.tmpl
+{
+    "data": {
+        "type": "{{ .RequestBody.data.type }}",
+        "id": "{{ .PathParams.GopherID }}",
+        "timestamp": "{{ timeFormat (timeUTC (timeNow)) "2006-01-02 15:04" }}", // Current time in UTC
+        "birthday": "{{ timeFormat (timeAdd (timeNow) "24h") "2006-01-02" }}", // Always returns tomorrow's date
+        "attributes": {
+            "name": "{{ .RequestBody.data.attributes.name }}",
+            "color": "{{ stringsJoin .RequestBody.data.attributes.colors "," }}", // Concatenates the colors array
+            "age": {{ .RequestBody.data.attributes.age }}
+        },
+        "friends": {{ jsonMarshal .RequestBody.data.friends }} // Includes all data from the friends field
+    }
+}
+
+````
+````jsonc
+// request body to POST /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b
 {
   "data": {
     "type": "gophers",
@@ -676,8 +749,8 @@ Here is an example that includes the request body in the response:
     "friends": [
       {
         "name": "Zebediah",
-        "color": "Purple",
-        "age": 55
+        "colors": ["Blue", "Purple"],
+        "age": 42
       }
     ]
   }
@@ -698,17 +771,6 @@ Here is an example that includes the request body in the response:
   }
 }
 ````
-
-#### Available custom templating functions
-
-These functions aren't part of the standard Go template functions, but are available for use in Killgrave templates:
-
-- `timeNow`: Returns the current time. Returns RFC3339 formatted string.
-- `timeUTC`: Converts a RFC3339 formatted string to UTC. Returns RFC3339 formatted string.
-- `timeAdd`: Adds a duration to a RFC3339 formatted datetime string. Returns RFC3339 formatted string. Uses the [Go ParseDuration format](https://pkg.go.dev/time#ParseDuration).
-- `timeFormat`: Formats a RFC3339 string using the provided layout. Uses the [Go time package layout](https://pkg.go.dev/time#pkg-constants).
-- `jsonMarshal`: Marshals an object to a JSON string.
-- `stringsJoin`: Concatenates an array of strings using a separator.
 
 
 ## Contributing
