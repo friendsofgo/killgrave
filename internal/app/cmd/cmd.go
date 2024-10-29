@@ -90,11 +90,7 @@ func runHTTP(cmd *cobra.Command, cfg killgrave.Config) error {
 	done := make(chan os.Signal, 1)
 	defer close(done)
 
-	logLevel, err := log.ParseLevel(cfg.Log.Level)
-	if err != nil {
-		return fmt.Errorf("Could not parse log level: %v", err)
-	}
-	log.SetLevel(logLevel)
+	log.SetLevel(cfg.Log.Level)
 
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
@@ -242,6 +238,11 @@ func configureLogging(cmd *cobra.Command, cfg *killgrave.Config) error {
 	if err != nil {
 		return err
 	}
-	cfg.Log.Level = logLevel
+	logrusLogLevel, err := log.ParseLevel(logLevel)
+	if err != nil {
+		return err
+	}
+
+	cfg.Log.Level = logrusLogLevel
 	return nil
 }
