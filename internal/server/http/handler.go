@@ -9,15 +9,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"text/template"
 	"time"
-)
 
-type TemplatingData struct {
-	RequestBody map[string]interface{}
-	PathParams  map[string]string
-	QueryParams map[string][]string
-}
+	"github.com/friendsofgo/killgrave/internal/templating"
+)
 
 // ImposterHandler create specific handler for the received imposter
 func ImposterHandler(i Imposter) http.HandlerFunc {
@@ -50,7 +45,26 @@ func writeBody(i Imposter, res Response, w http.ResponseWriter, r *http.Request)
 		bodyBytes = fetchBodyFromFile(bodyFile)
 	}
 
-	templateBytes, err := applyTemplate(i, bodyBytes, r)
+	bodyStr := string(bodyBytes)
+
+	// early return if body does not contain templating
+	if !strings.Contains(bodyStr, "{{") {
+		w.Write([]byte(bodyStr))
+		return
+	}
+
+	structuredBody, err := extractBody(r)
+	if err != nil {
+		log.Printf("error extracting body: %v\n", err)
+	}
+
+	templData := templating.TemplatingData{
+		RequestBody: structuredBody,
+		PathParams:  extractPathParams(r, i.Request.Endpoint),
+		QueryParams: extractQueryParams(r),
+	}
+
+	templateBytes, err := templating.ApplyTemplate(bodyStr, templData)
 	if err != nil {
 		log.Printf("error applying template: %v\n", err)
 	}
@@ -58,10 +72,10 @@ func writeBody(i Imposter, res Response, w http.ResponseWriter, r *http.Request)
 	w.Write(templateBytes)
 }
 
-func fetchBodyFromFile(bodyFile string) (bytes []byte) {
+func fetchBodyFromFile(bodyFile string) []byte {
 	if _, err := os.Stat(bodyFile); os.IsNotExist(err) {
 		log.Printf("the body file %s not found\n", bodyFile)
-		return
+		return nil
 	}
 
 	f, _ := os.Open(bodyFile)
@@ -69,81 +83,9 @@ func fetchBodyFromFile(bodyFile string) (bytes []byte) {
 	bytes, err := io.ReadAll(f)
 	if err != nil {
 		log.Printf("imposible read the file %s: %v\n", bodyFile, err)
+		return nil
 	}
-	return
-}
-
-func applyTemplate(i Imposter, bodyBytes []byte, r *http.Request) ([]byte, error) {
-	bodyStr := string(bodyBytes)
-
-	// check if the body contains a template
-	if !strings.Contains(bodyStr, "{{") {
-		return bodyBytes, nil
-	}
-
-	tmpl, err := template.New("body").
-		Funcs(template.FuncMap{
-			"stringsJoin": strings.Join,
-			"jsonMarshal": func(v interface{}) (string, error) {
-				b, err := json.Marshal(v)
-				if err != nil {
-					return "", err
-				}
-				return string(b), nil
-			},
-			"timeNow": func() string {
-				return time.Now().Format(time.RFC3339)
-			},
-			"timeUTC": func(t string) (string, error) {
-				parsedTime, err := time.Parse(time.RFC3339, t)
-				if err != nil {
-					return "", fmt.Errorf("error parsing time: %v", err)
-				}
-				return parsedTime.UTC().Format(time.RFC3339), nil
-			},
-			"timeAdd": func(t string, d string) (string, error) {
-				parsedTime, err := time.Parse(time.RFC3339, t)
-				if err != nil {
-					return "", fmt.Errorf("error parsing time: %v", err)
-				}
-				duration, err := time.ParseDuration(d)
-				if err != nil {
-					return "", fmt.Errorf("error parsing duration: %v", err)
-				}
-				return parsedTime.Add(duration).Format(time.RFC3339), nil
-			},
-			"timeFormat": func(t string, layout string) (string, error) {
-				parsedTime, err := time.Parse(time.RFC3339, t)
-				if err != nil {
-					return "", fmt.Errorf("error parsing time: %v", err)
-				}
-				return parsedTime.Format(layout), nil
-			},
-		}).
-		Parse(bodyStr)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing template: %w", err)
-	}
-
-	extractedBody, err := extractBody(r)
-	if err != nil {
-		log.Printf("error extracting body: %v\n", err)
-	}
-
-	// parse request body in a generic way
-	tmplData := TemplatingData{
-		RequestBody: extractedBody,
-		PathParams:  extractPathParams(i, r),
-		QueryParams: extractQueryParams(r),
-	}
-
-	var tpl bytes.Buffer
-	err = tmpl.Execute(&tpl, tmplData)
-	if err != nil {
-		return nil, fmt.Errorf("error applying template: %w", err)
-	}
-
-	return tpl.Bytes(), nil
+	return bytes
 }
 
 func extractBody(r *http.Request) (map[string]interface{}, error) {
@@ -176,7 +118,7 @@ func extractBody(r *http.Request) (map[string]interface{}, error) {
 	return body, nil
 }
 
-func extractPathParams(i Imposter, r *http.Request) map[string]string {
+func extractPathParams(r *http.Request, endpoint string) map[string]string {
 	params := make(map[string]string)
 
 	path := r.URL.Path
@@ -184,25 +126,22 @@ func extractPathParams(i Imposter, r *http.Request) map[string]string {
 		return params
 	}
 
-	endpoint := i.Request.Endpoint
-	// regex to split either path params using /:paramname or /{paramname}
-
 	// split path and endpoint by /
 	pathParts := strings.Split(path, "/")
-	imposterParts := strings.Split(endpoint, "/")
+	endpointParts := strings.Split(endpoint, "/")
 
-	if len(pathParts) != len(imposterParts) {
-		log.Printf("request path and imposter endpoint parts do not match: %s, %s\n", path, endpoint)
+	if len(pathParts) != len(endpointParts) {
+		log.Printf("request path and endpoint parts do not match: %s, %s\n", path, endpoint)
 		return params
 	}
 
 	// iterate over pathParts and endpointParts
-	for i := range imposterParts {
-		if strings.HasPrefix(imposterParts[i], ":") {
-			params[imposterParts[i][1:]] = pathParts[i]
+	for i := range endpointParts {
+		if strings.HasPrefix(endpointParts[i], ":") {
+			params[endpointParts[i][1:]] = pathParts[i]
 		}
-		if strings.HasPrefix(imposterParts[i], "{") && strings.HasSuffix(imposterParts[i], "}") {
-			params[imposterParts[i][1:len(imposterParts[i])-1]] = pathParts[i]
+		if strings.HasPrefix(endpointParts[i], "{") && strings.HasSuffix(endpointParts[i], "}") {
+			params[endpointParts[i][1:len(endpointParts[i])-1]] = pathParts[i]
 		}
 	}
 

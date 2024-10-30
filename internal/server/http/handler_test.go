@@ -139,7 +139,6 @@ func TestImposterHandlerTemplating(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 
 			rec := httptest.NewRecorder()
-			tt.imposter.PopulateBodyData()
 			handler := ImposterHandler(tt.imposter)
 
 			handler.ServeHTTP(rec, req)
@@ -241,4 +240,179 @@ func TestImposterHandler_MultipleRequests(t *testing.T) {
 		assert.Equal(t, http.StatusAccepted, rec.Code)
 		assert.Equal(t, "Accepted", rec.Body.String())
 	})
+}
+
+func TestExtractPathParams(t *testing.T) {
+	tests := []struct {
+		name     string
+		endpoint string
+		url      string
+		expected map[string]string
+	}{
+		{
+			name:     "simple path params",
+			endpoint: "/gophers/{id}",
+			url:      "/gophers/123",
+			expected: map[string]string{
+				"id": "123",
+			},
+		},
+		{
+			name:     "no path params",
+			endpoint: "/gophers",
+			url:      "/gophers",
+			expected: map[string]string{},
+		},
+		{
+			name:     "mismatched path parts",
+			endpoint: "/gophers/{id}/details",
+			url:      "/gophers/123",
+			expected: map[string]string{},
+		},
+		{
+			name:     "colon path params",
+			endpoint: "/gophers/:id",
+			url:      "/gophers/123",
+			expected: map[string]string{
+				"id": "123",
+			},
+		},
+		{
+			name:     "multiple path params",
+			endpoint: "/gophers/{id}/friends/{friendID}",
+			url:      "/gophers/123/friends/456",
+			expected: map[string]string{
+				"id":       "123",
+				"friendID": "456",
+			},
+		},
+		{
+			name:     "URL with extra slashes",
+			endpoint: "/gophers/{id}",
+			url:      "/gophers//123",
+			expected: map[string]string{},
+		},
+		{
+			name:     "URL with special characters",
+			endpoint: "/gophers/{id}",
+			url:      "/gophers/123@!$",
+			expected: map[string]string{
+				"id": "123@!$",
+			},
+		},
+		{
+			name:     "URL with missing path parts",
+			endpoint: "/gophers/{id}/friends/{friendID}",
+			url:      "/gophers/123/friends",
+			expected: map[string]string{},
+		},
+		{
+			name:     "URL with query parameters",
+			endpoint: "/gophers/{id}",
+			url:      "/gophers/123?color=blue",
+			expected: map[string]string{
+				"id": "123",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest("GET", tt.url, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			params := extractPathParams(req, tt.endpoint)
+			if len(params) != len(tt.expected) {
+				t.Errorf("expected %d params, got %d", len(tt.expected), len(params))
+			}
+			for k, v := range tt.expected {
+				if params[k] != v {
+					t.Errorf("expected param %s to be %s, got %s", k, v, params[k])
+				}
+			}
+		})
+	}
+}
+
+func TestExtractQueryParams(t *testing.T) {
+	tests := []struct {
+		name     string
+		url      string
+		expected map[string][]string
+	}{
+		{
+			name: "simple query params",
+			url:  "/gophers?color=blue&age=5",
+			expected: map[string][]string{
+				"color": {"blue"},
+				"age":   {"5"},
+			},
+		},
+		{
+			name:     "no query params",
+			url:      "/gophers",
+			expected: map[string][]string{},
+		},
+		{
+			name: "multiple values for a query param",
+			url:  "/gophers?color=blue&color=green",
+			expected: map[string][]string{
+				"color": {"blue", "green"},
+			},
+		},
+		{
+			name: "empty query parameter",
+			url:  "/gophers?color=",
+			expected: map[string][]string{
+				"color": {""},
+			},
+		},
+		{
+			name: "query parameter with no value",
+			url:  "/gophers?color",
+			expected: map[string][]string{
+				"color": {""},
+			},
+		},
+		{
+			name: "query parameter with special characters",
+			url:  "/gophers?color=blue&name=John%20Doe",
+			expected: map[string][]string{
+				"color": {"blue"},
+				"name":  {"John Doe"},
+			},
+		},
+		{
+			name: "query parameter with mixed case",
+			url:  "/gophers?Color=blue&color=green",
+			expected: map[string][]string{
+				"Color": {"blue"},
+				"color": {"green"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest("GET", tt.url, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			params := extractQueryParams(req)
+			if len(params) != len(tt.expected) {
+				t.Errorf("expected %d params, got %d", len(tt.expected), len(params))
+			}
+			for k, v := range tt.expected {
+				if len(params[k]) != len(v) {
+					t.Errorf("expected %d values for param %s, got %d", len(v), k, len(params[k]))
+				}
+				for i := range v {
+					if params[k][i] != v[i] {
+						t.Errorf("expected param %s to be %s, got %s", k, v[i], params[k][i])
+					}
+				}
+			}
+		})
+	}
 }
