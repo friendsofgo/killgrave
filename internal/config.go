@@ -3,7 +3,7 @@ package killgrave
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 
@@ -146,7 +146,7 @@ func NewConfigFromFile(cfgPath string) (Config, error) {
 	defer configFile.Close()
 
 	var cfg Config
-	bytes, _ := ioutil.ReadAll(configFile)
+	bytes, _ := io.ReadAll(configFile)
 	if err := yaml.Unmarshal(bytes, &cfg); err != nil {
 		return Config{}, fmt.Errorf("%w: error while unmarshalling configFile file %s, using default configuration instead", err, cfgPath)
 	}

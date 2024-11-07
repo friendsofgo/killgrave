@@ -14,7 +14,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/radovskyb/watcher"
-	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
 
@@ -125,9 +124,12 @@ func runServer(cfg killgrave.Config) server.Server {
 		log.Fatal(err)
 	}
 
-	imposterFs := server.NewImposterFS(afero.NewOsFs())
+	imposterFs, err := server.NewImposterFS(cfg.ImpostersPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	s := server.NewServer(
-		cfg.ImpostersPath,
 		router,
 		&httpServer,
 		proxyServer,
@@ -152,7 +154,7 @@ func runWatcher(cfg killgrave.Config, currentSrv *server.Server) (*watcher.Watch
 		if err := currentSrv.Shutdown(); err != nil {
 			log.Fatal(err)
 		}
-		runServer(cfg)
+		*currentSrv = runServer(cfg)
 	})
 	return w, nil
 }

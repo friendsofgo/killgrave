@@ -2,9 +2,7 @@ package http
 
 import (
 	"crypto/tls"
-	"errors"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -14,36 +12,40 @@ import (
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/mux"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 	os.Exit(m.Run())
 }
 
 func TestServer_Build(t *testing.T) {
-	imposterFs := NewImposterFS(afero.NewOsFs())
-
-	var serverData = []struct {
-		name   string
-		server Server
-		err    error
-	}{
-		{"imposter directory not found", NewServer("failImposterPath", nil, &http.Server{}, &Proxy{}, false, imposterFs), errors.New("hello")},
-		{"malformatted json", NewServer("test/testdata/malformatted_imposters", nil, &http.Server{}, &Proxy{}, false, imposterFs), nil},
-		{"valid imposter", NewServer("test/testdata/imposters", mux.NewRouter(), &http.Server{}, &Proxy{}, false, imposterFs), nil},
+	newServer := func(fs ImposterFs) Server {
+		return NewServer(mux.NewRouter(), &http.Server{}, &Proxy{}, false, fs)
 	}
 
-	for _, tt := range serverData {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.server.Build()
+	testCases := map[string]struct {
+		impostersPath string
+		shouldFail    bool
+	}{
+		"imposters with malformed json": {impostersPath: "test/testdata/malformed_imposters"},
+		"valid imposters":               {impostersPath: "test/testdata/imposters"},
+	}
 
-			if tt.err != nil {
-				assert.NotNil(t, err)
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			fs, err := NewImposterFS(tc.impostersPath)
+			require.NoError(t, err)
+
+			srv := newServer(fs)
+			err = srv.Build()
+
+			if tc.shouldFail {
+				assert.Error(t, err)
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 			}
 		})
 	}
@@ -54,17 +56,23 @@ func TestBuildProxyMode(t *testing.T) {
 		io.WriteString(w, "Proxied")
 	}))
 	defer proxyServer.Close()
-	makeServer := func(mode killgrave.ProxyMode) (*Server, func()) {
+
+	makeServer := func(mode killgrave.ProxyMode) (*Server, func() error) {
 		router := mux.NewRouter()
 		httpServer := &http.Server{Handler: router}
+
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
-		assert.Nil(t, err)
-		imposterFs := NewImposterFS(afero.NewOsFs())
-		server := NewServer("test/testdata/imposters", router, httpServer, proxyServer, false, imposterFs)
-		return &server, func() {
-			httpServer.Close()
+		require.NoError(t, err)
+
+		imposterFs, err := NewImposterFS("test/testdata/imposters")
+		require.NoError(t, err)
+
+		server := NewServer(router, httpServer, proxyServer, false, imposterFs)
+		return &server, func() error {
+			return httpServer.Close()
 		}
 	}
+
 	testCases := map[string]struct {
 		mode   killgrave.ProxyMode
 		url    string
@@ -113,7 +121,7 @@ func TestBuildProxyMode(t *testing.T) {
 
 			s.router.ServeHTTP(w, req)
 			response := w.Result()
-			body, _ := ioutil.ReadAll(response.Body)
+			body, _ := io.ReadAll(response.Body)
 
 			assert.Equal(t, tc.body, string(body))
 			assert.Equal(t, tc.status, response.StatusCode)
@@ -133,14 +141,19 @@ func TestBuildSecureMode(t *testing.T) {
 		httpServer := &http.Server{Handler: router, Addr: ":4430", TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{cert},
 		}}
+
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
-		assert.Nil(t, err)
-		imposterFs := NewImposterFS(afero.NewOsFs())
-		server := NewServer("test/testdata/imposters_secure", router, httpServer, proxyServer, true, imposterFs)
+		require.NoError(t, err)
+
+		imposterFs, err := NewImposterFS("test/testdata/imposters_secure")
+		require.NoError(t, err)
+
+		server := NewServer(router, httpServer, proxyServer, true, imposterFs)
 		return &server, func() {
 			httpServer.Close()
 		}
 	}
+
 	testCases := map[string]struct {
 		mode   killgrave.ProxyMode
 		url    string
@@ -187,7 +200,7 @@ func TestBuildSecureMode(t *testing.T) {
 
 				defer response.Body.Close()
 
-				body, err := ioutil.ReadAll(response.Body)
+				body, err := io.ReadAll(response.Body)
 				if err != nil {
 					return false
 				}

@@ -3,14 +3,13 @@ package http
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/spf13/afero"
 	"gopkg.in/yaml.v2"
 )
 
@@ -38,18 +37,22 @@ type ImposterConfig struct {
 
 // Imposter define an imposter structure
 type Imposter struct {
-	BasePath string   `json:"-" yaml:"-"`
-	Path     string   `json:"-" yaml:"-"`
-	Request  Request  `json:"request"`
-	Response Response `json:"response"`
+	BasePath string    `json:"-" yaml:"-"`
+	Path     string    `json:"-" yaml:"-"`
+	Request  Request   `json:"request"`
+	Response Responses `json:"response"`
+	resIdx   int
 }
 
-// Delay returns delay for response that user can specify in imposter config
-func (i *Imposter) Delay() time.Duration {
-	return i.Response.Delay.Delay()
+// NextResponse returns the imposter's response.
+// If there are multiple responses, it will return them sequentially.
+func (i *Imposter) NextResponse() Response {
+	r := i.Response[i.resIdx]
+	i.resIdx = (i.resIdx + 1) % len(i.Response)
+	return r
 }
 
-// CalculateFilePath calculate file path based on basePath of imposter directory
+// CalculateFilePath calculate file path based on basePath of imposter's directory
 func (i *Imposter) CalculateFilePath(filePath string) string {
 	return path.Join(i.BasePath, filePath)
 }
@@ -72,18 +75,84 @@ type Response struct {
 	Delay    ResponseDelay      `json:"delay" yaml:"delay"`
 }
 
-type ImposterFs struct {
-	fs afero.Fs
-}
+// Responses is a wrapper for Response, to allow the use of either a single
+// response or an array of responses, while keeping backwards compatibility.
+type Responses []Response
 
-func NewImposterFS(fs afero.Fs) ImposterFs {
-	return ImposterFs{
-		fs: fs,
+func (rr *Responses) MarshalJSON() ([]byte, error) {
+	if len(*rr) == 1 {
+		return json.Marshal((*rr)[0])
 	}
+	return json.Marshal(*rr)
 }
 
-func (i ImposterFs) FindImposters(impostersDirectory string, impostersCh chan []Imposter) error {
-	err := afero.Walk(i.fs, impostersDirectory, func(path string, info os.FileInfo, err error) error {
+func (rr *Responses) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		*rr = nil
+		return nil
+	}
+
+	if data[0] == '[' {
+		return json.Unmarshal(data, (*[]Response)(rr))
+	}
+
+	var r Response
+	if err := json.Unmarshal(data, &r); err != nil {
+		return err
+	}
+
+	*rr = Responses{r}
+	return nil
+}
+
+func (rr *Responses) MarshalYAML() (interface{}, error) {
+	if len(*rr) == 1 {
+		return (*rr)[0], nil
+	}
+	return *rr, nil
+}
+
+func (rr *Responses) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var r Response
+	if err := unmarshal(&r); err == nil {
+		*rr = Responses{r}
+		return nil
+	}
+
+	var tmp []Response
+	if err := unmarshal(&tmp); err != nil {
+		return err
+	}
+	*rr = tmp
+	return nil
+}
+
+type ImposterFs struct {
+	path string
+	fs   fs.FS
+}
+
+func NewImposterFS(path string) (ImposterFs, error) {
+	_, err := os.Stat(path)
+	if err != nil {
+		switch {
+		case os.IsNotExist(err):
+			return ImposterFs{}, fmt.Errorf("the directory '%s' does not exist", path)
+		case os.IsPermission(err):
+			return ImposterFs{}, fmt.Errorf("could not read the directory '%s': permission denied", path)
+		default:
+			return ImposterFs{}, fmt.Errorf("could not read the directory '%s': %w", path, err)
+		}
+	}
+
+	return ImposterFs{
+		path: path,
+		fs:   os.DirFS(path),
+	}, nil
+}
+
+func (i ImposterFs) FindImposters(impostersCh chan []Imposter) error {
+	err := fs.WalkDir(i.fs, ".", func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("%w: error finding imposters", err)
 		}
@@ -114,7 +183,7 @@ func (i ImposterFs) unmarshalImposters(imposterConfig ImposterConfig) ([]Imposte
 	imposterFile, _ := i.fs.Open(imposterConfig.FilePath)
 	defer imposterFile.Close()
 
-	bytes, _ := ioutil.ReadAll(imposterFile)
+	bytes, _ := io.ReadAll(imposterFile)
 
 	var parseError error
 	var imposters []Imposter
@@ -132,7 +201,7 @@ func (i ImposterFs) unmarshalImposters(imposterConfig ImposterConfig) ([]Imposte
 		return nil, fmt.Errorf("%w: error while unmarshalling imposter's file %s", parseError, imposterConfig.FilePath)
 	}
 
-	for i, _ := range imposters {
+	for i := range imposters {
 		imposters[i].BasePath = filepath.Dir(imposterConfig.FilePath)
 		imposters[i].Path = imposterConfig.FilePath
 	}
