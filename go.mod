@@ -1,8 +1,6 @@
 module github.com/friendsofgo/killgrave
 
-go 1.22.0
-
-toolchain go1.22.3
+go 1.21
 
 require (
 	github.com/gorilla/handlers v1.5.2
