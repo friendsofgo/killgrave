@@ -1,23 +1,27 @@
 name: Test & Build
 
 on:
+  pull_request:
   push:
     paths:
       - 'cmd/**'
       - 'internal/**'
+      - 'acceptance/**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: ['1.20']
+        go: [ '1.20' ]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
+      - name: Check out the source code
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go }}
-      - name: Run Tests...
+      - name: Run unit tests
         run: go test -v -vet=off -race ./...
-      - name: Build...
-        run: go build -race cmd/killgrave/main.go
+      - name: Run acceptance tests
+        run: make acceptance
