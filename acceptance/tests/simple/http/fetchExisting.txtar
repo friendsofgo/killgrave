@@ -1,0 +1,21 @@
+-- req.http --
+GET /gophers/01D8EMQ185CA8PRGE20DKZTGSR HTTP/1.1
+Content-Type: application/json
+
+-- res.http --
+HTTP/1.1 200 OK
+Content-Length: 214
+Content-Type: application/json
+
+
+{
+    "data": {
+        "type": "gophers",
+        "id": "01D8EMQ185CA8PRGE20DKZTGSR",
+        "attributes": {
+            "name": "Zebediah",
+            "color": "Purple",
+            "age": 54
+        }
+    }
+}

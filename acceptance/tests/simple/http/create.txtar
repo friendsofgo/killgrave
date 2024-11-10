@@ -6,7 +6,7 @@ Content-Type: application/json
 {"data": {"type": "gophers", "attributes": {"name": "Zebediah", "color": "Purple", "age": 54}}}
 
 -- res.http --
-HTTP/1.1 200 OK
+HTTP/1.1 201 Created
 Content-Length: 214
 Content-Type: application/json
 
