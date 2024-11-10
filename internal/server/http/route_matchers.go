@@ -55,7 +55,7 @@ func validateSchema(imposter Imposter, req *http.Request) error {
 		return fmt.Errorf("unexpected empty body request")
 	}
 
-	schemaFilePath, _ := filepath.Abs(schemaFile)
+	schemaFilePath, err := filepath.Abs(schemaFile)
 	if err != nil {
 		return fmt.Errorf("%w: impossible find the schema", err)
 	}
