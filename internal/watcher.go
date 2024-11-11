@@ -2,10 +2,10 @@ package killgrave
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/radovskyb/watcher"
+	log "github.com/sirupsen/logrus"
 )
 
 // InitializeWatcher initialize a watcher to check for modification on all files
@@ -18,6 +18,7 @@ func InitializeWatcher(pathToWatch string) (*watcher.Watcher, error) {
 	if err := w.AddRecursive(pathToWatch); err != nil {
 		return nil, fmt.Errorf("%w: error trying to watch change on %s directory", err, pathToWatch)
 	}
+	log.Infof("Watching for changes in: %v\n", pathToWatch)
 	return w, nil
 }
 
@@ -27,7 +28,7 @@ func InitializeWatcher(pathToWatch string) (*watcher.Watcher, error) {
 func AttachWatcher(w *watcher.Watcher, fn func()) {
 	go func() {
 		if err := w.Start(time.Millisecond * 100); err != nil {
-			log.Fatalln(err)
+			log.Fatal(err)
 		}
 	}()
 
@@ -47,10 +48,10 @@ func readEventsFromWatcher(w *watcher.Watcher, fn func()) {
 		for {
 			select {
 			case evt := <-w.Event:
-				log.Println("Modified file:", evt.Name())
+				log.Info("Modified file:", evt.Name())
 				fn()
 			case err := <-w.Error:
-				log.Printf("Error checking file change: %+v", err)
+				log.Warnf("Error checking file change: %+v", err)
 			case <-w.Closed:
 				return
 			}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -19,6 +20,13 @@ type Config struct {
 	Proxy         ConfigProxy `yaml:"proxy"`
 	Secure        bool        `yaml:"secure"`
 	Watcher       bool        `yaml:"watcher"`
+	Log           ConfigLog   `yaml:"log"`
+}
+
+// ConfigLog is a representation of the log section of the yaml
+// This should include configurations for future features for logging (output format, dump file, etc)
+type ConfigLog struct {
+	Level log.Level `yaml:"level"`
 }
 
 // ConfigCORS representation of section CORS of the yaml

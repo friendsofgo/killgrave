@@ -4,13 +4,14 @@ import (
 	"context"
 	"crypto/tls"
 	_ "embed"
+	"fmt"
 	"errors"
-	"log"
 	"net/http"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 )
 
 //go:embed cert/server.key
@@ -82,6 +83,7 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 func (s *Server) Build() error {
 	if s.proxy.mode == killgrave.ProxyAll {
 		// not necessary load the imposters if you will use the tool as a proxy
+		log.Infoln("ProxyAll mode enabled, no imposter will be used")
 		s.router.PathPrefix("/").HandlerFunc(s.proxy.Handler())
 		return nil
 	}
@@ -99,10 +101,14 @@ loop:
 		}
 
 		s.addImposterHandler(imposters)
-		log.Printf("imposter %s loaded\n", imposters[0].Path)
+		log.Infof("imposter %s loaded\n", imposters[0].Path)
 	}
 	if s.proxy.mode == killgrave.ProxyMissing {
+		log.Infof("Proxying missed requests to: %v", s.proxy.url)
 		s.router.NotFoundHandler = s.proxy.Handler()
+	} else {
+		log.Infoln("No proxy has been configured for non-matching requests, defaulting to a 404 response")
+		s.router.NotFoundHandler = s.defaultNotFoundHandler()
 	}
 	return nil
 }
@@ -115,7 +121,7 @@ func (s *Server) Run() {
 		if s.secure {
 			tlsString = "(TLS mode)"
 		}
-		log.Printf("The fake server is on tap now: %s%s\n", s.httpServer.Addr, tlsString)
+		log.Infof("The fake server is on tap now: %s%s\n", s.httpServer.Addr, tlsString)
 		err := s.run(s.secure)
 		if !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
@@ -136,15 +142,14 @@ func (s *Server) run(secure bool) error {
 	s.httpServer.TLSConfig = &tls.Config{
 		Certificates: []tls.Certificate{cert},
 	}
-
 	return s.httpServer.ListenAndServeTLS("", "")
 }
 
 // Shutdown shutdowns the current http server
 func (s *Server) Shutdown() error {
-	log.Println("stopping server...")
+	log.Info("stopping server...")
 	if err := s.httpServer.Shutdown(context.TODO()); err != nil {
-		log.Fatalf("Server Shutdown Failed:%+v", err)
+		return fmt.Errorf("Server Shutdown Failed:%+v", err)
 	}
 
 	return nil
@@ -167,9 +172,19 @@ func (s *Server) addImposterHandler(imposters []Imposter) {
 				r.Queries(k, v)
 			}
 		}
+		log.WithFields(imposter.LogFields()).Debugln("imposter loaded")
 	}
 }
 
+func (s *Server) defaultNotFoundHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.WithFields(killgrave.LogFieldsFromRequest(r)).Debugf("Request didn't match any imposter, and proxyMode is %v", s.proxy.mode)
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("404 page not found\n"))
+	}
+}
+
+// not used?
 func (s *Server) handleAll(h http.HandlerFunc) {
 	s.router.PathPrefix("/").HandlerFunc(h)
 }

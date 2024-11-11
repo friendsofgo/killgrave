@@ -9,3 +9,5 @@ cors:
   allow_credentials: true
 watcher: true
 secure: true
+log:
+  level: "info"

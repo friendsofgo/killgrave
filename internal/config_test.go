@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -107,6 +108,9 @@ func validConfig() Config {
 		},
 		Watcher: true,
 		Secure:  true,
+		Log: ConfigLog{
+			Level: log.InfoLevel,
+		},
 	}
 }
 
