@@ -152,8 +152,8 @@ func NewImposterFS(path string) (ImposterFs, error) {
 	}, nil
 }
 
-func (i ImposterFs) FindImposters(impostersCh chan []Imposter) error {
-	err := fs.WalkDir(i.fs, ".", func(path string, info fs.DirEntry, err error) error {
+func (ifs ImposterFs) FindImposters(impostersCh chan []Imposter) error {
+	err := fs.WalkDir(ifs.fs, ".", func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("%w: error finding imposters", err)
 		}
@@ -169,7 +169,7 @@ func (i ImposterFs) FindImposters(impostersCh chan []Imposter) error {
 			default:
 				return nil
 			}
-			imposters, err := i.unmarshalImposters(cfg)
+			imposters, err := ifs.unmarshalImposters(cfg)
 			if err != nil {
 				return err
 			}
@@ -177,11 +177,12 @@ func (i ImposterFs) FindImposters(impostersCh chan []Imposter) error {
 		}
 		return nil
 	})
+	close(impostersCh)
 	return err
 }
 
-func (i ImposterFs) unmarshalImposters(imposterConfig ImposterConfig) ([]Imposter, error) {
-	imposterFile, _ := i.fs.Open(imposterConfig.FilePath)
+func (ifs ImposterFs) unmarshalImposters(imposterConfig ImposterConfig) ([]Imposter, error) {
+	imposterFile, _ := ifs.fs.Open(imposterConfig.FilePath)
 	defer imposterFile.Close()
 
 	bytes, _ := io.ReadAll(imposterFile)
@@ -203,7 +204,7 @@ func (i ImposterFs) unmarshalImposters(imposterConfig ImposterConfig) ([]Imposte
 	}
 
 	for i := range imposters {
-		imposters[i].BasePath = filepath.Dir(imposterConfig.FilePath)
+		imposters[i].BasePath = filepath.Dir(filepath.Join(ifs.path, imposterConfig.FilePath))
 		imposters[i].Path = imposterConfig.FilePath
 	}
 

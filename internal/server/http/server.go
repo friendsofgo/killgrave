@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	_ "embed"
 	"fmt"
+	"errors"
 	"net/http"
 
 	killgrave "github.com/friendsofgo/killgrave/internal"
@@ -88,22 +89,19 @@ func (s *Server) Build() error {
 	}
 
 	var impostersCh = make(chan []Imposter)
-	var done = make(chan struct{})
 
 	go func() {
 		s.imposterFs.FindImposters(impostersCh)
-		done <- struct{}{}
 	}()
 loop:
 	for {
-		select {
-		case imposters := <-impostersCh:
-			s.addImposterHandler(imposters)
-		case <-done:
-			close(impostersCh)
-			close(done)
+		imposters, ok := <-impostersCh
+		if !ok {
 			break loop
 		}
+
+		s.addImposterHandler(imposters)
+		log.Infof("imposter %s loaded\n", imposters[0].Path)
 	}
 	if s.proxy.mode == killgrave.ProxyMissing {
 		log.Infof("Proxying missed requests to: %v", s.proxy.url)
@@ -125,7 +123,7 @@ func (s *Server) Run() {
 		}
 		log.Infof("The fake server is on tap now: %s%s\n", s.httpServer.Addr, tlsString)
 		err := s.run(s.secure)
-		if err != http.ErrServerClosed {
+		if !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
 		}
 	}()
@@ -147,7 +145,7 @@ func (s *Server) run(secure bool) error {
 	return s.httpServer.ListenAndServeTLS("", "")
 }
 
-// Shutdown shutdown the current http server
+// Shutdown shutdowns the current http server
 func (s *Server) Shutdown() error {
 	log.Info("stopping server...")
 	if err := s.httpServer.Shutdown(context.TODO()); err != nil {
