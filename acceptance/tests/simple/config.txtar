@@ -1,0 +1,65 @@
+-- imposters/gophers.imp.json --
+[
+    {
+        "request": {
+            "method": "GET",
+            "endpoint": "/gophers/01D8EMQ185CA8PRGE20DKZTGSR",
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        },
+        "response": {
+            "status": 200,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "bodyFile": "responses/create_gopher_response.json"
+        }
+    },
+    {
+        "request": {
+            "method": "POST",
+            "endpoint": "/gophers",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "params": {
+                "gopherColor": "{v:[a-z]+}"
+            }
+        },
+        "response": {
+            "status": 201,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "bodyFile": "responses/create_gopher_response.json"
+        }
+    },
+    {
+        "request": {
+            "method": "GET",
+            "endpoint": "/gophers/{_id:[\\w]{26}}",
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        },
+        "response": {
+            "status": 404
+        }
+    },
+    {
+        "t": "random_text"
+    }
+]
+-- imposters/responses/create_gopher_response.json --
+{
+    "data": {
+        "type": "gophers",
+        "id": "01D8EMQ185CA8PRGE20DKZTGSR",
+        "attributes": {
+            "name": "Zebediah",
+            "color": "Purple",
+            "age": 54
+        }
+    }
+}
