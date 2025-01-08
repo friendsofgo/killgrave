@@ -1,0 +1,11 @@
+{
+    "data": {
+        "type": "gophers",
+        "id": "1_2",
+        "attributes": {
+            "name": "Manfred",
+            "color": "Blue",
+            "age": 31
+        }
+    }
+}

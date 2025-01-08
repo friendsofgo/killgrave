@@ -1,0 +1,11 @@
+{
+    "data": {
+        "type": "gophers",
+        "id": "1_1",
+        "attributes": {
+            "name": "Hannes",
+            "color": "Yellow",
+            "age": 32
+        }
+    }
+}

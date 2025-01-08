@@ -2,6 +2,8 @@ package http
 
 import (
 	"bytes"
+	"encoding/json"
+	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -64,6 +66,66 @@ func TestImposterHandler(t *testing.T) {
 			handler.ServeHTTP(rec, req)
 			assert.Equal(t, rec.Code, tt.statusCode)
 			assert.Equal(t, tt.expectedBody, rec.Body.String())
+
+		})
+	}
+}
+
+func TestImposterHandler_Variables(t *testing.T) {
+	var headers = make(map[string]string)
+	headers["Content-Type"] = "application/json"
+
+	responseId1 := "test/testdata/imposters_variables/responses/gopher_1_response.json"
+	responseId2 := "test/testdata/imposters_variables/responses/gopher_2_response.json"
+	responseId1Variable1 := "test/testdata/imposters_variables/responses/gopher_1_1_response.json"
+	responseId1Variable2 := "test/testdata/imposters_variables/responses/gopher_1_2_response.json"
+	responseId1WithoutVariable := "test/testdata/imposters_variables/responses/gopher_1_without_variable_response.json"
+
+	imposterFilePath := "test/testdata/imposters_variables/gopher_variables.imp.json"
+	imposterFile, err := os.Open(imposterFilePath)
+	require.NoError(t, err)
+	defer imposterFile.Close()
+
+	imposterBytes, err := io.ReadAll(imposterFile)
+	require.NoError(t, err)
+
+	var imposters []Imposter
+	err = json.Unmarshal(imposterBytes, &imposters)
+	require.NoError(t, err)
+
+	var dataTest = []struct {
+		name             string
+		imposter         Imposter
+		url              string
+		expectedBodyPath string
+		statusCode       int
+	}{
+		{"valid imposter with id 1 in path", imposters[0], "/gophers/1", responseId1, http.StatusOK},
+		{"valid imposter with id 2 in path", imposters[0], "/gophers/2", responseId2, http.StatusOK},
+		{"valid imposter with id 1 and second variable 1 in path", imposters[1], "/gophers/1/1", responseId1Variable1, http.StatusOK},
+		{"valid imposter with id 1 and second variable 2 in path", imposters[1], "/gophers/1/2", responseId1Variable2, http.StatusOK},
+		{"valid imposter without variable but body file has variable", imposters[2], "/gophers/1", responseId1WithoutVariable, http.StatusOK},
+	}
+
+	for _, tt := range dataTest {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest("GET", tt.url, nil)
+			require.NoError(t, err)
+			rec := httptest.NewRecorder()
+			handler := ImposterHandler(tt.imposter)
+
+			m := mux.NewRouter()
+			m.Handle(tt.imposter.Request.Endpoint, handler)
+			m.ServeHTTP(rec, req)
+
+			expectedBodyPathFile, _ := os.Open(tt.expectedBodyPath)
+			defer expectedBodyPathFile.Close()
+			expectedBody, err := io.ReadAll(expectedBodyPathFile)
+			require.NoError(t, err)
+
+			assert.Equal(t, rec.Code, tt.statusCode)
+			assert.Equal(t, string(expectedBody), rec.Body.String())
 
 		})
 	}
