@@ -60,6 +60,11 @@ func PrepareAccessControl(config killgrave.ConfigCORS) (h []handlers.CORSOption)
 
 	if len(config.Origins) > 0 {
 		h = append(h, handlers.AllowedOrigins(config.Origins))
+	} else {
+		// When origins is empty, disable CORS headers to avoid conflicts with proxied server's CORS headers
+		h = append(h, handlers.AllowedOriginValidator(func(origin string) bool {
+			return false
+		}))
 	}
 
 	if len(config.Headers) > 0 {
