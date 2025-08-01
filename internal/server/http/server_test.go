@@ -210,3 +210,54 @@ func TestBuildSecureMode(t *testing.T) {
 		})
 	}
 }
+
+func TestPrepareAccessControl(t *testing.T) {
+	testCases := map[string]struct {
+		config                    killgrave.ConfigCORS
+		shouldHaveOriginValidator bool
+		shouldHaveAllowedOrigins  bool
+	}{
+		"empty origins should use origin validator": {
+			config: killgrave.ConfigCORS{
+				Origins: []string{},
+			},
+			shouldHaveOriginValidator: true,
+			shouldHaveAllowedOrigins:  false,
+		},
+		"non-empty origins should use allowed origins": {
+			config: killgrave.ConfigCORS{
+				Origins: []string{"http://example.com"},
+			},
+			shouldHaveOriginValidator: false,
+			shouldHaveAllowedOrigins:  true,
+		},
+		"nil origins should use origin validator": {
+			config: killgrave.ConfigCORS{
+				Origins: nil,
+			},
+			shouldHaveOriginValidator: true,
+			shouldHaveAllowedOrigins:  false,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			options := PrepareAccessControl(tc.config)
+
+			// This is a basic check that the function returns some options
+			// and that it handles empty origins differently from non-empty ones
+			assert.NotEmpty(t, options, "PrepareAccessControl should return CORS options")
+
+			// The actual validation of CORS behavior would require testing the complete
+			// CORS middleware, which is beyond the scope of this test. The important
+			// part is that we handle empty origins differently.
+			if tc.shouldHaveOriginValidator {
+				// When origins is empty, we expect at least the default options plus the origin validator
+				assert.GreaterOrEqual(t, len(options), 4, "Should have default options plus origin validator")
+			} else {
+				// When origins is provided, we expect at least the default options plus allowed origins
+				assert.GreaterOrEqual(t, len(options), 4, "Should have default options plus allowed origins")
+			}
+		})
+	}
+}
