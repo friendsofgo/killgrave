@@ -560,6 +560,219 @@ In the following example, we have defined multiple imposters for the `POST /goph
 ]
 ````
 
+#### Using Templating in Responses
+Killgrave supports templating in responses, allowing you to create dynamic responses based on request data. This feature uses Go's `text/template` package to render templates.
+
+In the following example, we define an imposter for the `GET /gophers/{id}` endpoint. The response body uses templating to include the id from the request URL.
+
+````json
+[
+  {
+    "request": {
+        "method": "GET",
+        "endpoint": "/gophers/{id}"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": "{\"id\": \"{{.PathParams.id}}\", \"name\": \"Gopher\"}"
+    }
+  }
+]
+````
+In this example:
+
+- The endpoint field uses a path parameter {id}.
+- The body field in the response uses a template to include the id from the request URL.
+
+You can also use other parts of the request in your templates, such query parameters and the request body.
+Since query parameters can be used more than once, they are stored in an array and you can access them by index or use the `stringsJoin` function to concatenate them.
+
+Here is an example that includes query parameters `gopherColor` and `gopherAge` in the response, one of which can be used more than once:
+
+````jsonc
+// expects a request to, for example, GET /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b?gopherColor=Blue&gopherColor=Purple&gopherAge=42
+[
+  {
+    "request": {
+        "method": "GET",
+        "endpoint": "/gophers/{id}",
+        "params": {
+            "gopherColor": "{v:[a-z]+}",
+            "gopherAge": "{v:[0-9]+}"
+        }
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": "{\"id\": \"{{ .PathParams.id }}\", \"color\": \"{{ stringsJoin .QueryParams.gopherColor "," }}\", \"age\": {{ index .QueryParams.gopherAge 0 }}}"
+    }
+  }
+]
+````
+
+### Using Data from JSON Requests
+
+Templates can also include data from the request body, allowing you to create dynamic responses based on the request data.
+Currently only JSON bodies are supported. The request also needs to have the correct content type set (Content-Type: application/json).
+
+Here is an example that includes the request body in the response:
+
+```jsonc
+// imposters/gophers.imp.json
+[
+  {
+    "request": {
+        "method": "POST",
+        "endpoint": "/gophers",
+        "schemaFile": "schemas/create_gopher_request.json",
+        "headers": {
+            "Content-Type": "application/json"
+        },
+    },
+    "response": {
+        "status": 201,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "bodyFile": "responses/create_gopher_response.json.tmpl"
+    }
+  }
+]
+````
+````tmpl
+// responses/create_gopher_response.json.tmpl
+{
+    "data": {
+        "type": "{{ .RequestBody.data.type }}",
+        "id": "{{ .PathParams.GopherID }}",
+        "attributes": {
+            "name": "{{ .RequestBody.data.attributes.name }}",
+            "color": "{{ .RequestBody.data.attributes.gopherColor }}",
+            "age": {{ .RequestBody.data.attributes.gopherAge }}
+        }
+    }
+}
+
+````
+````jsonc
+// request body to POST /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b
+{
+  "data": {
+    "type": "gophers",
+    "attributes": {
+      "name": "Natalissa",
+      "color": "Blue",
+      "age": 42
+    },
+  }
+}
+// response
+{
+  "data": {
+    "type": "gophers",
+    "id": "bca49e8a-82dd-4c5d-b886-13a6ceb3744b",
+    "attributes": {
+      "name": "Natalissa",
+      "color": "Blue",
+      "age": 42
+    }
+  }
+}
+````
+
+#### Using Custom Templating Functions
+
+These functions aren't part of the standard Go template functions, but are available for use in Killgrave templates:
+
+- `timeNow`: Returns the current time. Returns RFC3339 formatted string.
+- `timeUTC`: Converts a RFC3339 formatted string to UTC. Returns RFC3339 formatted string.
+- `timeAdd`: Adds a duration to a RFC3339 formatted datetime string. Returns RFC3339 formatted string. Uses the [Go ParseDuration format](https://pkg.go.dev/time#ParseDuration).
+- `timeFormat`: Formats a RFC3339 string using the provided layout. Uses the [Go time package layout](https://pkg.go.dev/time#pkg-constants).
+- `jsonMarshal`: Marshals an object to a JSON string. Useful for including all data from a field.
+- `stringsJoin`: Concatenates an array of strings using a separator.
+
+
+
+```jsonc
+// imposters/gophers_with_functions.imp.json
+[
+  {
+    "request": {
+        "method": "POST",
+        "endpoint": "/gophers",
+        "schemaFile": "schemas/create_gopher_request.json",
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    },
+    "response": {
+        "status": 201,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "bodyFile": "responses/create_gopher_response_with_functions.json.tmpl"
+    }
+  }
+]
+````
+````tmpl
+// responses/create_gopher_response_with_functions.json.tmpl
+{
+    "data": {
+        "type": "{{ .RequestBody.data.type }}",
+        "id": "{{ .PathParams.GopherID }}",
+        "timestamp": "{{ timeFormat (timeUTC (timeNow)) "2006-01-02 15:04" }}", // Current time in UTC
+        "birthday": "{{ timeFormat (timeAdd (timeNow) "24h") "2006-01-02" }}", // Always returns tomorrow's date
+        "attributes": {
+            "name": "{{ .RequestBody.data.attributes.name }}",
+            "color": "{{ stringsJoin .RequestBody.data.attributes.colors "," }}", // Concatenates the colors array
+            "age": {{ .RequestBody.data.attributes.age }}
+        },
+        "friends": {{ jsonMarshal .RequestBody.data.friends }} // Includes all data from the friends field
+    }
+}
+
+````
+````jsonc
+// request body to POST /gophers/bca49e8a-82dd-4c5d-b886-13a6ceb3744b
+{
+  "data": {
+    "type": "gophers",
+    "attributes": {
+      "name": "Natalissa"
+    },
+    "friends": [
+      {
+        "name": "Zebediah",
+        "colors": ["Blue", "Purple"],
+        "age": 42
+      }
+    ]
+  }
+}
+// response
+{
+  "data": {
+    "type": "gophers",
+    "id": "bca49e8a-82dd-4c5d-b886-13a6ceb3744b",
+    "timestamp": "2006-01-02 15:04",
+    "birthday": "2006-01-03",
+    "attributes": {
+      "name": "Natalissa",
+      "color": "Blue,Purple",
+      "age": 42
+    },
+    "friends": [{"age":55,"color":"Purple","name":"Zebediah"}]
+  }
+}
+````
+
+
 ## Contributing
 [Contributions](CONTRIBUTING.md) are more than welcome, if you are interested please follow our guidelines to help you get started.
 
