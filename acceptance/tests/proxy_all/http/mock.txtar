@@ -1,0 +1,18 @@
+-- req.http --
+POST /mock HTTP/1.1
+X-Test: preserved
+Content-Type: application/json
+Content-Length: 8
+
+payload
+
+-- res.http --
+HTTP/1.1 202 Accepted
+Content-Length: 37
+Content-Type: text/plain
+X-Upstream: yes
+
+
+POST /mock
+X-Test: preserved
+payload

@@ -1,0 +1,80 @@
+-- imposters/routes.imp.json --
+[
+  {
+    "request": {
+      "method": "POST",
+      "endpoint": "/animals",
+      "schemaFile": "schemas/gopher.json"
+    },
+    "response": {
+      "status": 201,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "gopher\n"
+    }
+  },
+  {
+    "request": {
+      "method": "POST",
+      "endpoint": "/animals",
+      "schemaFile": "schemas/cat.json"
+    },
+    "response": {
+      "status": 202,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "cat\n"
+    }
+  },
+  {
+    "request": {
+      "method": "POST",
+      "endpoint": "/animals"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "fallback\n"
+    }
+  },
+  {
+    "request": {
+      "method": "GET",
+      "endpoint": "/restricted/{id:[0-9]+}",
+      "headers": {
+        "X-Key": "^token[a-z]+$"
+      },
+      "params": {
+        "color": "{color:red|blue}"
+      }
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "matched\n"
+    }
+  },
+  {
+    "request": {
+      "method": "GET",
+      "endpoint": "/restricted/{id}"
+    },
+    "response": {
+      "status": 418,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "fallback\n"
+    }
+  }
+]
+-- imposters/schemas/gopher.json --
+{"type": "object", "properties": {"type": {"enum": ["gopher"]}}, "required": ["type"]}
+-- imposters/schemas/cat.json --
+{"type": "object", "properties": {"type": {"enum": ["cat"]}}, "required": ["type"]}

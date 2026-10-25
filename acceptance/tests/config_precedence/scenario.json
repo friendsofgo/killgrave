@@ -1,0 +1,12 @@
+{
+  "args": [
+    "--config",
+    "settings/config.yml",
+    "--port",
+    "-1",
+    "--host",
+    "invalid.invalid",
+    "--imposters",
+    "missing"
+  ]
+}

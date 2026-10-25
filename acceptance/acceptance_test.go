@@ -5,12 +5,14 @@ package acceptance
 import (
 	"bufio"
 	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
-	"log"
+	"net"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"os/exec"
@@ -18,6 +20,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -47,25 +50,19 @@ func Test(t *testing.T) {
 	// This is useful, not only to write a log that can serve as metadata for the test results,
 	// but also to ensure that the Killgrave binary is available.
 	version, err := extractKillgraveVersion(t)
-	if err != nil {
-		var pathErr *fs.PathError
-		if errors.As(err, &pathErr) || strings.Contains(err.Error(), "executable file not found in $PATH") {
-			log.Fatalf("Attention! It looks like you haven't compiled Killgrave, the execution of the Killgrave "+
-				"binary has failed with: %v", err)
-		}
-		log.Fatalf("The execution of `killgrave version` has failed with: %v", err)
-	}
+	require.NoError(t, err, "build Killgrave with make build before running acceptance tests")
 	t.Logf("Running acceptance tests with Killgrave version: %s", version)
 
-	// Once we now that the Killgrave binary is available, we can proceed with the acceptance tests.
+	// Once we know the Killgrave binary is available, proceed with the acceptance tests.
 	// The first step is to collect all test cases from the `tests` directory. For each test:
 	//
 	// 0. The test case self-contain on each directory, which name is used as the test name.
 	// 1. Requires a `config.txtar` file at the root level of the test case directory,
 	//    it is used to initialize a file system with all the configuration-related files,
 	//    which not only includes the Killgrave configuration file but also the imposters.
-	// 2. Runs Killgrave in any available port (so we can run multiple test cases at the same
-	// 	  time), using the configuration files from the previous step.
+	// 2. Uses optional scenario.json startup settings, or the default imposter flags.
+	//    Startup-error scenarios assert an unsuccessful exit instead of sending HTTP.
+	//    Each server runs on an available port so scenarios can run concurrently.
 	// 3. Requires an `http` directory which contains a set of request and response pairs.
 	//    Each pair is defined by two files: `req.http` and `res.http`, where the request
 	//    is the HTTP request that will be performed as part of the test, and the response
@@ -80,10 +77,55 @@ func Test(t *testing.T) {
 			t.Parallel()
 
 			// 1. Create a temporary directory with the configuration files.
-			path := createTmpCfgDir(t, tc)
+			opts := readScenario(t, tc.path)
+			port, err := network.AnyAvailablePort()
+			require.NoError(t, err)
+			var calls atomic.Int32
+			upstreamURL := ""
+			if opts.UpstreamCalls != nil {
+				upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					calls.Add(1)
+					body, err := io.ReadAll(r.Body)
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusBadRequest)
+						return
+					}
+					w.Header().Set("Content-Type", "text/plain")
+					w.Header().Set("X-Upstream", "yes")
+					w.WriteHeader(http.StatusAccepted)
+					fmt.Fprintf(w, "%s %s\nX-Test: %s\n%s", r.Method, r.URL.RequestURI(), r.Header.Get("X-Test"), body)
+				}))
+				t.Cleanup(upstream.Close)
+				upstreamURL = upstream.URL
+				if opts.UpstreamDown {
+					upstream.Close()
+				}
+			}
+			replace := strings.NewReplacer("${PORT}", strconv.Itoa(port), "${UPSTREAM}", upstreamURL)
+			path := createTmpCfgDir(t, tc, replace)
+			if opts.OccupyPort {
+				listener, err := net.Listen("tcp", net.JoinHostPort(addr, strconv.Itoa(port)))
+				require.NoError(t, err)
+				t.Cleanup(func() { listener.Close() })
+			}
 
 			// 2. Start the Killgrave process.
-			address := runApplication(t, path)
+			args := []string{"-P", strconv.Itoa(port), "--imposters", filepath.Join(path, "imposters")}
+			if opts.Args != nil {
+				args = make([]string, len(opts.Args))
+				for i, arg := range opts.Args {
+					args[i] = replace.Replace(arg)
+				}
+			}
+			if opts.Error != "" {
+				assertStartupError(t, path, args, opts.Error)
+				return
+			}
+			address := net.JoinHostPort(addr, strconv.Itoa(port))
+			runApplication(t, path, address, args)
+			client := &http.Client{Timeout: 3 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error {
+				return http.ErrUseLastResponse
+			}}
 
 			// 3. Collect the request and response pairs
 			// and iterate over them to perform the tests.
@@ -95,13 +137,16 @@ func Test(t *testing.T) {
 					rr.overrideAddress(address)
 
 					// Send the request
-					res, err := http.DefaultClient.Do(rr.req)
+					res, err := client.Do(rr.req)
 					require.NoError(t, err)
 					t.Cleanup(func() { res.Body.Close() })
 
 					// Assert the res
 					rr.assertResponse(t, res)
 				})
+			}
+			if opts.UpstreamCalls != nil {
+				assert.Equal(t, *opts.UpstreamCalls, int(calls.Load()), "upstream request count")
 			}
 		})
 	}
@@ -249,7 +294,7 @@ func readRequest(t *testing.T, raw []byte) *http.Request {
 // Additionally, in the future we might explore ways to reuse this setup to run these tests
 // as "integration tests", so faking using a fake, likely in-memory, file system but directly
 // calling app.Run().
-func createTmpCfgDir(t *testing.T, tc testCase) string {
+func createTmpCfgDir(t *testing.T, tc testCase, replace *strings.Replacer) string {
 	// First, we read the `config.txtar` file and initialize a txtar.Archive with its contents.
 	tmpCfgDir := t.TempDir()
 	cfgFilePath := filepath.Join(tc.path, "config.txtar")
@@ -265,68 +310,128 @@ func createTmpCfgDir(t *testing.T, tc testCase) string {
 		err := os.MkdirAll(fileDir, os.ModePerm)
 		require.NoError(t, err)
 
-		err = os.WriteFile(filePath, f.Data, os.ModePerm)
+		err = os.WriteFile(filePath, []byte(replace.Replace(string(f.Data))), 0o600)
 		require.NoError(t, err)
 	}
 
 	return tmpCfgDir
 }
 
-// runApplication runs Killgrave assuming the binary already exists.
-// It uses the imposters located at `from`, which path must be absolute.
-// It runs the application on any available port, so we can run multiple
-// tests concurrently. It returns the address as the first return value.
-//
-// For now, it redirects the application's output (stdout and stderr)
-// to the test's output, but in the future, we might want to capture
-// the output to assert the logs, and or use it in a smarter way.
-func runApplication(t *testing.T, from string) string {
-	// Look for any available port.
-	port, err := network.AnyAvailablePort()
-	address := addr + ":" + strconv.Itoa(port)
-	require.NoError(t, err, "failed to find an available port")
-
-	// Prepare the `killgrave` command, and start it.
-	cmd := exec.Command(bin, "-P", strconv.Itoa(port), "--imposters", filepath.Join(from, "imposters"))
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Start()
-	require.NoError(t, err)
-
-	// Tell the testing framework to stop the process after the test is done.
-	t.Cleanup(func() {
-		err := cmd.Process.Signal(os.Interrupt)
-		require.NoError(t, err)
-
-		err = cmd.Wait()
-		require.NoError(t, err)
-	})
-
-	// Wait for the application to be ready.
-	const (
-		maxWaitTime = 2 * time.Second
-		checkEvery  = 100 * time.Millisecond
-	)
-	require.Eventually(t, func() bool {
-		res, err := http.Get("http://" + address + "/nonExistingEndpoint")
-		if err != nil {
-			return false
-		}
-		defer res.Body.Close()
-		return res.StatusCode == http.StatusNotFound
-	}, maxWaitTime, checkEvery)
-
-	return address
+// scenario contains optional startup settings. Args are passed literally, with only
+// ${PORT} and ${UPSTREAM} substituted; no shell is involved.
+type scenario struct {
+	Args          []string `json:"args"`
+	Error         string   `json:"error"`
+	OccupyPort    bool     `json:"occupyPort"`
+	UpstreamCalls *int     `json:"upstreamCalls"`
+	UpstreamDown  bool     `json:"upstreamDown"`
 }
 
-// extractKillgraveVersion runs the `killgrave version` command and uses a regular expression
+func readScenario(t *testing.T, path string) scenario {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(path, "scenario.json"))
+	if errors.Is(err, os.ErrNotExist) {
+		return scenario{}
+	}
+	require.NoError(t, err)
+	var opts scenario
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	require.NoError(t, decoder.Decode(&opts))
+	return opts
+}
+
+func applicationCommand(t *testing.T, dir string, args []string) *exec.Cmd {
+	t.Helper()
+	binary, err := filepath.Abs(bin)
+	require.NoError(t, err)
+	cmd := exec.Command(binary, args...)
+	cmd.Dir = dir
+	return cmd
+}
+
+func assertStartupError(t *testing.T, dir string, args []string, message string) {
+	t.Helper()
+	cmd := applicationCommand(t, dir, args)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd = exec.CommandContext(ctx, cmd.Path, args...)
+	cmd.Dir = dir
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, ctx.Err(), "startup timed out: %s", output)
+	var exitErr *exec.ExitError
+	require.ErrorAs(t, err, &exitErr, "expected unsuccessful exit: %s", output)
+	assert.Contains(t, string(output), message)
+}
+
+// runApplication captures output in a file so concurrent writes and diagnostics
+// cannot race. TCP readiness does not consume responses or hit a proxy upstream.
+func runApplication(t *testing.T, dir, address string, args []string) {
+	t.Helper()
+	cmd := applicationCommand(t, dir, args)
+	outputPath := filepath.Join(dir, "process.log")
+	output, err := os.Create(outputPath)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		output.Close()
+		if t.Failed() {
+			data, _ := os.ReadFile(outputPath)
+			t.Logf("Killgrave output:\n%s", data)
+		}
+	})
+	cmd.Stdout, cmd.Stderr = output, output
+	require.NoError(t, cmd.Start())
+	done := make(chan struct{})
+	var waitErr error
+	go func() {
+		waitErr = cmd.Wait()
+		close(done)
+	}()
+	t.Cleanup(func() {
+		select {
+		case <-done:
+		default:
+			_ = cmd.Process.Signal(os.Interrupt)
+			select {
+			case <-done:
+			case <-time.After(3 * time.Second):
+				_ = cmd.Process.Kill()
+				<-done
+				t.Error("Killgrave did not stop within 3 seconds")
+			}
+		}
+		assert.NoError(t, waitErr, "Killgrave process exit")
+	})
+	deadline := time.NewTimer(5 * time.Second)
+	defer deadline.Stop()
+	tick := time.NewTicker(20 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		select {
+		case <-done:
+			t.Fatalf("Killgrave exited before becoming ready: %v", waitErr)
+		case <-deadline.C:
+			t.Fatal("Killgrave did not become ready within 5 seconds")
+		case <-tick.C:
+			conn, err := net.DialTimeout("tcp", address, 100*time.Millisecond)
+			if err == nil {
+				conn.Close()
+				return
+			}
+		}
+	}
+}
+
+// extractKillgraveVersion runs `killgrave --version` and uses a regular expression
 // to extract the version from the output. In case there's any error (e.g. the binary is not
 // available), it returns the error.
 func extractKillgraveVersion(t *testing.T) (string, error) {
 	t.Helper()
 
-	// Prepare the `killgrave version` command.
-	cmd := exec.Command(bin, "version", "-v")
+	// Bound even the initial binary check so a broken command cannot hang the suite.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, bin, "--version")
 
 	// Capture the command's output.
 	out := new(bytes.Buffer)
@@ -339,7 +444,7 @@ func extractKillgraveVersion(t *testing.T) (string, error) {
 	}
 
 	// Extract the Killgrave version from the output.
-	re := regexp.MustCompile(`Killgrave version:\s*([a-zA-Z0-9\-]+)`)
+	re := regexp.MustCompile(`Killgrave version:\s*(\S+)`)
 	match := re.FindStringSubmatch(out.String())
 	if len(match) == 2 {
 		return match[1], nil

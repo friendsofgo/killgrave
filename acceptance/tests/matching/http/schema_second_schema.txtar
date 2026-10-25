@@ -1,0 +1,14 @@
+-- req.http --
+POST /animals HTTP/1.1
+Content-Type: application/json
+Content-Length: 15
+
+{"type":"cat"}
+
+-- res.http --
+HTTP/1.1 202 Accepted
+Content-Length: 4
+Content-Type: text/plain
+
+
+cat

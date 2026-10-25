@@ -1,0 +1,8 @@
+{
+  "args": [
+    "--config",
+    "bad.yml"
+  ],
+  "error": "error while unmarshalling configFile",
+  "occupyPort": false
+}

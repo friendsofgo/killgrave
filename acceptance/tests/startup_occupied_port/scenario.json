@@ -1,0 +1,12 @@
+{
+  "args": [
+    "--host",
+    "localhost",
+    "--port",
+    "${PORT}",
+    "--imposters",
+    "imposters"
+  ],
+  "error": "address already in use",
+  "occupyPort": true
+}

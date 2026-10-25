@@ -1,0 +1,14 @@
+-- req.http --
+POST /animals HTTP/1.1
+Content-Type: application/json
+Content-Length: 18
+
+{"type":"gopher"}
+
+-- res.http --
+HTTP/1.1 201 Created
+Content-Length: 7
+Content-Type: text/plain
+
+
+gopher

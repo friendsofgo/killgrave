@@ -1,0 +1,4 @@
+-- bad.yml --
+host: [
+-- imposters/routes.imp.json --
+[{"request": {"method": "GET", "endpoint": "/mock"}, "response": {"status": 200, "headers": {"Content-Type": "text/plain"}, "body": "mock\n"}}]

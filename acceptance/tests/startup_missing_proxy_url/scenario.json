@@ -1,0 +1,8 @@
+{
+  "args": [
+    "--proxy-mode",
+    "missing"
+  ],
+  "error": "proxy-url is mandatory",
+  "occupyPort": false
+}

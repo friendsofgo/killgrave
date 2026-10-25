@@ -1,0 +1,14 @@
+-- req.http --
+POST /upstream/items?color=red&n=2 HTTP/1.1
+Content-Length: 8
+
+payload
+
+-- res.http --
+HTTP/1.1 404 Not Found
+Content-Length: 19
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+
+
+404 page not found

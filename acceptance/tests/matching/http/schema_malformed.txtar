@@ -1,0 +1,14 @@
+-- req.http --
+POST /animals HTTP/1.1
+Content-Type: application/json
+Content-Length: 8
+
+{broken
+
+-- res.http --
+HTTP/1.1 400 Bad Request
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback

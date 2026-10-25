@@ -1,0 +1,6 @@
+{
+  "args": [
+    "--config",
+    "settings/config.yml"
+  ]
+}

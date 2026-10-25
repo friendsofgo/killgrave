@@ -1,0 +1,8 @@
+{
+  "args": [
+    "--proxy-mode",
+    "invalid"
+  ],
+  "error": "unknown proxy mode: invalid",
+  "occupyPort": false
+}

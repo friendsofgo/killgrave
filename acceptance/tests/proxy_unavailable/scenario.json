@@ -1,0 +1,14 @@
+{
+  "args": [
+    "--port",
+    "${PORT}",
+    "--imposters",
+    "imposters",
+    "--proxy-mode",
+    "all",
+    "--proxy-url",
+    "${UPSTREAM}"
+  ],
+  "upstreamCalls": 0,
+  "upstreamDown": true
+}
