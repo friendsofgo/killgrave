@@ -8,7 +8,7 @@ Unit tests sit beside source files as `*_test.go`. Fixtures live in `internal/te
 
 ## Build, Test, and Development Commands
 
-Use Go 1.21, matching `go.mod` and CI.
+Use Go 1.27, matching `go.mod` and CI.
 
 - `make build`: produce `bin/killgrave` with branch and commit version metadata.
 - `./bin/killgrave --imposters ./internal/server/http/test/testdata/imposters`: run locally with existing fixtures on localhost:3000.
