@@ -97,6 +97,7 @@ func Test(t *testing.T) {
 					// Send the request
 					res, err := http.DefaultClient.Do(rr.req)
 					require.NoError(t, err)
+					t.Cleanup(func() { res.Body.Close() })
 
 					// Assert the res
 					rr.assertResponse(t, res)
@@ -250,7 +251,7 @@ func readRequest(t *testing.T, raw []byte) *http.Request {
 // calling app.Run().
 func createTmpCfgDir(t *testing.T, tc testCase) string {
 	// First, we read the `config.txtar` file and initialize a txtar.Archive with its contents.
-	tmpCfgDir := filepath.Join(os.TempDir(), tc.name)
+	tmpCfgDir := t.TempDir()
 	cfgFilePath := filepath.Join(tc.path, "config.txtar")
 	contents, err := os.ReadFile(cfgFilePath)
 	require.NoError(t, err)
@@ -267,12 +268,6 @@ func createTmpCfgDir(t *testing.T, tc testCase) string {
 		err = os.WriteFile(filePath, f.Data, os.ModePerm)
 		require.NoError(t, err)
 	}
-
-	// Tell the testing framework to clean up the temporary directory after the test is done.
-	t.Cleanup(func() {
-		err := os.RemoveAll(tmpCfgDir)
-		require.NoError(t, err)
-	})
 
 	return tmpCfgDir
 }
@@ -314,7 +309,11 @@ func runApplication(t *testing.T, from string) string {
 	)
 	require.Eventually(t, func() bool {
 		res, err := http.Get("http://" + address + "/nonExistingEndpoint")
-		return err == nil && res != nil && res.StatusCode == http.StatusNotFound
+		if err != nil {
+			return false
+		}
+		defer res.Body.Close()
+		return res.StatusCode == http.StatusNotFound
 	}, maxWaitTime, checkEvery)
 
 	return address
