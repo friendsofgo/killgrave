@@ -125,8 +125,9 @@ func TestImposterFS_FindImposters(t *testing.T) {
 		BasePath: "test/testdata/imposters",
 		Path:     "test_request.imp.yml",
 		Request: Request{
-			Method:   "POST",
-			Endpoint: "/yamlGophers",
+			Method:     "POST",
+			Endpoint:   "/yamlGophers",
+			SchemaFile: &schemaFile,
 			Headers: &map[string]string{
 				"Content-Type": "application/json",
 			},
