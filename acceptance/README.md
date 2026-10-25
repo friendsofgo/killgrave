@@ -1,56 +1,69 @@
 # Acceptance tests
 
-Run `make acceptance` from the repository root. This builds the binary before
-testing it as a separate process. Scenarios run concurrently without external
-network services.
+Run `make acceptance` from the repository root. It builds Killgrave and runs each
+`tests/<scenario>.txtar` against a separate process with an isolated working
+directory and port. No external services are needed.
 
-Each directory in `tests/` contains:
+Keep each scenario in one archive containing its setup and named HTTP steps:
 
-- `config.txtar`: files to extract into an isolated temporary working directory.
-  Paths are relative to that directory. The archive can contain only a comment
-  when a startup error needs no files.
-- `http/*.txtar`: a `req.http` and `res.http` pair per exchange. These run in
-  filename order within a scenario. Expected responses include all headers
-  except `Date`, which the harness removes. Redirects are asserted directly.
-- Optional `scenario.json`: startup arguments and additional expectations.
+```text
+-- imposters/routes.imp.json --
+[{"request":{"method":"GET","endpoint":"/example"},"response":{"status":200,"headers":{"Content-Type":"text/plain"},"body":"example\n"}}]
+-- http/matched/req.http --
+GET /example HTTP/1.1
 
-Without `scenario.json`, Killgrave starts with `--imposters <temp>/imposters`
-and an available port. If `args` is present, it replaces those default arguments.
-Arguments and extracted file contents support `${PORT}` and `${UPSTREAM}`
-substitution. Arguments run directly without a shell.
+-- http/matched/res.http --
+HTTP/1.1 200 OK
+Content-Length: 8
+Content-Type: text/plain
 
-For example, to exercise configuration from a different directory:
 
-```json
-{
-  "args": ["--config", "settings/config.yml"]
-}
+example
 ```
 
-The extracted config must include `port: ${PORT}`. Its imposter path should be
-relative to the config's directory, rather than the process working directory.
-The `config_precedence` scenario records the current behavior: config-file host,
-port, and imposter settings take precedence over the corresponding flags.
+Each `http/<step>/` group is a named subtest containing `req.http` and `res.http`.
+Steps run in archive order, so response sequences are visible together without
+numbering separate files. Scenarios run concurrently. Expected responses include
+all headers except `Date`; redirects are checked directly.
 
-Other settings:
+All entries outside `http/`, except `scenario.json`, are extracted as setup files.
+By default Killgrave uses the extracted `imposters` directory and an allocated
+port. An optional `scenario.json` entry can replace startup arguments:
+
+```text
+-- scenario.json --
+{"args":["--config","settings/config.yml"]}
+-- settings/config.yml --
+host: localhost
+port: ${PORT}
+imposters_path: imposters
+```
+
+Arguments and setup files support `${PORT}` and `${UPSTREAM}` substitution.
+Arguments run directly without a shell. Config-file imposter paths resolve
+relative to the config file; `config_precedence.txtar` records precedence over
+host, port, and imposter flags.
+
+Optional `scenario.json` settings:
 
 | Setting | Meaning |
 | --- | --- |
-| `error` | Expected diagnostic substring; require an unsuccessful exit within five seconds. No HTTP fixtures are used. |
+| `args` | Replace the default startup arguments. |
+| `error` | Require an unsuccessful exit and this diagnostic substring. No HTTP steps are needed. |
 | `occupyPort` | Hold the allocated port open to exercise bind failure. |
-| `upstreamCalls` | Start a local upstream and assert this exact request count. Zero also verifies that traffic stays local. |
-| `upstreamDown` | Close that upstream before launching Killgrave to exercise a connection failure. |
+| `upstreamCalls` | Start a local upstream and assert this exact request count, including zero. |
+| `upstreamDown` | Close that upstream before startup to exercise a connection failure. |
 
-The upstream returns status 202, `X-Upstream: yes`, and a text body echoing the
-method, request URI, `X-Test` header, and request body. Proxy fixtures use these
-to check forwarding as well as upstream response propagation. Readiness uses a
-TCP connection, so it neither calls the upstream nor advances a response sequence.
+The upstream returns status 202, `X-Upstream: yes`, and a body echoing the method,
+request URI, `X-Test` header, and body. TCP readiness does not call the upstream
+or advance response sequences.
 
-HTTP calls time out after three seconds; readiness and startup-error commands
+Watcher steps can include `http/<step>/write/<relative-path>` entries to atomically
+create or replace files before the request. An `http/<step>/eventually` entry
+containing `true` retries the response check for up to five seconds. Writes happen
+once. Use retries only for stateless GET requests without bodies; sequence tests
+must check every response without retries. See `watcher_flag.txtar` for an example.
+
+HTTP requests time out after three seconds; readiness and startup-error commands
 have five-second limits. Cleanup allows three seconds for an interrupt before
-killing and reaping the process. Server logs are attached to failed scenarios.
-
-Current groups cover config-file paths and precedence, matching/schema fallback,
-proxy modes (including schema-rejected bodies and unavailable upstreams), startup
-errors, and the original simple resource example. Malformed imposter handling is
-not yet specified by this suite; malformed startup configuration is covered.
+killing and reaping the process. Failed scenarios include server logs.

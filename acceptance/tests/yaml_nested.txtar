@@ -1,0 +1,166 @@
+-- imposters/yml/nested/routes.imp.yml --
+- request:
+    method: POST
+    endpoint: /yml/{id:[0-9]+}
+    schemaFile: schemas/request.json
+    headers:
+      X-Key: ^token$
+    params:
+      color: red
+  response:
+    status: 201
+    headers:
+      Content-Type: text/plain
+      X-Source: yml
+    bodyFile: responses/body.txt
+- request:
+    method: POST
+    endpoint: /yml/{id}
+  response:
+    status: 400
+    headers:
+      Content-Type: text/plain
+    body: "fallback\n"
+-- imposters/yml/nested/schemas/request.json --
+{"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}
+-- imposters/yml/nested/responses/body.txt --
+yml file body
+-- imposters/yaml/nested/routes.imp.yaml --
+- request:
+    method: POST
+    endpoint: /yaml/{id:[0-9]+}
+    schemaFile: schemas/request.json
+    headers:
+      X-Key: ^token$
+    params:
+      color: red
+  response:
+    status: 201
+    headers:
+      Content-Type: text/plain
+      X-Source: yaml
+    bodyFile: responses/body.txt
+- request:
+    method: POST
+    endpoint: /yaml/{id}
+  response:
+    status: 400
+    headers:
+      Content-Type: text/plain
+    body: "fallback\n"
+-- imposters/yaml/nested/schemas/request.json --
+{"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}
+-- imposters/yaml/nested/responses/body.txt --
+yaml file body
+-- http/yaml_invalid_schema/req.http --
+POST /yaml/42?color=red HTTP/1.1
+X-Key: token
+Content-Length: 12
+
+{"name":42}
+
+-- http/yaml_invalid_schema/res.http --
+HTTP/1.1 400 Bad Request
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/yaml_missing_header/req.http --
+POST /yaml/42?color=red HTTP/1.1
+Content-Length: 18
+
+{"name":"gopher"}
+
+-- http/yaml_missing_header/res.http --
+HTTP/1.1 400 Bad Request
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/yaml_valid/req.http --
+POST /yaml/42?color=red HTTP/1.1
+X-Key: token
+Content-Length: 18
+
+{"name":"gopher"}
+
+-- http/yaml_valid/res.http --
+HTTP/1.1 201 Created
+Content-Length: 15
+Content-Type: text/plain
+X-Source: yaml
+
+
+yaml file body
+-- http/yaml_wrong_query/req.http --
+POST /yaml/42?color=blue HTTP/1.1
+X-Key: token
+Content-Length: 18
+
+{"name":"gopher"}
+
+-- http/yaml_wrong_query/res.http --
+HTTP/1.1 400 Bad Request
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/yml_invalid_schema/req.http --
+POST /yml/42?color=red HTTP/1.1
+X-Key: token
+Content-Length: 12
+
+{"name":42}
+
+-- http/yml_invalid_schema/res.http --
+HTTP/1.1 400 Bad Request
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/yml_missing_header/req.http --
+POST /yml/42?color=red HTTP/1.1
+Content-Length: 18
+
+{"name":"gopher"}
+
+-- http/yml_missing_header/res.http --
+HTTP/1.1 400 Bad Request
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/yml_valid/req.http --
+POST /yml/42?color=red HTTP/1.1
+X-Key: token
+Content-Length: 18
+
+{"name":"gopher"}
+
+-- http/yml_valid/res.http --
+HTTP/1.1 201 Created
+Content-Length: 14
+Content-Type: text/plain
+X-Source: yml
+
+
+yml file body
+-- http/yml_wrong_query/req.http --
+POST /yml/42?color=blue HTTP/1.1
+X-Key: token
+Content-Length: 18
+
+{"name":"gopher"}
+
+-- http/yml_wrong_query/res.http --
+HTTP/1.1 400 Bad Request
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback

@@ -1,8 +1,0 @@
-{
-  "args": [
-    "--imposters",
-    "missing"
-  ],
-  "error": "does not exist",
-  "occupyPort": false
-}

@@ -23,7 +23,7 @@ Follow existing Go conventions: use `gofmt` formatting and tab indentation, shor
 
 ## Testing Guidelines
 
-Use Go's `testing` package with Testify assertions. Name tests `Test<Behavior>` and use descriptive table-driven subtests for input variations. Add regression coverage for behavior changes, including error cases. Acceptance scenarios belong under `acceptance/tests/<scenario>/`, with `config.txtar` and HTTP request/response archives in `http/`. Run unit and acceptance suites before submitting. No numeric coverage threshold is configured.
+Use Go's `testing` package with Testify assertions. Name tests `Test<Behavior>` and use descriptive table-driven subtests for input variations. Add regression coverage for behavior changes, including error cases. Each acceptance scenario is one `acceptance/tests/<scenario>.txtar` archive containing setup files, optional `scenario.json`, and named `http/<step>/req.http` and `res.http` entries. See `acceptance/README.md` for the format. Run unit and acceptance suites before submitting. No numeric coverage threshold is configured.
 
 ## Commit & Pull Request Guidelines
 

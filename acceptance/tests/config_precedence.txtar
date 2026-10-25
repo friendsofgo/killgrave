@@ -1,0 +1,30 @@
+-- settings/config.yml --
+host: 127.0.0.1
+port: ${PORT}
+imposters_path: imposters
+-- settings/imposters/configured.imp.json --
+[{"request": {"method": "GET", "endpoint": "/configured"}, "response": {"status": 200, "headers": {"Content-Type": "text/plain"}, "body": "config wins\n"}}]
+-- scenario.json --
+{
+  "args": [
+    "--config",
+    "settings/config.yml",
+    "--port",
+    "-1",
+    "--host",
+    "invalid.invalid",
+    "--imposters",
+    "missing"
+  ]
+}
+-- http/configured/req.http --
+GET /configured HTTP/1.1
+
+
+-- http/configured/res.http --
+HTTP/1.1 200 OK
+Content-Length: 12
+Content-Type: text/plain
+
+
+config wins

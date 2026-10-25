@@ -1,7 +1,0 @@
-{
-  "upstreamCalls": 2,
-  "args": [
-    "--config",
-    "config.yml"
-  ]
-}

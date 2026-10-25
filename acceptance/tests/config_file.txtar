@@ -1,0 +1,26 @@
+-- settings/config.yml --
+host: 127.0.0.1
+port: ${PORT}
+imposters_path: imposters
+-- settings/imposters/nested/configured.imp.json --
+[{"request": {"method": "GET", "endpoint": "/configured"}, "response": {"status": 200, "headers": {"Content-Type": "text/plain"}, "bodyFile": "responses/body.txt"}}]
+-- settings/imposters/nested/responses/body.txt --
+configured
+-- scenario.json --
+{
+  "args": [
+    "--config",
+    "settings/config.yml"
+  ]
+}
+-- http/configured/req.http --
+GET /configured HTTP/1.1
+
+
+-- http/configured/res.http --
+HTTP/1.1 200 OK
+Content-Length: 11
+Content-Type: text/plain
+
+
+configured

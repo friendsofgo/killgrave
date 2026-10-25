@@ -27,8 +27,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/tools/txtar"
-
-	"github.com/friendsofgo/killgrave/acceptance/utils/network"
 )
 
 const (
@@ -46,29 +44,13 @@ const (
 
 // Test is the entry point for the acceptance tests.
 func Test(t *testing.T) {
-	// First of all, we extract the Killgrave version by running `killgrave version`.
-	// This is useful, not only to write a log that can serve as metadata for the test results,
-	// but also to ensure that the Killgrave binary is available.
+	// Verify the built binary before starting the scenarios.
 	version, err := extractKillgraveVersion(t)
 	require.NoError(t, err, "build Killgrave with make build before running acceptance tests")
 	t.Logf("Running acceptance tests with Killgrave version: %s", version)
 
-	// Once we know the Killgrave binary is available, proceed with the acceptance tests.
-	// The first step is to collect all test cases from the `tests` directory. For each test:
-	//
-	// 0. The test case self-contain on each directory, which name is used as the test name.
-	// 1. Requires a `config.txtar` file at the root level of the test case directory,
-	//    it is used to initialize a file system with all the configuration-related files,
-	//    which not only includes the Killgrave configuration file but also the imposters.
-	// 2. Uses optional scenario.json startup settings, or the default imposter flags.
-	//    Startup-error scenarios assert an unsuccessful exit instead of sending HTTP.
-	//    Each server runs on an available port so scenarios can run concurrently.
-	// 3. Requires an `http` directory which contains a set of request and response pairs.
-	//    Each pair is defined by two files: `req.http` and `res.http`, where the request
-	//    is the HTTP request that will be performed as part of the test, and the response
-	//    is the response expected from Killgrave (which will be asserted).
-	//    Each pair is considered one of the test cases that compose the acceptance test,
-	//    defined by the aforementioned parent directory.
+	// Each archive contains setup files, optional startup settings, and named
+	// HTTP steps. Scenarios run concurrently; steps within a scenario run in order.
 	tcs := collectTestCases(t)
 
 	for _, tc := range tcs {
@@ -77,9 +59,8 @@ func Test(t *testing.T) {
 			t.Parallel()
 
 			// 1. Create a temporary directory with the configuration files.
-			opts := readScenario(t, tc.path)
-			port, err := network.AnyAvailablePort()
-			require.NoError(t, err)
+			opts := readScenario(t, tc.files)
+			port := availablePort(t)
 			var calls atomic.Int32
 			upstreamURL := ""
 			if opts.UpstreamCalls != nil {
@@ -129,20 +110,14 @@ func Test(t *testing.T) {
 
 			// 3. Collect the request and response pairs
 			// and iterate over them to perform the tests.
-			rrs := collectRequestResponses(t, tc.path)
+			rrs := collectRequestResponses(t, tc.files)
 			for _, rr := range rrs {
 				rr := rr
 				t.Run(rr.name, func(t *testing.T) {
 					// Override the address
 					rr.overrideAddress(address)
 
-					// Send the request
-					res, err := client.Do(rr.req)
-					require.NoError(t, err)
-					t.Cleanup(func() { res.Body.Close() })
-
-					// Assert the res
-					rr.assertResponse(t, res)
+					rr.run(t, client, path)
 				})
 			}
 			if opts.UpstreamCalls != nil {
@@ -152,35 +127,43 @@ func Test(t *testing.T) {
 	}
 }
 
-// testCase represents a test case to be run.
-// It is defined by the name of the test case and the path
-// to the directory where the testCase files live in.
-type testCase struct {
-	name string
-	path string
+// availablePort asks the OS for a port, then releases it for the child process.
+func availablePort(t *testing.T) int {
+	t.Helper()
+	listener, err := net.Listen("tcp", ":0")
+	require.NoError(t, err)
+	port := listener.Addr().(*net.TCPAddr).Port
+	require.NoError(t, listener.Close())
+	return port
 }
 
-// collectTestCases walks over the `tests` directory and
-// constructs all the testCase's from the directories found.
+// testCase holds one scenario archive: setup files, startup options, and HTTP steps.
+type testCase struct {
+	name  string
+	files []txtar.File
+}
+
+// collectTestCases reads one archive per scenario from the tests directory.
 func collectTestCases(t *testing.T) []testCase {
+	t.Helper()
 	var tcs []testCase
 
-	cwd, err := os.Getwd()
-	require.NoError(t, err)
-
-	testsDir := filepath.Join(cwd, testsDir)
 	entries, err := os.ReadDir(testsDir)
 	require.NoError(t, err)
 
 	for _, entry := range entries {
-		if entry.IsDir() {
-			tcs = append(tcs, testCase{
-				name: entry.Name(),
-				path: filepath.Join(testsDir, entry.Name()),
-			})
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".txtar") {
+			continue
 		}
+		data, err := os.ReadFile(filepath.Join(testsDir, entry.Name()))
+		require.NoError(t, err)
+		tcs = append(tcs, testCase{
+			name:  strings.TrimSuffix(entry.Name(), ".txtar"),
+			files: txtar.Parse(data).Files,
+		})
 	}
 
+	require.NotEmpty(t, tcs, "no acceptance scenarios found")
 	return tcs
 }
 
@@ -190,9 +173,11 @@ func collectTestCases(t *testing.T) []testCase {
 // - the request to be sent to Killgrave, as *http.Request.
 // - the expected response from Killgrave, as []byte.
 type reqRes struct {
-	name string
-	req  *http.Request
-	res  []byte
+	name       string
+	req        *http.Request
+	res        []byte
+	writes     []txtar.File
+	eventually bool
 }
 
 // overrideAddress changes the request's URL to use the provided address.
@@ -203,17 +188,52 @@ func (rr reqRes) overrideAddress(address string) {
 	rr.req.URL.Host = address
 }
 
-// assertResponse is a self-contained function that can be used to assert
-// that the response received from Killgrave matches the expected response.
-//
-// It builds the response string from the response object, and then it
-// compares it with the expected response (from the test definition).
-func (rr reqRes) assertResponse(t *testing.T, response *http.Response) {
+// run applies file changes once, then checks the response. Only stateless GET
+// exchanges may opt into retries while waiting for a watcher reload.
+func (rr reqRes) run(t *testing.T, client *http.Client, dir string) {
 	t.Helper()
-
-	// Read the response body
-	body, err := io.ReadAll(response.Body)
+	for _, file := range rr.writes {
+		require.True(t, filepath.IsLocal(file.Name), "write path must be relative: %s", file.Name)
+		target := filepath.Join(dir, file.Name)
+		require.NoError(t, os.MkdirAll(filepath.Dir(target), 0o755))
+		// Publish a complete file so the watcher cannot load partially written JSON.
+		tmp, err := os.CreateTemp(filepath.Dir(target), ".acceptance-*")
+		require.NoError(t, err)
+		_, writeErr := tmp.Write(file.Data)
+		closeErr := tmp.Close()
+		require.NoError(t, writeErr)
+		require.NoError(t, closeErr)
+		require.NoError(t, os.Rename(tmp.Name(), target))
+	}
+	if rr.eventually {
+		require.Equal(t, http.MethodGet, rr.req.Method, "eventually is only for stateless GET requests")
+		require.True(t, rr.req.Body == nil || rr.req.Body == http.NoBody, "eventually requests cannot have a body")
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			res, err := client.Do(rr.req.Clone(context.Background()))
+			if !assert.NoError(c, err) {
+				return
+			}
+			actual, err := formatResponse(res)
+			if assert.NoError(c, err) {
+				assert.Equal(c, string(rr.res), actual)
+			}
+		}, 5*time.Second, 50*time.Millisecond)
+		return
+	}
+	res, err := client.Do(rr.req)
 	require.NoError(t, err)
+	actual, err := formatResponse(res)
+	require.NoError(t, err)
+	assert.Equal(t, string(rr.res), actual)
+}
+
+// formatResponse consumes and closes the body on every attempt, including retries.
+func formatResponse(response *http.Response) (string, error) {
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
 
 	// Format the status line
 	statusLine := fmt.Sprintf("HTTP/%d.%d %s", response.ProtoMajor, response.ProtoMinor, response.Status)
@@ -224,38 +244,53 @@ func (rr reqRes) assertResponse(t *testing.T, response *http.Response) {
 	// Format the headers
 	var headersBuilder strings.Builder
 	err = response.Header.Write(&headersBuilder)
-	require.NoError(t, err)
+	if err != nil {
+		return "", err
+	}
 	headers := strings.ReplaceAll(headersBuilder.String(), "\r\n", "\n")
 
 	// Format the response
-	res := fmt.Sprintf("%s\n%s\n\n%s", statusLine, headers, body)
-	assert.Equal(t, string(rr.res), res)
+	return fmt.Sprintf("%s\n%s\n\n%s", statusLine, headers, body), nil
 }
 
-// collectRequestResponses walks over the `http` directory of the test case
-// and collects all the reqRes pairs. In other words, it collects all the test cases.
-func collectRequestResponses(t *testing.T, path string) (rrs []reqRes) {
-	httpDir := filepath.Join(path, "http")
-	entries, err := os.ReadDir(httpDir)
-	require.NoError(t, err)
-
-	for _, entry := range entries {
-		if entry.IsDir() {
+// collectRequestResponses groups http/<step>/ entries, preserving archive order.
+func collectRequestResponses(t *testing.T, files []txtar.File) (rrs []reqRes) {
+	t.Helper()
+	var order []string
+	steps := make(map[string][]txtar.File)
+	for _, file := range files {
+		rel, ok := strings.CutPrefix(file.Name, "http/")
+		if !ok {
 			continue
 		}
-
-		rrFilePath := filepath.Join(httpDir, entry.Name())
-
-		contents, err := os.ReadFile(rrFilePath)
-		require.NoError(t, err)
-
-		archive := txtar.Parse(contents)
-
-		rrs = append(rrs, reqRes{
-			name: entry.Name(),
-			req:  readRequest(t, find(archive.Files, "req.http")),
-			res:  find(archive.Files, "res.http"),
-		})
+		name, part, ok := strings.Cut(rel, "/")
+		require.True(t, ok && name != "", "expected http/<step>/<entry>: %s", file.Name)
+		if _, exists := steps[name]; !exists {
+			order = append(order, name)
+		}
+		steps[name] = append(steps[name], txtar.File{Name: part, Data: file.Data})
+	}
+	require.NotEmpty(t, order, "scenario has no HTTP exchanges")
+	for _, name := range order {
+		entries := steps[name]
+		require.NotEmpty(t, find(entries, "req.http"), "missing request for %s", name)
+		require.NotEmpty(t, find(entries, "res.http"), "missing response for %s", name)
+		rr := reqRes{
+			name: name,
+			req:  readRequest(t, find(entries, "req.http")),
+			res:  find(entries, "res.http"),
+		}
+		for _, file := range entries {
+			if name, ok := strings.CutPrefix(file.Name, "write/"); ok {
+				rr.writes = append(rr.writes, txtar.File{Name: name, Data: file.Data})
+			}
+			if file.Name == "eventually" {
+				eventually, err := strconv.ParseBool(strings.TrimSpace(string(file.Data)))
+				require.NoError(t, err)
+				rr.eventually = eventually
+			}
+		}
+		rrs = append(rrs, rr)
 	}
 
 	return
@@ -285,25 +320,17 @@ func readRequest(t *testing.T, raw []byte) *http.Request {
 	return req
 }
 
-// createTmpCfgDir creates a temporary directory with the configuration files defined
-// in the `config.txtar` file, replicating the structure to be used by Killgrave, when executed.
-//
-// We follow this approach because this way we can test the application assuming the binary
-// already exists, so these tests can be run with a recently generated binary (e.g. a release).
-//
-// Additionally, in the future we might explore ways to reuse this setup to run these tests
-// as "integration tests", so faking using a fake, likely in-memory, file system but directly
-// calling app.Run().
+// createTmpCfgDir extracts setup files into the process working directory.
+// Scenario metadata and HTTP steps stay in the harness.
 func createTmpCfgDir(t *testing.T, tc testCase, replace *strings.Replacer) string {
-	// First, we read the `config.txtar` file and initialize a txtar.Archive with its contents.
+	t.Helper()
 	tmpCfgDir := t.TempDir()
-	cfgFilePath := filepath.Join(tc.path, "config.txtar")
-	contents, err := os.ReadFile(cfgFilePath)
-	require.NoError(t, err)
-	archive := txtar.Parse(contents)
 
-	// Then, we create the temporary directory and write the files.
-	for _, f := range archive.Files {
+	for _, f := range tc.files {
+		if f.Name == "scenario.json" || strings.HasPrefix(f.Name, "http/") {
+			continue
+		}
+		require.True(t, filepath.IsLocal(f.Name), "setup path must be relative: %s", f.Name)
 		filePath := filepath.Join(tmpCfgDir, f.Name)
 		fileDir := filepath.Dir(filePath)
 
@@ -327,13 +354,12 @@ type scenario struct {
 	UpstreamDown  bool     `json:"upstreamDown"`
 }
 
-func readScenario(t *testing.T, path string) scenario {
+func readScenario(t *testing.T, files []txtar.File) scenario {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(path, "scenario.json"))
-	if errors.Is(err, os.ErrNotExist) {
+	data := find(files, "scenario.json")
+	if data == nil {
 		return scenario{}
 	}
-	require.NoError(t, err)
 	var opts scenario
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()

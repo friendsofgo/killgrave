@@ -1,6 +1,0 @@
--- settings/config.yml --
-host: 127.0.0.1
-port: ${PORT}
-imposters_path: imposters
--- settings/imposters/configured.imp.json --
-[{"request": {"method": "GET", "endpoint": "/configured"}, "response": {"status": 200, "headers": {"Content-Type": "text/plain"}, "body": "config wins\n"}}]

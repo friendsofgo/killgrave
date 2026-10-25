@@ -1,0 +1,60 @@
+-- imposters/routes.imp.json --
+[{"request": {"method": "POST", "endpoint": "/mock"}, "response": {"status": 200, "headers": {"Content-Type": "text/plain"}, "body": "mocked\n"}}, {"request": {"method": "POST", "endpoint": "/submit", "schemaFile": "schemas/gopher.json"}, "response": {"status": 201, "headers": {"Content-Type": "text/plain"}, "body": "gopher\n"}}]
+-- imposters/schemas/gopher.json --
+{"type": "object", "properties": {"type": {"enum": ["gopher"]}}, "required": ["type"]}
+-- scenario.json --
+{
+  "upstreamCalls": 0,
+  "args": [
+    "--port",
+    "${PORT}",
+    "--imposters",
+    "imposters",
+    "--proxy-mode",
+    "none",
+    "--proxy-url",
+    "${UPSTREAM}"
+  ]
+}
+-- http/missing/req.http --
+POST /upstream/items?color=red&n=2 HTTP/1.1
+Content-Length: 8
+
+payload
+
+-- http/missing/res.http --
+HTTP/1.1 404 Not Found
+Content-Length: 19
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+
+
+404 page not found
+-- http/mock/req.http --
+POST /mock HTTP/1.1
+X-Test: preserved
+Content-Length: 8
+
+payload
+
+-- http/mock/res.http --
+HTTP/1.1 200 OK
+Content-Length: 7
+Content-Type: text/plain
+
+
+mocked
+-- http/schema_rejected/req.http --
+POST /submit HTTP/1.1
+Content-Length: 15
+
+{"type":"cat"}
+
+-- http/schema_rejected/res.http --
+HTTP/1.1 404 Not Found
+Content-Length: 19
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+
+
+404 page not found

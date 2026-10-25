@@ -1,0 +1,119 @@
+-- imposters/gophers.imp.json --
+[
+    {
+        "request": {
+            "method": "GET",
+            "endpoint": "/gophers/01D8EMQ185CA8PRGE20DKZTGSR",
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        },
+        "response": {
+            "status": 200,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "bodyFile": "responses/create_gopher_response.json"
+        }
+    },
+    {
+        "request": {
+            "method": "POST",
+            "endpoint": "/gophers",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "params": {
+                "gopherColor": "{v:[a-z]+}"
+            }
+        },
+        "response": {
+            "status": 201,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "bodyFile": "responses/create_gopher_response.json"
+        }
+    },
+    {
+        "request": {
+            "method": "GET",
+            "endpoint": "/gophers/{_id:[\\w]{26}}",
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        },
+        "response": {
+            "status": 404
+        }
+    },
+    {
+        "t": "random_text"
+    }
+]
+-- imposters/responses/create_gopher_response.json --
+{
+    "data": {
+        "type": "gophers",
+        "id": "01D8EMQ185CA8PRGE20DKZTGSR",
+        "attributes": {
+            "name": "Zebediah",
+            "color": "Purple",
+            "age": 54
+        }
+    }
+}
+-- http/create/req.http --
+POST /gophers?gopherColor=red HTTP/1.1
+Content-Length: 95
+Content-Type: application/json
+
+{"data": {"type": "gophers", "attributes": {"name": "Zebediah", "color": "Purple", "age": 54}}}
+
+-- http/create/res.http --
+HTTP/1.1 201 Created
+Content-Length: 214
+Content-Type: application/json
+
+
+{
+    "data": {
+        "type": "gophers",
+        "id": "01D8EMQ185CA8PRGE20DKZTGSR",
+        "attributes": {
+            "name": "Zebediah",
+            "color": "Purple",
+            "age": 54
+        }
+    }
+}
+-- http/fetchExisting/req.http --
+GET /gophers/01D8EMQ185CA8PRGE20DKZTGSR HTTP/1.1
+Content-Type: application/json
+
+-- http/fetchExisting/res.http --
+HTTP/1.1 200 OK
+Content-Length: 214
+Content-Type: application/json
+
+
+{
+    "data": {
+        "type": "gophers",
+        "id": "01D8EMQ185CA8PRGE20DKZTGSR",
+        "attributes": {
+            "name": "Zebediah",
+            "color": "Purple",
+            "age": 54
+        }
+    }
+}
+-- http/fetchNotFound/req.http --
+GET /gophers/01D8EMQ185CA8PRGE20DKZT404 HTTP/1.1
+Content-Type: application/json
+
+-- http/fetchNotFound/res.http --
+HTTP/1.1 404 Not Found
+Content-Length: 0
+
+
