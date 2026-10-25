@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,7 +21,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
+	"syscall"
 	"testing"
 	"time"
 
@@ -107,6 +110,13 @@ func Test(t *testing.T) {
 			client := &http.Client{Timeout: 3 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error {
 				return http.ErrUseLastResponse
 			}}
+			if opts.HTTPS {
+				// Killgrave ships a dummy certificate. Restrict this test transport
+				// to HTTP/1.1 so raw response fixtures are independent of ALPN.
+				transport := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+				client.Transport = transport
+				t.Cleanup(transport.CloseIdleConnections)
+			}
 
 			// 3. Collect the request and response pairs
 			// and iterate over them to perform the tests.
@@ -116,6 +126,9 @@ func Test(t *testing.T) {
 				t.Run(rr.name, func(t *testing.T) {
 					// Override the address
 					rr.overrideAddress(address)
+					if opts.HTTPS {
+						rr.req.URL.Scheme = "https"
+					}
 
 					rr.run(t, client, path)
 				})
@@ -178,6 +191,8 @@ type reqRes struct {
 	res        []byte
 	writes     []txtar.File
 	eventually bool
+	minTime    time.Duration
+	maxTime    time.Duration
 }
 
 // overrideAddress changes the request's URL to use the provided address.
@@ -220,11 +235,19 @@ func (rr reqRes) run(t *testing.T, client *http.Client, dir string) {
 		}, 5*time.Second, 50*time.Millisecond)
 		return
 	}
+	start := time.Now()
 	res, err := client.Do(rr.req)
 	require.NoError(t, err)
 	actual, err := formatResponse(res)
 	require.NoError(t, err)
+	elapsed := time.Since(start)
 	assert.Equal(t, string(rr.res), actual)
+	if rr.minTime > 0 {
+		assert.GreaterOrEqual(t, elapsed, rr.minTime, "response returned before the configured delay")
+	}
+	if rr.maxTime > 0 {
+		assert.LessOrEqual(t, elapsed, rr.maxTime, "response exceeded the timing allowance")
+	}
 }
 
 // formatResponse consumes and closes the body on every attempt, including retries.
@@ -289,7 +312,22 @@ func collectRequestResponses(t *testing.T, files []txtar.File) (rrs []reqRes) {
 				require.NoError(t, err)
 				rr.eventually = eventually
 			}
+			if file.Name == "timing.json" {
+				var timing struct {
+					Min string `json:"min"`
+					Max string `json:"max"`
+				}
+				require.NoError(t, json.Unmarshal(file.Data, &timing))
+				var err error
+				rr.minTime, err = time.ParseDuration(timing.Min)
+				require.NoError(t, err)
+				rr.maxTime, err = time.ParseDuration(timing.Max)
+				require.NoError(t, err)
+				require.GreaterOrEqual(t, rr.minTime, time.Duration(0))
+				require.GreaterOrEqual(t, rr.maxTime, rr.minTime)
+			}
 		}
+		require.False(t, rr.eventually && rr.maxTime > 0, "timing checks cannot use retries")
 		rrs = append(rrs, rr)
 	}
 
@@ -352,6 +390,7 @@ type scenario struct {
 	OccupyPort    bool     `json:"occupyPort"`
 	UpstreamCalls *int     `json:"upstreamCalls"`
 	UpstreamDown  bool     `json:"upstreamDown"`
+	HTTPS         bool     `json:"https"`
 }
 
 func readScenario(t *testing.T, files []txtar.File) scenario {
@@ -390,9 +429,14 @@ func assertStartupError(t *testing.T, dir string, args []string, message string)
 	assert.Contains(t, string(output), message)
 }
 
+type runningApplication struct {
+	process *os.Process
+	done    <-chan struct{}
+}
+
 // runApplication captures output in a file so concurrent writes and diagnostics
 // cannot race. TCP readiness does not consume responses or hit a proxy upstream.
-func runApplication(t *testing.T, dir, address string, args []string) {
+func runApplication(t *testing.T, dir, address string, args []string) runningApplication {
 	t.Helper()
 	cmd := applicationCommand(t, dir, args)
 	outputPath := filepath.Join(dir, "process.log")
@@ -427,6 +471,10 @@ func runApplication(t *testing.T, dir, address string, args []string) {
 			}
 		}
 		assert.NoError(t, waitErr, "Killgrave process exit")
+		listener, err := net.Listen("tcp", address)
+		if assert.NoError(t, err, "Killgrave did not release its listening port") {
+			listener.Close()
+		}
 	})
 	deadline := time.NewTimer(5 * time.Second)
 	defer deadline.Stop()
@@ -442,9 +490,84 @@ func runApplication(t *testing.T, dir, address string, args []string) {
 			conn, err := net.DialTimeout("tcp", address, 100*time.Millisecond)
 			if err == nil {
 				conn.Close()
-				return
+				return runningApplication{process: cmd.Process, done: done}
 			}
 		}
+	}
+}
+
+// This test uses a blocked local upstream to synchronize shutdown with an active
+// request. Channels establish that the request is in flight without timing sleeps.
+func TestGracefulShutdown(t *testing.T) {
+	for _, signal := range []os.Signal{os.Interrupt, syscall.SIGTERM} {
+		t.Run(signal.String(), func(t *testing.T) {
+			t.Parallel()
+			started, release := make(chan struct{}), make(chan struct{})
+			upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				close(started)
+				select {
+				case <-release:
+					io.WriteString(w, "completed\n")
+				case <-r.Context().Done():
+				}
+			}))
+			t.Cleanup(upstream.Close)
+			dir := t.TempDir()
+			require.NoError(t, os.Mkdir(filepath.Join(dir, "imposters"), 0o755))
+			port := strconv.Itoa(availablePort(t))
+			address := net.JoinHostPort(addr, port)
+			app := runApplication(t, dir, address, []string{"--port", port, "--imposters", "imposters", "--proxy-mode", "all", "--proxy-url", upstream.URL})
+			var releaseOnce sync.Once
+			unblock := func() { releaseOnce.Do(func() { close(release) }) }
+			t.Cleanup(unblock)
+			client := &http.Client{Timeout: 3 * time.Second}
+			t.Cleanup(client.CloseIdleConnections)
+			type result struct {
+				response *http.Response
+				err      error
+			}
+			results := make(chan result, 1)
+			go func() {
+				res, err := client.Get("http://" + address + "/in-flight")
+				results <- result{res, err}
+			}()
+			select {
+			case <-started:
+			case <-time.After(2 * time.Second):
+				t.Fatal("request never reached the upstream")
+			}
+			require.NoError(t, app.process.Signal(signal))
+			require.Eventually(t, func() bool {
+				conn, err := net.DialTimeout("tcp", address, 100*time.Millisecond)
+				if err != nil {
+					return true
+				}
+				conn.Close()
+				return false
+			}, time.Second, 10*time.Millisecond, "shutdown did not stop accepting connections")
+			select {
+			case <-app.done:
+				t.Fatal("Killgrave exited before its in-flight request completed")
+			default:
+			}
+			unblock()
+			select {
+			case got := <-results:
+				require.NoError(t, got.err)
+				defer got.response.Body.Close()
+				body, err := io.ReadAll(got.response.Body)
+				require.NoError(t, err)
+				assert.Equal(t, http.StatusOK, got.response.StatusCode)
+				assert.Equal(t, "completed\n", string(body))
+			case <-time.After(3 * time.Second):
+				t.Fatal("in-flight request did not complete during shutdown")
+			}
+			select {
+			case <-app.done:
+			case <-time.After(3 * time.Second):
+				t.Fatal("Killgrave did not exit after its in-flight request completed")
+			}
+		})
 	}
 }
 

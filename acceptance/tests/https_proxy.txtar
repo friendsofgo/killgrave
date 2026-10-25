@@ -1,0 +1,40 @@
+-- imposters/routes.imp.json --
+[{"request": {"method": "GET", "endpoint": "/secure"}, "response": {"status": 200, "headers": {"Content-Type": "text/plain"}, "body": "mocked\n"}}]
+-- scenario.json --
+{
+  "https": true,
+  "upstreamCalls": 1,
+  "args": [
+    "--port",
+    "${PORT}",
+    "--imposters",
+    "imposters",
+    "--secure",
+    "--proxy-mode",
+    "missing",
+    "--proxy-url",
+    "${UPSTREAM}"
+  ]
+}
+-- http/local/req.http --
+GET /secure HTTP/1.1
+
+-- http/local/res.http --
+HTTP/1.1 200 OK
+Content-Length: 7
+Content-Type: text/plain
+
+
+mocked
+-- http/upstream/req.http --
+GET /upstream?color=red HTTP/1.1
+
+-- http/upstream/res.http --
+HTTP/1.1 202 Accepted
+Content-Length: 33
+Content-Type: text/plain
+X-Upstream: yes
+
+
+GET /upstream?color=red
+X-Test: 

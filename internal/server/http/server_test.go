@@ -142,8 +142,11 @@ func TestBuildSecureMode(t *testing.T) {
 			Certificates: []tls.Certificate{cert},
 		}}
 
+		upstreamTransport := proxyServer.Client().Transport
 		proxyServer, err := NewProxy(proxyServer.URL, mode)
 		require.NoError(t, err)
+		// Trust only the local test upstream through its own TLS client transport.
+		proxyServer.server.Transport = upstreamTransport
 
 		imposterFs, err := NewImposterFS("test/testdata/imposters_secure")
 		require.NoError(t, err)
@@ -159,21 +162,18 @@ func TestBuildSecureMode(t *testing.T) {
 		url    string
 		body   string
 		status int
-		server *httptest.Server
 	}{
 		"ProxyNone_Hit": {
 			mode:   killgrave.ProxyNone,
 			url:    "https://localhost:4430/testHTTPSRequest",
 			body:   "Handled",
 			status: http.StatusOK,
-			server: proxyServer,
 		},
 		"ProxyAlways_Hit": {
 			mode:   killgrave.ProxyAll,
-			url:    proxyServer.URL,
+			url:    "https://localhost:4430/testHTTPSRequest",
 			body:   "Proxied",
 			status: http.StatusOK,
-			server: proxyServer,
 		},
 	}
 	for name, tc := range testCases {
@@ -185,12 +185,13 @@ func TestBuildSecureMode(t *testing.T) {
 			assert.Nil(t, err)
 			s.Run()
 
-			client := tc.server.Client()
-			client.Transport = &http.Transport{
-				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true,
+			client := &http.Client{
+				Timeout: time.Second,
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 				},
 			}
+			defer client.CloseIdleConnections()
 
 			assert.Eventually(t, func() bool {
 				response, err := client.Get(tc.url)
