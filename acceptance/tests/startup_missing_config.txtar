@@ -1,0 +1,10 @@
+No fixture files are needed: this scenario fails during startup validation.
+-- scenario.json --
+{
+  "args": [
+    "--config",
+    "missing.yml"
+  ],
+  "error": "error trying to read config file",
+  "occupyPort": false
+}

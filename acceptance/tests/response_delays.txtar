@@ -1,0 +1,98 @@
+-- imposters/routes.imp.json --
+[
+  {
+    "request": {
+      "method": "GET",
+      "endpoint": "/json/fixed"
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "json fixed\n",
+      "delay": "200ms"
+    }
+  },
+  {
+    "request": {
+      "method": "GET",
+      "endpoint": "/json/range"
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "json range\n",
+      "delay": "150ms:250ms"
+    }
+  }
+]
+-- imposters/routes.imp.yaml --
+- request:
+    method: GET
+    endpoint: /yaml/fixed
+  response:
+    status: 200
+    headers:
+      Content-Type: text/plain
+    body: "yaml fixed\n"
+    delay: 200ms
+- request:
+    method: GET
+    endpoint: /yaml/range
+  response:
+    status: 200
+    headers:
+      Content-Type: text/plain
+    body: "yaml range\n"
+    delay: 150ms:250ms
+-- http/json_fixed/req.http --
+GET /json/fixed HTTP/1.1
+
+-- http/json_fixed/res.http --
+HTTP/1.1 200 OK
+Content-Length: 11
+Content-Type: text/plain
+
+
+json fixed
+-- http/json_fixed/timing.json --
+{"min": "180ms", "max": "2s"}
+-- http/json_range/req.http --
+GET /json/range HTTP/1.1
+
+-- http/json_range/res.http --
+HTTP/1.1 200 OK
+Content-Length: 11
+Content-Type: text/plain
+
+
+json range
+-- http/json_range/timing.json --
+{"min": "130ms", "max": "2s"}
+-- http/yaml_fixed/req.http --
+GET /yaml/fixed HTTP/1.1
+
+-- http/yaml_fixed/res.http --
+HTTP/1.1 200 OK
+Content-Length: 11
+Content-Type: text/plain
+
+
+yaml fixed
+-- http/yaml_fixed/timing.json --
+{"min": "180ms", "max": "2s"}
+-- http/yaml_range/req.http --
+GET /yaml/range HTTP/1.1
+
+-- http/yaml_range/res.http --
+HTTP/1.1 200 OK
+Content-Length: 11
+Content-Type: text/plain
+
+
+yaml range
+-- http/yaml_range/timing.json --
+{"min": "130ms", "max": "2s"}

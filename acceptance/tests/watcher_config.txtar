@@ -1,0 +1,111 @@
+-- imposters/routes.imp.json --
+[
+  {
+    "request": {
+      "method": "GET",
+      "endpoint": "/watched"
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "original\n"
+    }
+  }
+]
+-- config.yml --
+host: localhost
+port: ${PORT}
+imposters_path: imposters
+watcher: true
+
+-- scenario.json --
+{
+  "args": [
+    "--config",
+    "config.yml"
+  ]
+}
+-- http/01_initial/req.http --
+GET /watched HTTP/1.1
+
+
+-- http/01_initial/res.http --
+HTTP/1.1 200 OK
+Content-Length: 9
+Content-Type: text/plain
+
+
+original
+-- http/02_update/req.http --
+GET /watched HTTP/1.1
+
+
+-- http/02_update/res.http --
+HTTP/1.1 200 OK
+Content-Length: 14
+Content-Type: text/plain
+
+
+updated route
+-- http/02_update/write/imposters/routes.imp.json --
+[
+  {
+    "request": {
+      "method": "GET",
+      "endpoint": "/watched"
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "updated route\n"
+    }
+  }
+]
+-- http/02_update/eventually --
+true
+-- http/03_create/req.http --
+GET /created HTTP/1.1
+
+
+-- http/03_create/res.http --
+HTTP/1.1 200 OK
+Content-Length: 9
+Content-Type: text/plain
+
+
+new file
+-- http/03_create/write/imposters/created.imp.json --
+[
+  {
+    "request": {
+      "method": "GET",
+      "endpoint": "/created"
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "new file\n"
+    }
+  }
+]
+-- http/03_create/eventually --
+true
+-- http/04_updated_still_served/req.http --
+GET /watched HTTP/1.1
+
+
+-- http/04_updated_still_served/res.http --
+HTTP/1.1 200 OK
+Content-Length: 14
+Content-Type: text/plain
+
+
+updated route
+-- http/04_updated_still_served/eventually --
+true

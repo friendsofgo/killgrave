@@ -1,0 +1,119 @@
+-- config.yml --
+host: localhost
+port: ${PORT}
+imposters_path: imposters
+cors:
+  origins: ["https://client.example", "https://other.example"]
+  methods: ["GET", "PUT"]
+  headers: ["X-Token"]
+  exposed_headers: ["X-Trace"]
+  allow_credentials: true
+-- imposters/routes.imp.json --
+[{"request": {"method": "GET", "endpoint": "/cors"}, "response": {"status": 200, "headers": {"Content-Type": "text/plain"}, "body": "cors\n"}}]
+-- scenario.json --
+{
+  "args": [
+    "--config",
+    "config.yml"
+  ]
+}
+-- http/actual_allowed/req.http --
+GET /cors HTTP/1.1
+Origin: https://client.example
+
+
+-- http/actual_allowed/res.http --
+HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Origin: https://client.example
+Access-Control-Expose-Headers: X-Trace
+Content-Length: 5
+Content-Type: text/plain
+Vary: Origin
+
+
+cors
+-- http/actual_no_origin/req.http --
+GET /cors HTTP/1.1
+
+
+-- http/actual_no_origin/res.http --
+HTTP/1.1 200 OK
+Content-Length: 5
+Content-Type: text/plain
+
+
+cors
+-- http/actual_wrong_origin/req.http --
+GET /cors HTTP/1.1
+Origin: https://denied.example
+
+
+-- http/actual_wrong_origin/res.http --
+HTTP/1.1 200 OK
+Content-Length: 5
+Content-Type: text/plain
+
+
+cors
+-- http/preflight_allowed/req.http --
+OPTIONS /cors HTTP/1.1
+Origin: https://client.example
+Access-Control-Request-Method: PUT
+Access-Control-Request-Headers: x-token
+
+
+-- http/preflight_allowed/res.http --
+HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Headers: X-Token
+Access-Control-Allow-Methods: PUT
+Access-Control-Allow-Origin: https://client.example
+Content-Length: 0
+Vary: Origin
+
+
+-- http/preflight_missing_method/req.http --
+OPTIONS /cors HTTP/1.1
+Origin: https://client.example
+
+
+-- http/preflight_missing_method/res.http --
+HTTP/1.1 400 Bad Request
+Content-Length: 0
+
+
+-- http/preflight_wrong_header/req.http --
+OPTIONS /cors HTTP/1.1
+Origin: https://client.example
+Access-Control-Request-Method: PUT
+Access-Control-Request-Headers: X-Forbidden
+
+
+-- http/preflight_wrong_header/res.http --
+HTTP/1.1 403 Forbidden
+Content-Length: 0
+
+
+-- http/preflight_wrong_method/req.http --
+OPTIONS /cors HTTP/1.1
+Origin: https://client.example
+Access-Control-Request-Method: DELETE
+
+
+-- http/preflight_wrong_method/res.http --
+HTTP/1.1 405 Method Not Allowed
+Content-Length: 0
+
+
+-- http/preflight_wrong_origin/req.http --
+OPTIONS /cors HTTP/1.1
+Origin: https://denied.example
+Access-Control-Request-Method: PUT
+
+
+-- http/preflight_wrong_origin/res.http --
+HTTP/1.1 200 OK
+Content-Length: 0
+
+

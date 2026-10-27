@@ -1,0 +1,26 @@
+-- imposters/routes.imp.json --
+[{"request": {"method": "GET", "endpoint": "/mock"}, "response": {"status": 200, "headers": {"Content-Type": "text/plain"}, "body": "mock\n"}}]
+-- scenario.json --
+{
+  "args": [
+    "--port",
+    "${PORT}",
+    "--imposters",
+    "imposters",
+    "--proxy-mode",
+    "all",
+    "--proxy-url",
+    "${UPSTREAM}"
+  ],
+  "upstreamCalls": 0,
+  "upstreamDown": true
+}
+-- http/unavailable/req.http --
+GET /missing HTTP/1.1
+
+
+-- http/unavailable/res.http --
+HTTP/1.1 502 Bad Gateway
+Content-Length: 0
+
+
