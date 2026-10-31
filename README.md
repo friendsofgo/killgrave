@@ -76,7 +76,7 @@ You can install Killgrave in different ways, but all of them are very simple:
 If you are a Mac user, you can install Killgrave using [Homebrew](https://brew.sh/):
 
 ```sh
-$ brew install friendsofgo/tap/killgrave
+$ brew install --cask friendsofgo/tap/killgrave
 ```
 
 :warning:  If you are installing via Homebrew, you always get the [latest Killgrave version](https://github.com/friendsofgo/killgrave/releases), we hope to fix this soon.
@@ -561,6 +561,9 @@ In the following example, we have defined multiple imposters for the `POST /goph
 ````
 
 ## Contributing
+
+Release tooling, nonpublishing checks, credentials, and retry steps are documented in [Release maintenance](docs/releases.md).
+
 [Contributions](CONTRIBUTING.md) are more than welcome, if you are interested please follow our guidelines to help you get started.
 
 ## License
