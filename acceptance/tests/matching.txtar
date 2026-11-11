@@ -1,0 +1,241 @@
+-- imposters/routes.imp.json --
+[
+  {
+    "request": {
+      "method": "POST",
+      "endpoint": "/animals",
+      "schemaFile": "schemas/gopher.json"
+    },
+    "response": {
+      "status": 201,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "gopher\n"
+    }
+  },
+  {
+    "request": {
+      "method": "POST",
+      "endpoint": "/animals",
+      "schemaFile": "schemas/cat.json"
+    },
+    "response": {
+      "status": 202,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "cat\n"
+    }
+  },
+  {
+    "request": {
+      "method": "POST",
+      "endpoint": "/animals"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "fallback\n"
+    }
+  },
+  {
+    "request": {
+      "method": "GET",
+      "endpoint": "/restricted/{id:[0-9]+}",
+      "headers": {
+        "X-Key": "^token[a-z]+$"
+      },
+      "params": {
+        "color": "{color:red|blue}"
+      }
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "matched\n"
+    }
+  },
+  {
+    "request": {
+      "method": "GET",
+      "endpoint": "/restricted/{id}"
+    },
+    "response": {
+      "status": 418,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "fallback\n"
+    }
+  }
+]
+-- imposters/schemas/gopher.json --
+{"type": "object", "properties": {"type": {"enum": ["gopher"]}}, "required": ["type"]}
+-- imposters/schemas/cat.json --
+{"type": "object", "properties": {"type": {"enum": ["cat"]}}, "required": ["type"]}
+-- http/matching_missing_header/req.http --
+GET /restricted/42?color=red HTTP/1.1
+
+
+-- http/matching_missing_header/res.http --
+HTTP/1.1 418 I'm a teapot
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/matching_missing_query/req.http --
+GET /restricted/42 HTTP/1.1
+X-Key: tokenabc
+
+
+-- http/matching_missing_query/res.http --
+HTTP/1.1 418 I'm a teapot
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/matching_valid/req.http --
+GET /restricted/42?color=red HTTP/1.1
+X-Key: tokenabc
+
+
+-- http/matching_valid/res.http --
+HTTP/1.1 200 OK
+Content-Length: 8
+Content-Type: text/plain
+
+
+matched
+-- http/matching_wrong_header/req.http --
+GET /restricted/42?color=red HTTP/1.1
+X-Key: invalid
+
+
+-- http/matching_wrong_header/res.http --
+HTTP/1.1 418 I'm a teapot
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/matching_wrong_path/req.http --
+GET /restricted/abc?color=red HTTP/1.1
+X-Key: tokenabc
+
+
+-- http/matching_wrong_path/res.http --
+HTTP/1.1 418 I'm a teapot
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/matching_wrong_query/req.http --
+GET /restricted/42?color=green HTTP/1.1
+X-Key: tokenabc
+
+
+-- http/matching_wrong_query/res.http --
+HTTP/1.1 418 I'm a teapot
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/schema_empty/req.http --
+POST /animals HTTP/1.1
+Content-Type: application/json
+Content-Length: 0
+
+
+-- http/schema_empty/res.http --
+HTTP/1.1 400 Bad Request
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/schema_invalid/req.http --
+POST /animals HTTP/1.1
+Content-Type: application/json
+Content-Length: 15
+
+{"type":"dog"}
+
+-- http/schema_invalid/res.http --
+HTTP/1.1 400 Bad Request
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/schema_malformed/req.http --
+POST /animals HTTP/1.1
+Content-Type: application/json
+Content-Length: 8
+
+{broken
+
+-- http/schema_malformed/res.http --
+HTTP/1.1 400 Bad Request
+Content-Length: 9
+Content-Type: text/plain
+
+
+fallback
+-- http/schema_second_schema/req.http --
+POST /animals HTTP/1.1
+Content-Type: application/json
+Content-Length: 15
+
+{"type":"cat"}
+
+-- http/schema_second_schema/res.http --
+HTTP/1.1 202 Accepted
+Content-Length: 4
+Content-Type: text/plain
+
+
+cat
+-- http/schema_valid/req.http --
+POST /animals HTTP/1.1
+Content-Type: application/json
+Content-Length: 18
+
+{"type":"gopher"}
+
+-- http/schema_valid/res.http --
+HTTP/1.1 201 Created
+Content-Length: 7
+Content-Type: text/plain
+
+
+gopher
+-- http/unknown_route/req.http --
+GET /unknown HTTP/1.1
+
+
+-- http/unknown_route/res.http --
+HTTP/1.1 404 Not Found
+Content-Length: 19
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+
+
+404 page not found
+-- http/wrong_method/req.http --
+DELETE /animals HTTP/1.1
+
+
+-- http/wrong_method/res.http --
+HTTP/1.1 405 Method Not Allowed
+Content-Length: 0
+
+

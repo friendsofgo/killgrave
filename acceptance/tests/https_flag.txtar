@@ -1,0 +1,48 @@
+-- imposters/routes.imp.json --
+[
+  {
+    "request": {
+      "method": "GET",
+      "endpoint": "/secure"
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "secure\n"
+    }
+  }
+]
+-- scenario.json --
+{
+  "https": true,
+  "args": [
+    "--port",
+    "${PORT}",
+    "--imposters",
+    "imposters",
+    "--secure"
+  ]
+}
+-- http/matched/req.http --
+GET /secure HTTP/1.1
+
+-- http/matched/res.http --
+HTTP/1.1 200 OK
+Content-Length: 7
+Content-Type: text/plain
+
+
+secure
+-- http/unmatched/req.http --
+GET /missing HTTP/1.1
+
+-- http/unmatched/res.http --
+HTTP/1.1 404 Not Found
+Content-Length: 19
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+
+
+404 page not found

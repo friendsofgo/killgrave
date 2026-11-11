@@ -71,12 +71,12 @@ You can learn more about how to configure imposters in the [Imposter Configurati
 
 You can install Killgrave in different ways, but all of them are very simple:
 
-### Homebrew 
+### Homebrew
 
 If you are a Mac user, you can install Killgrave using [Homebrew](https://brew.sh/):
 
 ```sh
-$ brew install friendsofgo/tap/killgrave
+$ brew install --cask friendsofgo/tap/killgrave
 ```
 
 :warning:  If you are installing via Homebrew, you always get the [latest Killgrave version](https://github.com/friendsofgo/killgrave/releases), we hope to fix this soon.
@@ -219,29 +219,29 @@ If you want to use `killgrave` from a client application you should consider con
 In the CORS section of the file you can find the following options:
 
 - **methods** (string array)
-  
+
   Represents the **Access-Control-Request-Method header**, if you don't specify it or if you leave it as an empty array, the default values will be:
 
   `"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE", "PATCH", "TRACE", "CONNECT"`
 
 - **headers** (string array)
-  
+
   Represents the **Access-Control-Request-Headers header**, if you don't specify it or if you leave it as an empty array, the default values will be:
 
   `"X-Requested-With", "Content-Type", "Authorization"`
 
 - **exposed_headers** (string array)
-  
+
   Represents the **Access-Control-Expose-Headers header**, if you don't specify it or if you leave it as an empty array, the default values will be:
 
   `"Cache-Control", "Content-Language", "Content-Type", "Expires", "Last-Modified", "Pragma"`
 
 - **origins** (string array)
-  
+
   Represents the **Access-Control-Allow-Origin header**, if you don't specify it or if you leave it as an empty array this option has not default value
 
 - **allow_credentials** (boolean)
-  
+
   Enables or disables the **Access-Control-Allow-Credentials header**.
 
 ### Preparing Killgrave for Proxy Mode
@@ -264,7 +264,7 @@ We use a rule-based system to match requests to imposters. Therefore, you have t
     {
         "request": {
             "method": "GET",
-            "endpoint": "/gophers/01D8EMQ185CA8PRGE20DKZTGSR"            
+            "endpoint": "/gophers/01D8EMQ185CA8PRGE20DKZTGSR"
         },
         "response": {
             "status": 200,
@@ -561,6 +561,7 @@ In the following example, we have defined multiple imposters for the `POST /goph
 ````
 
 ## Contributing
+
 [Contributions](CONTRIBUTING.md) are more than welcome, if you are interested please follow our guidelines to help you get started.
 
 ## License

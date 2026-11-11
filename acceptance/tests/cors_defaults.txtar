@@ -1,0 +1,42 @@
+-- imposters/routes.imp.json --
+[{"request": {"method": "GET", "endpoint": "/cors"}, "response": {"status": 200, "headers": {"Content-Type": "text/plain"}, "body": "cors\n"}}]
+-- http/actual_defaults/req.http --
+GET /cors HTTP/1.1
+Origin: https://client.example
+
+
+-- http/actual_defaults/res.http --
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Expose-Headers: Cache-Control,Content-Language,Content-Type,Expires,Last-Modified,Pragma
+Content-Length: 5
+Content-Type: text/plain
+
+
+cors
+-- http/actual_no_origin/req.http --
+GET /cors HTTP/1.1
+
+
+-- http/actual_no_origin/res.http --
+HTTP/1.1 200 OK
+Content-Length: 5
+Content-Type: text/plain
+
+
+cors
+-- http/preflight_default_methods_headers/req.http --
+OPTIONS /cors HTTP/1.1
+Origin: https://client.example
+Access-Control-Request-Method: PATCH
+Access-Control-Request-Headers: content-type,authorization
+
+
+-- http/preflight_default_methods_headers/res.http --
+HTTP/1.1 200 OK
+Access-Control-Allow-Headers: Content-Type,Authorization
+Access-Control-Allow-Methods: PATCH
+Access-Control-Allow-Origin: *
+Content-Length: 0
+
+

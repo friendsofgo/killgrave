@@ -1,0 +1,10 @@
+No fixture files are needed: this scenario fails during startup validation.
+-- scenario.json --
+{
+  "args": [
+    "--imposters",
+    "missing"
+  ],
+  "error": "does not exist",
+  "occupyPort": false
+}

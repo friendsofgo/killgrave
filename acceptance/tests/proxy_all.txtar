@@ -1,0 +1,72 @@
+-- imposters/routes.imp.json --
+[{"request": {"method": "POST", "endpoint": "/mock"}, "response": {"status": 200, "headers": {"Content-Type": "text/plain"}, "body": "mocked\n"}}, {"request": {"method": "POST", "endpoint": "/submit", "schemaFile": "schemas/gopher.json"}, "response": {"status": 201, "headers": {"Content-Type": "text/plain"}, "body": "gopher\n"}}]
+-- imposters/schemas/gopher.json --
+{"type": "object", "properties": {"type": {"enum": ["gopher"]}}, "required": ["type"]}
+-- scenario.json --
+{
+  "upstreamCalls": 3,
+  "args": [
+    "--port",
+    "${PORT}",
+    "--imposters",
+    "imposters",
+    "--proxy-mode",
+    "all",
+    "--proxy-url",
+    "${UPSTREAM}"
+  ]
+}
+-- http/missing/req.http --
+POST /upstream/items?color=red&n=2 HTTP/1.1
+X-Test: preserved
+Content-Type: application/json
+Content-Length: 8
+
+payload
+
+-- http/missing/res.http --
+HTTP/1.1 202 Accepted
+Content-Length: 61
+Content-Type: text/plain
+X-Upstream: yes
+
+
+POST /upstream/items?color=red&n=2
+X-Test: preserved
+payload
+-- http/mock/req.http --
+POST /mock HTTP/1.1
+X-Test: preserved
+Content-Type: application/json
+Content-Length: 8
+
+payload
+
+-- http/mock/res.http --
+HTTP/1.1 202 Accepted
+Content-Length: 37
+Content-Type: text/plain
+X-Upstream: yes
+
+
+POST /mock
+X-Test: preserved
+payload
+-- http/schema_rejected/req.http --
+POST /submit HTTP/1.1
+X-Test: preserved
+Content-Type: application/json
+Content-Length: 15
+
+{"type":"cat"}
+
+-- http/schema_rejected/res.http --
+HTTP/1.1 202 Accepted
+Content-Length: 46
+Content-Type: text/plain
+X-Upstream: yes
+
+
+POST /submit
+X-Test: preserved
+{"type":"cat"}

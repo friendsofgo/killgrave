@@ -1,0 +1,98 @@
+name: Validate
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  GO_VERSION: '1.27'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Run unit tests
+        run: go test -race ./...
+      - name: Run static checks
+        run: |
+          go vet ./...
+          go vet -tags=acceptance ./acceptance/...
+      - name: Run acceptance tests
+        run: make acceptance
+      - name: Check for vulnerabilities
+        run: |
+          go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+          go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 -tags=acceptance ./...
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
+        with:
+          version: v2.19.0
+          install-only: true
+      - name: Validate release configuration and build snapshot
+        run: |
+          goreleaser check
+          goreleaser release --snapshot --clean
+          python3 scripts/check-release-artifacts.py
+      - name: Run acceptance tests against packaged Linux binary
+        run: |
+          mkdir -p bin
+          tar -xzf dist/*_linux_x86_64.tar.gz -C bin killgrave
+          ./bin/killgrave --version
+          cd acceptance
+          go test -count=1 -tags=acceptance ./...
+
+  docker:
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build image without publishing
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/${{ matrix.arch }}
+          build-args: VERSION=validation
+          push: false
+          load: true
+          tags: killgrave:validation
+      - name: Check image version and fixture response
+        run: |
+          docker run --rm --platform linux/${{ matrix.arch }} killgrave:validation --version | grep -Fx 'Killgrave version: docker-validation'
+          mkdir -p "$RUNNER_TEMP/imposters"
+          cat > "$RUNNER_TEMP/imposters/smoke.imp.json" <<'JSON'
+          [{"request":{"method":"GET","endpoint":"/release-check"},"response":{"status":200,"body":"release-ok"}}]
+          JSON
+          container=$(docker run -d --platform linux/${{ matrix.arch }} -p 127.0.0.1:3000:3000 -v "$RUNNER_TEMP/imposters:/imposters:ro" killgrave:validation --host 0.0.0.0 --imposters /imposters)
+          trap 'docker logs "$container"; docker rm -f "$container"' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/release-check > "$RUNNER_TEMP/response"; then break; fi
+            sleep 1
+          done
+          test "$(cat "$RUNNER_TEMP/response")" = release-ok

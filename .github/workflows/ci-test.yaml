@@ -1,0 +1,14 @@
+name: Test & Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    uses: ./.github/workflows/validate.yml

@@ -1,0 +1,239 @@
+-- imposters/json.imp.json --
+[
+  {
+    "request": {
+      "method": "POST",
+      "endpoint": "/json/a"
+    },
+    "response": [
+      {
+        "status": 201,
+        "headers": {
+          "Content-Type": "text/plain"
+        },
+        "body": "json first\n"
+      },
+      {
+        "status": 409,
+        "headers": {
+          "Content-Type": "text/plain"
+        },
+        "body": "json second\n"
+      }
+    ]
+  },
+  {
+    "request": {
+      "method": "POST",
+      "endpoint": "/json/b"
+    },
+    "response": [
+      {
+        "status": 202,
+        "headers": {
+          "Content-Type": "text/plain"
+        },
+        "body": "json b first\n"
+      },
+      {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/plain"
+        },
+        "body": "json b second\n"
+      }
+    ]
+  },
+  {
+    "request": {
+      "method": "GET",
+      "endpoint": "/single"
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "single\n"
+    }
+  }
+]
+-- imposters/yaml.imp.yaml --
+- request:
+    method: POST
+    endpoint: /yaml/a
+  response:
+    - status: 201
+      headers:
+        Content-Type: text/plain
+      body: "yaml first\n"
+    - status: 409
+      headers:
+        Content-Type: text/plain
+      body: "yaml second\n"
+- request:
+    method: POST
+    endpoint: /yaml/b
+  response:
+    - status: 202
+      headers:
+        Content-Type: text/plain
+      body: "yaml b first\n"
+    - status: 200
+      headers:
+        Content-Type: text/plain
+      body: "yaml b second\n"
+-- http/01_json_a/req.http --
+POST /json/a HTTP/1.1
+
+
+-- http/01_json_a/res.http --
+HTTP/1.1 201 Created
+Content-Length: 11
+Content-Type: text/plain
+
+
+json first
+-- http/02_json_b/req.http --
+POST /json/b HTTP/1.1
+
+
+-- http/02_json_b/res.http --
+HTTP/1.1 202 Accepted
+Content-Length: 13
+Content-Type: text/plain
+
+
+json b first
+-- http/03_json_a/req.http --
+POST /json/a HTTP/1.1
+
+
+-- http/03_json_a/res.http --
+HTTP/1.1 409 Conflict
+Content-Length: 12
+Content-Type: text/plain
+
+
+json second
+-- http/04_json_a/req.http --
+POST /json/a HTTP/1.1
+
+
+-- http/04_json_a/res.http --
+HTTP/1.1 201 Created
+Content-Length: 11
+Content-Type: text/plain
+
+
+json first
+-- http/05_json_b/req.http --
+POST /json/b HTTP/1.1
+
+
+-- http/05_json_b/res.http --
+HTTP/1.1 200 OK
+Content-Length: 14
+Content-Type: text/plain
+
+
+json b second
+-- http/06_json_b/req.http --
+POST /json/b HTTP/1.1
+
+
+-- http/06_json_b/res.http --
+HTTP/1.1 202 Accepted
+Content-Length: 13
+Content-Type: text/plain
+
+
+json b first
+-- http/07_yaml_a/req.http --
+POST /yaml/a HTTP/1.1
+
+
+-- http/07_yaml_a/res.http --
+HTTP/1.1 201 Created
+Content-Length: 11
+Content-Type: text/plain
+
+
+yaml first
+-- http/08_yaml_b/req.http --
+POST /yaml/b HTTP/1.1
+
+
+-- http/08_yaml_b/res.http --
+HTTP/1.1 202 Accepted
+Content-Length: 13
+Content-Type: text/plain
+
+
+yaml b first
+-- http/09_yaml_a/req.http --
+POST /yaml/a HTTP/1.1
+
+
+-- http/09_yaml_a/res.http --
+HTTP/1.1 409 Conflict
+Content-Length: 12
+Content-Type: text/plain
+
+
+yaml second
+-- http/10_yaml_a/req.http --
+POST /yaml/a HTTP/1.1
+
+
+-- http/10_yaml_a/res.http --
+HTTP/1.1 201 Created
+Content-Length: 11
+Content-Type: text/plain
+
+
+yaml first
+-- http/11_yaml_b/req.http --
+POST /yaml/b HTTP/1.1
+
+
+-- http/11_yaml_b/res.http --
+HTTP/1.1 200 OK
+Content-Length: 14
+Content-Type: text/plain
+
+
+yaml b second
+-- http/12_yaml_b/req.http --
+POST /yaml/b HTTP/1.1
+
+
+-- http/12_yaml_b/res.http --
+HTTP/1.1 202 Accepted
+Content-Length: 13
+Content-Type: text/plain
+
+
+yaml b first
+-- http/20_single_0/req.http --
+GET /single HTTP/1.1
+
+
+-- http/20_single_0/res.http --
+HTTP/1.1 200 OK
+Content-Length: 7
+Content-Type: text/plain
+
+
+single
+-- http/20_single_1/req.http --
+GET /single HTTP/1.1
+
+
+-- http/20_single_1/res.http --
+HTTP/1.1 200 OK
+Content-Length: 7
+Content-Type: text/plain
+
+
+single
