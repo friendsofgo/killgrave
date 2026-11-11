@@ -1,19 +1,20 @@
-FROM golang:1.27-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS build
 
-LABEL MAINTAINER = 'Friends of Go (it@friendsofgo.tech)'
+LABEL maintainer="Friends of Go (it@friendsofgo.tech)"
 
+RUN apk add --no-cache ca-certificates
+WORKDIR /go/src/github.com/friendsofgo/killgrave
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
 ARG TARGETOS=linux
 ARG TARGETARCH=amd64
+ARG VERSION=dev
+RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" go build \
+    -buildvcs=false -trimpath \
+    -ldflags "-s -w -X github.com/friendsofgo/killgrave/internal/app/cmd._version=docker-${VERSION}" \
+    -o /go/bin/killgrave ./cmd/killgrave
 
-RUN apk add --update git
-RUN apk add ca-certificates
-WORKDIR /go/src/github.com/friendsofgo/killgrave
-COPY . .
-RUN go mod tidy && TAG=$(git describe --tags --abbrev=0) \
-    && LDFLAGS=$(echo "-s -w -X github.com/friendsofgo/killgrave/internal/app/cmd._version="docker-$TAG) \
-    && CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" go build -a -installsuffix cgo -o /go/bin/killgrave -ldflags "$LDFLAGS" cmd/killgrave/main.go
-
-# Building image with the binary
 FROM scratch
 COPY --from=build /go/bin/killgrave /go/bin/killgrave
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/

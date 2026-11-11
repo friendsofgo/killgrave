@@ -12,3 +12,11 @@ updates:
   - dependency-name: github.com/gorilla/handlers
     versions:
     - 1.5.1
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: weekly
+- package-ecosystem: docker
+  directory: "/"
+  schedule:
+    interval: weekly
